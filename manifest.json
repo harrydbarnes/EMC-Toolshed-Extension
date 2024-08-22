@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Campaign URL Builder",
+  "version": "1.0",
+  "description": "Generates a campaign management URL with inputted Campaign ID and date.",
+  "permissions": ["tabs"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  }

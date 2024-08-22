@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Campaign URL Builder",
+  "name": "Prisma, But Better!",
   "version": "1.0",
   "description": "Generates a campaign management URL with inputted Campaign ID and date.",
   "permissions": ["tabs"],

@@ -1,84 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EM Prisma Tools</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            width: 300px;
-            padding: 10px;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .logo {
-            width: 32px;
-            height: 32px;
-            margin-right: 10px;
-        }
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
-        .subtitle {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .subtitle em {
-            font-style: italic;
-        }
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .button {
-            margin: 5px 0;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        .button:hover {
-            background-color: #e0e0e0;
-        }
-        .button:active {
-            transform: translateY(2px);
-            background-color: #d0d0d0;
-        }
-        .section {
-            width: 100%;
-            margin-top: 15px;
-        }
-        .section-title {
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .toggle-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-        }
-        .feedback {
-            margin-top: 15px;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -86,45 +10,43 @@
             <img src="icon.png" alt="EM Prisma Tools" class="logo">
             <h1 class="title">EM Prisma Tools</h1>
         </div>
-
-        <h2 class="subtitle">Prisma, But <em>Better</em>!</h2>
-
+        <h2 class="subtitle">Prisma, But Better!</h2>
+        
         <div class="button-group">
-            <button class="button" id="prismaButton">Prisma</button>
-            <button class="button" id="timesheetsButton">My Timesheets</button>
-            <button class="button" id="approvalsButton">Timesheet Approvals</button>
-            <button class="button" id="expensesButton">Expenses</button>
-            <button class="button" id="addCampaignButton">Add Campaign</button>
+            <button class="nav-button" id="prismaButton">Prisma</button>
+            <button class="nav-button" id="timesheetsButton">My Timesheets</button>
+            <button class="nav-button" id="approvalsButton">Timesheet Approvals</button>
+            <button class="nav-button" id="expensesButton">Expenses</button>
+            <button class="nav-button" id="addCampaignButton">Add Campaign</button>
         </div>
 
         <div class="input-group">
             <input type="text" id="campaignId" placeholder="Enter Campaign ID">
-            <input type="text" id="campaignDate" placeholder="Enter Campaign Date (MM/DD)">
         </div>
 
-        <button class="button" id="generateUrl">Open Campaign</button>
+        <div class="input-group">
+            <input type="text" id="campaignDate" placeholder="Enter Month e.g., January (optional)">
+        </div>
+
+        <button id="generateUrl" class="primary-button">Open Campaign</button>
 
         <div class="section">
-            <h3 class="section-title">Switch Location:</h3>
+            <h3>Switch Location:</h3>
             <div class="button-group">
-                <button class="button" id="ngmclonButton">NGMCLON</button>
-                <button class="button" id="ngmcintButton">NGMCINT</button>
-                <button class="button" id="ngmcscoButton">NGMCSCO</button>
-                <button class="button" id="ngopenButton">NGOPEN</button>
+                <button class="location-button" id="ngmclonButton">NGMCLON</button>
+                <button class="location-button" id="ngmcintButton">NGMCINT</button>
+                <button class="location-button" id="ngmcscoButton">NGMCSCO</button>
+                <button class="location-button" id="nopenButton">NGOPEN</button>
             </div>
         </div>
 
         <div class="toggle-container">
-            <label>
-                <input type="checkbox" id="logoToggle"> Replace Prisma Logo
-            </label>
-            <label>
-                <input type="checkbox" id="timesheetReminderToggle"> Enable Timesheet Reminder
-            </label>
+            <label for="logoToggle">Replace Prisma Logo:</label>
+            <input type="checkbox" id="logoToggle">
+            <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
+            <input type="checkbox" id="logoToggle">
         </div>
-
-        <button class="button" id="triggerReminder">Trigger TimeSheet Reminder Now</button>
-
+        
         <div class="feedback">
             <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
         </div>

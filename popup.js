@@ -76,4 +76,23 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('nopenButton').addEventListener('click', () => {
         chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR09QRU4ifX0sImZyb20iOnsiaWQiOiIzNS1SRUlLV1hILTYiLCJzdWJDb250ZXh0Ijp7ImlkIjoiTkdNQ0lOVCJ9fX0=' });
     });
+    
+    const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
+
+    // Load saved state for timesheet reminder
+    chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
+        timesheetReminderToggle.checked = data.timesheetReminderEnabled !== false;
+    });
+
+    // Handle timesheet reminder toggle
+    timesheetReminderToggle.addEventListener('change', function() {
+        const isEnabled = timesheetReminderToggle.checked;
+        chrome.storage.sync.set({timesheetReminderEnabled: isEnabled}, function() {
+            if (isEnabled) {
+                chrome.runtime.sendMessage({action: "createTimesheetAlarm"});
+            } else {
+                chrome.runtime.sendMessage({action: "removeTimesheetAlarm"});
+            }
+        });
+    });
 });

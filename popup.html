@@ -1,8 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EM Prisma Tools</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 300px;
+            padding: 10px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+        }
+        .logo {
+            width: 50px;
+            height: 50px;
+        }
+        .title {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .button {
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            animation: vibrate 0.3s linear infinite;
+        }
+        .button:active {
+            transform: translateY(2px);
+        }
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            25% { transform: translate(1px, 1px); }
+            50% { transform: translate(0); }
+            75% { transform: translate(-1px, -1px); }
+            100% { transform: translate(0); }
+        }
+        .input-group {
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+        .section {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .section-title {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .feedback {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .feedback a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .feedback a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -10,42 +101,46 @@
             <img src="icon.png" alt="EM Prisma Tools" class="logo">
             <h1 class="title">EM Prisma Tools</h1>
         </div>
-        <h2 class="subtitle">Prisma, But Better!</h2>
+        
+        <h2 class="subtitle">Prisma, But <i>Better</i>!</h2>
         
         <div class="button-group">
-            <button class="nav-button" id="prismaButton">Prisma</button>
-            <button class="nav-button" id="timesheetsButton">My Timesheets</button>
-            <button class="nav-button" id="approvalsButton">Timesheet Approvals</button>
-            <button class="nav-button" id="expensesButton">Expenses</button>
-            <button class="nav-button" id="addCampaignButton">Add Campaign</button>
+            <button id="prismaButton" class="button">Prisma</button>
+            <button id="timesheetsButton" class="button">My Timesheets</button>
+            <button id="approvalsButton" class="button">Timesheet Approvals</button>
+            <button id="expensesButton" class="button">Expenses</button>
+            <button id="addCampaignButton" class="button">Add Campaign</button>
         </div>
-
+        
         <div class="input-group">
-            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+            <input type="text" id="campaignId" placeholder="Campaign ID">
+            <input type="text" id="campaignDate" placeholder="Campaign Date (MM/DD)">
         </div>
-
-        <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Enter Month e.g., January (optional)">
-        </div>
-
-        <button id="generateUrl" class="primary-button">Open Campaign</button>
-
+        
+        <button id="generateUrl" class="button">Open Campaign</button>
+        
         <div class="section">
-            <h3>Switch Location:</h3>
+            <h3 class="section-title">Switch Location:</h3>
             <div class="button-group">
-                <button class="location-button" id="ngmclonButton">NGMCLON</button>
-                <button class="location-button" id="ngmcintButton">NGMCINT</button>
-                <button class="location-button" id="ngmcscoButton">NGMCSCO</button>
-                <button class="location-button" id="nopenButton">NGOPEN</button>
+                <button id="ngmclonButton" class="button">NGMCLON</button>
+                <button id="ngmcintButton" class="button">NGMCINT</button>
+                <button id="ngmcscoButton" class="button">NGMCSCO</button>
+                <button id="ngopenButton" class="button">NGOPEN</button>
             </div>
         </div>
-
+        
         <div class="toggle-container">
-            <label for="logoToggle">Replace Prisma Logo:</label>
-            <input type="checkbox" id="logoToggle">
-            <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
-            <input type="checkbox" id="logoToggle">
+            <label>
+                Replace Prisma Logo:
+                <input type="checkbox" id="logoToggle">
+            </label>
+            <label>
+                Enable Timesheet Reminder:
+                <input type="checkbox" id="timesheetReminderToggle">
+            </label>
         </div>
+        
+        <button id="triggerTimesheetReminder" class="button">Trigger Timesheet Reminder Now</button>
         
         <div class="feedback">
             <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>

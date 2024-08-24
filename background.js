@@ -7,6 +7,12 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "showTimesheetNotification") {
+        showTimesheetNotification();
+    }
+});
+
 // Create the alarm for Friday at 2:30 PM
 function createTimesheetAlarm() {
   chrome.alarms.create('timesheetReminder', {

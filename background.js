@@ -43,7 +43,7 @@ function showTimesheetNotification() {
         message: 'Don\'t forget to complete your timesheet!',
         buttons: [
           { title: 'My Timesheets' },
-          { title: 'Snooze for 15 minutes' }
+          { title: 'Timelock Me!' }
         ],
         requireInteraction: true
       });
@@ -73,7 +73,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     createTimesheetAlarm();
   } else if (request.action === "removeTimesheetAlarm") {
     chrome.alarms.clear('timesheetReminder');
-  } else if (request.action === "triggerTimesheetReminderNow") {
-    showTimesheetNotification();
   }
 });

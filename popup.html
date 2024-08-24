@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prisma, But Better!</title>
-    <link rel="stylesheet" href="style.css">
+    <title>EM Prisma Tools</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Prisma, But Better!</h1>
+        <h1 class="title">EM Prisma Tools</h1>
         <input type="text" id="campaignId" placeholder="Campaign ID">
-        <input type="text" id="campaignDate" placeholder="Month (e.g., July)">
+        <input type="text" id="campaignDate" placeholder="Campaign Date (e.g., January)">
         <button id="generateUrl">Open Campaign</button>
+        <div class="toggle-container">
+            <label for="logoToggle">Replace Prisma Logo:</label>
+            <input type="checkbox" id="logoToggle">
+        </div>
     </div>
     <script src="popup.js"></script>
 </body>

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "EM Prisma Tools",
   "version": "1.0",
-  "description": "Generates a campaign management URL with inputted Campaign ID and date, and optionally replaces the Prisma logo.",
+  "description": "Enhances Prisma functionality and provides quick access to various tools.",
   "permissions": ["tabs", "storage", "activeTab"],
   "host_permissions": ["https://groupmuk-prisma.mediaocean.com/*"],
   "action": {

@@ -19,15 +19,16 @@ function restoreOriginalLogo() {
     }
 }
 
-// Rest of the content.js remains the same
+function handleLogoReplaceEnabled(data) {
+    if (data.logoReplaceEnabled) {
+        replaceLogo();
+    } else {
+        restoreOriginalLogo();
+    }
+}
+
 function checkAndReplaceLogo() {
-    chrome.storage.sync.get('logoReplaceEnabled', function(data) {
-        if (data.logoReplaceEnabled) {
-            replaceLogo();
-        } else {
-            restoreOriginalLogo();
-        }
-    });
+    chrome.storage.sync.get('logoReplaceEnabled', handleLogoReplaceEnabled);
 }
 
 // Initial check and replace

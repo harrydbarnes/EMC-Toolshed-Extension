@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "EM Prisma Tools",
-  "version": "1",
-  "description": "Enhances Prisma functionality and provides quick access to various tools.",
+  "version": "1.0",
+  "description": "Enhances Prisma functionality and provides quick access to various tools. Built by Harry Barnes.",
   "permissions": [
     "activeTab",
     "storage",

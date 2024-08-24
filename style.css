@@ -57,8 +57,8 @@ body {
     transition: transform 0.1s;
 }
 
-.nav-button:hover, .location-button:hover {
-    animation: vibrate 0.1s linear infinite;
+.nav-button:hover, .location-button:hover, .primary-button:hover {
+    animation: vibrate 0.15s linear;
 }
 
 .nav-button:active, .location-button:active {
@@ -66,10 +66,9 @@ body {
 }
 
 @keyframes vibrate {
-    0% { transform: translateX(0); }
+    0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-1px); }
     75% { transform: translateX(1px); }
-    100% { transform: translateX(0); }
 }
 
 .input-group {

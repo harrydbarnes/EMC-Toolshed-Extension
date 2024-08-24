@@ -1,6 +1,10 @@
 // Set up the alarm when the extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  createTimesheetAlarm();
+  chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
+    if (data.timesheetReminderEnabled !== false) {
+      createTimesheetAlarm();
+    }
+  });
 });
 
 // Create the alarm for Friday at 2:30 PM
@@ -30,16 +34,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 // Show the notification
 function showTimesheetNotification() {
-  chrome.notifications.create('timesheetReminder', {
-    type: 'basic',
-    iconUrl: 'icon.png',
-    title: 'Timesheet Reminder',
-    message: 'Don\'t forget to complete your timesheet!',
-    buttons: [
-      { title: 'My Timesheets' },
-      { title: 'Timelock Me!' }
-    ],
-    requireInteraction: true
+  chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
+    if (data.timesheetReminderEnabled !== false) {
+      chrome.notifications.create('timesheetReminder', {
+        type: 'basic',
+        iconUrl: 'icon.png',
+        title: 'Timesheet Reminder',
+        message: 'Don\'t forget to complete your timesheet!',
+        buttons: [
+          { title: 'My Timesheets' },
+          { title: 'Timelock Me!' }
+        ],
+        requireInteraction: true
+      });
+    }
   });
 }
 
@@ -56,5 +64,14 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
       });
     }
     chrome.notifications.clear(notificationId);
+  }
+});
+
+// Listen for messages from popup.js
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "createTimesheetAlarm") {
+    createTimesheetAlarm();
+  } else if (request.action === "removeTimesheetAlarm") {
+    chrome.alarms.clear('timesheetReminder');
   }
 });

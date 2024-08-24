@@ -2,9 +2,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateUrlButton = document.getElementById('generateUrl');
     const logoToggle = document.getElementById('logoToggle');
 
-    // Load saved toggle state
+    // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', function(data) {
-        logoToggle.checked = data.logoReplaceEnabled || false;
+        if (data.logoReplaceEnabled === undefined) {
+            chrome.storage.sync.set({logoReplaceEnabled: true});
+            logoToggle.checked = true;
+        } else {
+            logoToggle.checked = data.logoReplaceEnabled;
+        }
     });
 
     generateUrlButton.addEventListener('click', function() {

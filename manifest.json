@@ -3,7 +3,7 @@
   "name": "EM Prisma Tools",
   "version": "1.0",
   "description": "Enhances Prisma functionality and provides quick access to various tools.",
-  "permissions": ["tabs", "storage", "activeTab"],
+  "permissions": ["tabs", "storage", "activeTab", "alarms", "notifications"],
   "host_permissions": ["https://groupmuk-prisma.mediaocean.com/*"],
   "action": {
     "default_popup": "popup.html",
@@ -20,10 +20,13 @@
       "js": ["content.js"]
     }
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "web_accessible_resources": [
     {
       "resources": ["icon.png"],
-      "matches": ["https://groupmuk-prisma.mediaocean.com/*"]
+      "matches": ["*groupmuk-prisma.mediaocean.com/*"]
     }
   ]
 }

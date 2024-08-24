@@ -8,10 +8,9 @@
     <div class="container">
         <div class="header">
             <img src="icon.png" alt="EM Prisma Tools" class="logo">
-            <h1 class="title">EM Prisma Tools</h1>
+            <h1 id="em-prisma-tools" class="title">EM Prisma Tools</h1>
         </div>
         <h2 class="subtitle">Prisma, But <em>Better</em></h2>
-        
         <div class="button-group">
             <button class="nav-button" id="prismaButton">Prisma</button>
             <button class="nav-button" id="timesheetsButton">My Timesheets</button>
@@ -19,36 +18,31 @@
             <button class="nav-button" id="expensesButton">Expenses</button>
             <button class="nav-button" id="addCampaignButton">Add Campaign</button>
         </div>
-
         <div class="input-group">
-            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+            <input type="text" id="campaignId" placeholder="Campaign ID">
         </div>
-
         <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Enter Month e.g., January (optional)">
+            <input type="text" id="campaignDate" placeholder="Campaign Date (MM/YYYY)">
         </div>
-
         <button id="generateUrl" class="primary-button">Open Campaign</button>
-
+        <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
         <div class="section">
             <h3>Switch Location:</h3>
             <div class="button-group">
                 <button class="location-button" id="ngmclonButton">NGMCLON</button>
                 <button class="location-button" id="ngmcintButton">NGMCINT</button>
                 <button class="location-button" id="ngmcscoButton">NGMCSCO</button>
-                <button class="location-button" id="nopenButton">NGOPEN</button>
+                <button class="location-button" id="ngopenButton">NGOPEN</button>
             </div>
         </div>
-
         <div class="toggle-container">
-            <label for="logoToggle">Replace Prisma Logo:</label>
-            <input type="checkbox" id="logoToggle">
-            <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
+            <span>Replace Prisma Logo:</span>
             <input type="checkbox" id="logoToggle">
         </div>
-
-        <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
-        
+        <div class="toggle-container">
+            <span>Enable Timesheet Reminder:</span>
+            <input type="checkbox" id="timesheetReminderToggle">
+        </div>
         <div class="feedback">
             <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
         </div>

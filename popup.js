@@ -57,6 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    document.getElementById('triggerTimesheetReminder').addEventListener('click', () => {
+    chrome.runtime.sendMessage({action: "showTimesheetNotification"});
+    });
+    
     // Navigation buttons
     document.getElementById('prismaButton').addEventListener('click', () => {
         chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });

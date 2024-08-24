@@ -62,11 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
     });
 
-    // Add event listener for the new "Trigger Timesheet Reminder Now" button
-    document.getElementById('triggerTimesheetReminder').addEventListener('click', function() {
-        chrome.runtime.sendMessage({action: "triggerTimesheetReminderNow"});
-    });
-    
     document.getElementById('timesheetsButton').addEventListener('click', () => {
         chrome.tabs.create({ url: 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo' });
     });

@@ -1,62 +1,56 @@
-<container>
-<header>
-![EM Prisma Tools](icon.png){.logo}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EM Prisma Tools</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="icon.png" alt="EM Prisma Tools" class="logo">
+            <h1 class="title">EM Prisma Tools</h1>
+        </div>
+        <h2 class="subtitle">Prisma, But Better!</h2>
+        
+        <div class="button-group">
+            <button class="nav-button" id="prismaButton">Prisma</button>
+            <button class="nav-button" id="timesheetsButton">My Timesheets</button>
+            <button class="nav-button" id="approvalsButton">Timesheet Approvals</button>
+            <button class="nav-button" id="expensesButton">Expenses</button>
+            <button class="nav-button" id="addCampaignButton">Add Campaign</button>
+        </div>
 
-# EM Prisma Tools {#em-prisma-tools .title}
-</header>
+        <div class="input-group">
+            <label for="campaignId">Campaign ID:</label>
+            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+        </div>
 
-## Prisma, But Better! {#prisma-but-better .subtitle}
+        <div class="input-group">
+            <label for="campaignDate">Optional: Campaign Date:</label>
+            <input type="text" id="campaignDate" placeholder="e.g., January">
+        </div>
 
-<button-group>
-Prisma
+        <button id="generateUrl" class="primary-button">Open Campaign</button>
 
-My Timesheets
+        <div class="section">
+            <h3>Switch Location:</h3>
+            <div class="button-group">
+                <button class="location-button" id="ngmclonButton">NGMCLON</button>
+                <button class="location-button" id="ngmcintButton">NGMCINT</button>
+                <button class="location-button" id="ngmcscoButton">NGMCSCO</button>
+                <button class="location-button" id="nopenButton">NOPEN</button>
+            </div>
+        </div>
 
-Timesheet Approvals
-
-Expenses
-
-Add Campaign
-</button-group>
-
-<section>
-### Prisma Campaign Opener:
-
-<input-group>
-Campaign ID:
-</input-group>
-
-<input-group>
-Optional: Enter Month (e.g. January)
-</input-group>
-
-Open Campaign
-</section>
-
-<section>
-### Switch Prisma Location:
-
-<button-group>
-NGMCLON
-
-NGMCINT
-
-NGMCSCO
-
-NGOPEN
-</button-group>
-</section>
-
-<section>
-### Settings:
-
-<toggle-container>
-Replace Prisma Logo:
-</toggle-container>
-</section>
-
-<feedback>
-[Submit feedback / compliment the chef
-here!](https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat){target="_blank"}
-</feedback>
-</container>
+        <div class="toggle-container">
+            <label for="logoToggle">Replace Prisma Logo:</label>
+            <input type="checkbox" id="logoToggle">
+        </div>
+        
+        <div class="feedback">
+            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

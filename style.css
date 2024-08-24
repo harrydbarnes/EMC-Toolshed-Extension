@@ -57,7 +57,7 @@ body {
     transition: transform 0.1s;
 }
 
-.nav-button:hover, .location-button:hover, .primary-button:hover {
+.nav-button:hover, .location-button:hover {
     animation: vibrate 0.15s linear;
 }
 
@@ -73,22 +73,20 @@ body {
 
 .input-group {
     margin-bottom: 10px;
+    width: 100%;
 }
 
-.input-group label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-input {
+.input-group input {
     width: 100%;
     padding: 8px;
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    box-sizing: border-box;
 }
 
 .primary-button {
+    width: 100%;
     padding: 10px;
     font-size: 14px;
     cursor: pointer;
@@ -101,7 +99,7 @@ input {
 }
 
 .primary-button:hover {
-    animation: vibrate 0.1s linear infinite;
+    animation: vibrate 0.15s linear;
 }
 
 .primary-button:active {
@@ -122,7 +120,7 @@ input {
     margin-bottom: 15px;
 }
 
-#logoToggle {
+#logoToggle, #timesheetReminderToggle {
     margin-left: 10px;
 }
 

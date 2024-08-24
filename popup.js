@@ -57,10 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.getElementById('triggerTimesheetReminder').addEventListener('click', () => {
-    chrome.runtime.sendMessage({action: "showTimesheetNotification"});
-    });
-    
     // Navigation buttons
     document.getElementById('prismaButton').addEventListener('click', () => {
         chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
@@ -97,5 +93,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('ngopenButton').addEventListener('click', () => {
         chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR09QRU4ifX0sImZyb20iOnsiaWQiOiIzNS1SRUlLV1hILTYiLCJzdWJDb250ZXh0Ijp7ImlkIjoiTkdNQ0lOVCJ9fX0=' });
+    });
+
+    document.getElementById('triggerTimesheetReminder').addEventListener('click', () => {
+        chrome.runtime.sendMessage({action: "showTimesheetNotification"});
     });
 });

@@ -30,9 +30,13 @@ body {
 }
 
 .subtitle {
-    font-size: 1em;
+    font-size: 1.1em;
     margin: 0 0 15px 0;
     color: #666;
+}
+
+.subtitle em {
+    font-style: italic;
 }
 
 .button-group {
@@ -50,6 +54,22 @@ body {
     background-color: #f0f0f0;
     border: 1px solid #ccc;
     border-radius: 4px;
+    transition: transform 0.1s;
+}
+
+.nav-button:hover, .location-button:hover {
+    animation: vibrate 0.1s linear infinite;
+}
+
+.nav-button:active, .location-button:active {
+    transform: translateY(2px);
+}
+
+@keyframes vibrate {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-1px); }
+    75% { transform: translateX(1px); }
+    100% { transform: translateX(0); }
 }
 
 .input-group {
@@ -78,10 +98,21 @@ input {
     border: none;
     border-radius: 4px;
     margin-bottom: 15px;
+    transition: transform 0.1s;
+}
+
+.primary-button:hover {
+    animation: vibrate 0.1s linear infinite;
+}
+
+.primary-button:active {
+    transform: translateY(2px);
 }
 
 .section h3 {
     margin: 10px 0;
+    font-size: 0.9em;
+    color: #666;
 }
 
 .toggle-container {

@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Prisma, But Better!",
+  "name": "EM Prisma Tools",
   "version": "1.0",
-  "description": "Generates a campaign management URL with inputted Campaign ID and date.",
-  "permissions": ["tabs"],
+  "description": "Generates a campaign management URL with inputted Campaign ID and date, and optionally replaces the Prisma logo.",
+  "permissions": ["tabs", "storage", "activeTab"],
+  "host_permissions": ["https://groupmuk-prisma.mediaocean.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -11,5 +12,17 @@
       "48": "icon.png",
       "128": "icon.png"
     }
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://groupmuk-prisma.mediaocean.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icon.png"],
+      "matches": ["https://groupmuk-prisma.mediaocean.com/*"]
+    }
+  ]
 }

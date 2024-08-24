@@ -90,13 +90,7 @@ function addClickListener(id, url, customCallback) {
             if (customCallback) {
                 customCallback();
             } else if (url) {
-                chrome.tabs.create({ url: url }, (tab) => {
-                    if (chrome.runtime.lastError) {
-                        console.error(`Error opening tab: ${chrome.runtime.lastError.message}`);
-                    } else {
-                        console.log(`Tab created with id: ${tab.id}`);
-                    }
-                });
+                chrome.tabs.create({ url: url });
             }
         });
     } else {

@@ -10,6 +10,10 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "showTimesheetNotification") {
         showTimesheetNotification();
+    } else if (request.action === "createTimesheetAlarm") {
+        createTimesheetAlarm();
+    } else if (request.action === "removeTimesheetAlarm") {
+        chrome.alarms.clear('timesheetReminder');
     }
 });
 
@@ -70,14 +74,5 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
       });
     }
     chrome.notifications.clear(notificationId);
-  }
-});
-
-// Listen for messages from popup.js
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "createTimesheetAlarm") {
-    createTimesheetAlarm();
-  } else if (request.action === "removeTimesheetAlarm") {
-    chrome.alarms.clear('timesheetReminder');
   }
 });

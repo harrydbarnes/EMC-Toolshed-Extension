@@ -10,11 +10,15 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "showTimesheetNotification") {
         showTimesheetNotification();
+        sendResponse({status: "Notification shown"});
     } else if (request.action === "createTimesheetAlarm") {
         createTimesheetAlarm();
+        sendResponse({status: "Alarm created"});
     } else if (request.action === "removeTimesheetAlarm") {
         chrome.alarms.clear('timesheetReminder');
+        sendResponse({status: "Alarm removed"});
     }
+    return true;  // Indicates that the response is sent asynchronously
 });
 
 // Create the alarm for Friday at 2:30 PM

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
+    const settingsIcon = settingsToggle.querySelector('i');
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -14,7 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
     generateUrlButton.addEventListener('click', handleGenerateUrl);
     logoToggle.addEventListener('change', handleLogoToggle);
     timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
-    settingsToggle.addEventListener('click', toggleSettingsVisibility);
+    
+    settingsToggle.addEventListener('click', function() {
+        settingsContent.style.maxHeight = settingsContent.style.maxHeight ? null : settingsContent.scrollHeight + "px";
+        settingsIcon.classList.toggle('fa-chevron-down');
+        settingsIcon.classList.toggle('fa-chevron-up');
+    });
 
     // Navigation buttons
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
@@ -29,7 +35,15 @@ document.addEventListener('DOMContentLoaded', function() {
     addClickListener('ngmcscoButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DU0NPIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngopenButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR09QRU4ifX0sImZyb20iOnsiaWQiOiIzNS1SRUlLV1hILTYiLCJzdWJDb250ZXh0Ijp7ImlkIjoiTkdNQ0lOVCJ9fX0=');
 
-    addClickListener('triggerTimesheetReminder', null, triggerTimesheetReminder);
+    addClickListener('triggerTimesheetReminder', null, function() {
+        chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError);
+            } else {
+                console.log("Timesheet reminder triggered");
+            }
+        });
+    });
 });
 
 function setLogoToggleState(data) {
@@ -99,13 +113,4 @@ function addClickListener(id, url, customCallback) {
     } else {
         console.error(`Button with id ${id} not found`);
     }
-}
-
-function triggerTimesheetReminder() {
-    chrome.runtime.sendMessage({action: "showTimesheetNotification"});
-}
-
-function toggleSettingsVisibility() {
-    const settingsContent = document.getElementById('settingsContent');
-    settingsContent.style.display = settingsContent.style.display === 'none' ? 'block' : 'none';
 }

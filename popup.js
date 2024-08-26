@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
     const settingsIcon = settingsToggle.querySelector('i');
+    const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
+
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);

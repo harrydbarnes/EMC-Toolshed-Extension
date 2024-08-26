@@ -32,7 +32,10 @@ function checkAndReplaceLogo() {
 }
 
 // Initial check and replace
-checkAndReplaceLogo();
+if (window.location.hostname.includes('groupmuk-prisma.mediaocean.com') || 
+    window.location.hostname.includes('groupmuk-aura.mediaocean.com')) {
+    checkAndReplaceLogo();
+}
 
 // Listen for messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {

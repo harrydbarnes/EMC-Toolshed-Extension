@@ -1,54 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EM Prisma Tools</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img src="icon.png" alt="EM Prisma Tools" class="logo">
-            <h1 id="em-prisma-tools" class="title">EM Prisma Tools</h1>
+            <h1 class="title">EM Prisma Tools</h1>
         </div>
+
         <h2 class="subtitle">Prisma, But <em>Better</em></h2>
+
         <div class="button-group">
-            <button class="nav-button" id="prismaButton">Prisma</button>
-            <button class="nav-button" id="timesheetsButton">My Timesheets</button>
-            <button class="nav-button" id="approvalsButton">Timesheet Approvals</button>
-            <button class="nav-button" id="expensesButton">Expenses</button>
-            <button class="nav-button" id="addCampaignButton">Add Campaign</button>
+            <button id="prismaButton" class="nav-button">Prisma</button>
+            <button id="timesheetsButton" class="nav-button">My Timesheets</button>
+            <button id="approvalsButton" class="nav-button">Timesheet Approvals</button>
+            <button id="expensesButton" class="nav-button">Expenses</button>
+            <button id="addCampaignButton" class="nav-button">Add Campaign</button>
         </div>
+
         <div class="input-group">
             <input type="text" id="campaignId" placeholder="Campaign ID">
         </div>
+
         <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Campaign Date (MM/YYYY) (optional)">
+            <input type="text" id="campaignDate" placeholder="Campaign month and year <em>optional</em>">
         </div>
+
         <button id="generateUrl" class="primary-button">Open Campaign</button>
+
         <div class="section">
             <h3>Switch Location:</h3>
             <div class="button-group">
-                <button class="location-button" id="ngmclonButton">NGMCLON</button>
-                <button class="location-button" id="ngmcintButton">NGMCINT</button>
-                <button class="location-button" id="ngmcscoButton">NGMCSCO</button>
-                <button class="location-button" id="ngopenButton">NGOPEN</button>
+                <button id="ngmclonButton" class="location-button">NGMCLON</button>
+                <button id="ngmcintButton" class="location-button">NGMCINT</button>
+                <button id="ngmcscoButton" class="location-button">NGMCSCO</button>
+                <button id="ngopenButton" class="location-button">NGOPEN</button>
             </div>
         </div>
+
         <div class="section">
-        <h3>Settings:</h3>
-        <div class="toggle-container">
-            <span>Replace Prisma Logo:</span>
-            <input type="checkbox" id="logoToggle">
+            <h3 id="settingsToggle" class="collapsible">Settings</h3>
+            <div id="settingsContent" class="collapsible-content">
+                <div class="toggle-container">
+                    <label for="logoToggle">Replace Prisma Logo:</label>
+                    <input type="checkbox" id="logoToggle">
+                </div>
+
+                <div class="toggle-container">
+                    <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
+                    <input type="checkbox" id="timesheetReminderToggle">
+                </div>
+
+                <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
+            </div>
         </div>
-        <div class="toggle-container">
-            <span>Enable Timesheet Reminder:</span>
-            <input type="checkbox" id="timesheetReminderToggle">
-        </div>
-        <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
+
         <div class="feedback">
-            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">
+                Submit feedback / compliment the chef here!
+            </a>
         </div>
     </div>
+
     <script src="popup.js"></script>
 </body>
 </html>

@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EM Prisma Tools</title>
     <link rel="stylesheet" href="style.css">
-    <script src="popup.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img src="icon.png" alt="EM Prisma Tools" class="logo">
-            <h1 id="em-prisma-tools" class="title">EM Prisma Tools</h1>
+            <h1 class="title">EM Prisma Tools</h1>
         </div>
 
-        <h2 id="prisma-but-better" class="subtitle">Prisma, But <em>Better</em></h2>
+        <h2 class="subtitle">Prisma, But <em>Better</em></h2>
 
         <div class="button-group">
             <button id="prismaButton" class="nav-button">Prisma</button>
@@ -29,7 +29,7 @@
         </div>
 
         <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Campaign month and year <em>(optional)</em>">
+            <input type="text" id="campaignDate" placeholder="Campaign month and year (optional)">
         </div>
 
         <button id="generateUrl" class="primary-button">Open Campaign</button>
@@ -45,23 +45,31 @@
         </div>
 
         <div class="section">
-            <h3 id="settingsToggle" class="collapsible">Settings <i class="fa-solid fa-chevron-down"></i></h3>
+            <h3 id="settingsToggle" class="collapsible">
+                Settings <i class="fas fa-chevron-down"></i>
+            </h3>
             <div id="settingsContent" class="collapsible-content">
                 <div class="toggle-container">
                     <label for="logoToggle">Replace Prisma Logo:</label>
                     <input type="checkbox" id="logoToggle">
                 </div>
+
                 <div class="toggle-container">
                     <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
                     <input type="checkbox" id="timesheetReminderToggle">
                 </div>
-                <button id="triggerTimesheetReminder" class="secondary-button">Trigger Timesheet Reminder Now</button>
+
+                <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
             </div>
         </div>
 
         <div class="feedback">
-            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">
+                Submit feedback / compliment the chef here!
+            </a>
         </div>
     </div>
+
+    <script src="popup.js"></script>
 </body>
 </html>

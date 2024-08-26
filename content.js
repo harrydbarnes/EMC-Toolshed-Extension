@@ -1,20 +1,17 @@
 function replaceLogo() {
-    const bannerElement = document.querySelector('.banner');
-    if (bannerElement) {
-        const logoElement = bannerElement.querySelector('.logo');
-        if (logoElement) {
-            const newLogo = document.createElement('img');
-            newLogo.src = chrome.runtime.getURL('icon.png');
-            newLogo.style.width = '32px';
-            newLogo.style.height = '32px';
-            newLogo.className = 'custom-logo';
-            logoElement.parentNode.replaceChild(newLogo, logoElement);
-        }
+    const logoElement = document.querySelector('mo-banner .logo');
+    if (logoElement) {
+        const newLogo = document.createElement('img');
+        newLogo.src = chrome.runtime.getURL('icon.png');
+        newLogo.style.width = '32px';
+        newLogo.style.height = '32px';
+        newLogo.className = 'custom-logo';
+        logoElement.parentNode.replaceChild(newLogo, logoElement);
     }
 }
 
 function restoreOriginalLogo() {
-    const customLogo = document.querySelector('.banner .custom-logo');
+    const customLogo = document.querySelector('mo-banner .custom-logo');
     if (customLogo) {
         const originalLogo = document.createElement('i');
         originalLogo.className = 'logo';

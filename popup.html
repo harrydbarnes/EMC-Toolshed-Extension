@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EM Prisma Tools</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -28,7 +29,7 @@
         </div>
 
         <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Campaign month and year <em>optional</em>">
+            <input type="text" id="campaignDate" placeholder="Campaign month and year (optional)">
         </div>
 
         <button id="generateUrl" class="primary-button">Open Campaign</button>
@@ -44,7 +45,9 @@
         </div>
 
         <div class="section">
-            <h3 id="settingsToggle" class="collapsible">Settings</h3>
+            <h3 id="settingsToggle" class="collapsible">
+                Settings <i class="fas fa-chevron-down"></i>
+            </h3>
             <div id="settingsContent" class="collapsible-content">
                 <div class="toggle-container">
                     <label for="logoToggle">Replace Prisma Logo:</label>

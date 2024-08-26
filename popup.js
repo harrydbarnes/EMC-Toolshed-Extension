@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateUrlButton = document.getElementById('generateUrl');
     const logoToggle = document.getElementById('logoToggle');
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsContent = document.getElementById('settingsContent');
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     generateUrlButton.addEventListener('click', handleGenerateUrl);
     logoToggle.addEventListener('change', handleLogoToggle);
     timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
+    settingsToggle.addEventListener('click', toggleSettingsVisibility);
 
     // Navigation buttons
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
@@ -100,4 +103,9 @@ function addClickListener(id, url, customCallback) {
 
 function triggerTimesheetReminder() {
     chrome.runtime.sendMessage({action: "showTimesheetNotification"});
+}
+
+function toggleSettingsVisibility() {
+    const settingsContent = document.getElementById('settingsContent');
+    settingsContent.style.display = settingsContent.style.display === 'none' ? 'block' : 'none';
 }

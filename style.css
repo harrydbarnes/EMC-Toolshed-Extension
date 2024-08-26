@@ -106,6 +106,18 @@ body {
     transform: translateY(2px);
 }
 
+.section {
+    margin-top: 10px;
+}
+
+.collapsible {
+    cursor: pointer;
+}
+
+.collapsible-content {
+    display: none;
+}
+
 .section h3 {
     margin: 10px 0;
     font-size: 0.9em;

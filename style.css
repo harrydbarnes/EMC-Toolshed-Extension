@@ -85,29 +85,37 @@ body {
     box-sizing: border-box;
 }
 
-.primary-button {
+.primary-button, .secondary-button {
     width: 100%;
     padding: 10px;
     font-size: 14px;
     cursor: pointer;
-    background-color: #ff4087;
-    color: white;
     border: none;
     border-radius: 4px;
     margin-bottom: 15px;
     transition: transform 0.1s;
 }
 
-.primary-button:hover {
+.primary-button {
+    background-color: #ff4087;
+    color: white;
+}
+
+.secondary-button {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.primary-button:hover, .secondary-button:hover {
     animation: vibrate 0.15s linear;
 }
 
-.primary-button:active {
+.primary-button:active, .secondary-button:active {
     transform: translateY(2px);
 }
 
 .section {
-    margin-top: 5px;  /* Reduced from 10px */
+    margin-top: 10px;
 }
 
 .collapsible {
@@ -129,7 +137,7 @@ body {
 }
 
 .section h3 {
-    margin: 10px 0;
+    margin: 5px 0;
     font-size: 0.9em;
     color: #666;
 }
@@ -147,7 +155,12 @@ body {
 }
 
 #campaignDate::placeholder {
+    font-style: normal;
+}
+
+#campaignDate::placeholder em {
     font-style: italic;
+}
 
 .feedback {
     margin-top: 15px;
@@ -162,4 +175,23 @@ body {
 
 .feedback a:hover {
     text-decoration: underline;
+}
+
+/* Modern scrollbar styles */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

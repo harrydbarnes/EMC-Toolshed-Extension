@@ -57,7 +57,7 @@ function showTimesheetNotification() {
         message: 'Don\'t forget to complete your timesheet!',
         buttons: [
           { title: 'My Timesheets' },
-          { title: 'Timelock Me!' }
+          { title: 'Snooze (15 min)' }
         ],
         requireInteraction: true
       });

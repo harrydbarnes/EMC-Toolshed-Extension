@@ -17,6 +17,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "removeTimesheetAlarm") {
         chrome.alarms.clear('timesheetReminder');
         sendResponse({status: "Alarm removed"});
+    } else if (request.action === "getLogoReplaceEnabled") {
+        chrome.storage.sync.get('logoReplaceEnabled', function(data) {
+            chrome.tabs.sendMessage(sender.tab.id, {
+                action: "checkLogoReplaceEnabled",
+                enabled: data.logoReplaceEnabled
+            });
+        });
     }
     return true;  // Indicates that the response is sent asynchronously
 });

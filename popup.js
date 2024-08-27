@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error(chrome.runtime.lastError);
             } else {
                 console.log("Timesheet reminder triggered");
-                alert("Timesheet reminder triggered!");
             }
         });
     });
@@ -84,7 +83,10 @@ function handleLogoToggle() {
     const isEnabled = this.checked;
     chrome.storage.sync.set({logoReplaceEnabled: isEnabled}, function() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {action: "toggleLogo", enabled: isEnabled});
+            chrome.tabs.sendMessage(tabs[0].id, {
+                action: "checkLogoReplaceEnabled",
+                enabled: isEnabled
+            });
         });
     });
 }
@@ -92,11 +94,7 @@ function handleLogoToggle() {
 function handleTimesheetReminderToggle() {
     const isEnabled = this.checked;
     chrome.storage.sync.set({timesheetReminderEnabled: isEnabled}, function() {
-        if (isEnabled) {
-            chrome.runtime.sendMessage({action: "createTimesheetAlarm"});
-        } else {
-            chrome.runtime.sendMessage({action: "removeTimesheetAlarm"});
-        }
+        chrome.runtime.sendMessage({action: isEnabled ? "createTimesheetAlarm" : "removeTimesheetAlarm"});
     });
 }
 

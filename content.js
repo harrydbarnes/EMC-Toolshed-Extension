@@ -1,5 +1,5 @@
 function replaceLogo() {
-    const logoElement = document.querySelector('mo-banner .logo');
+    const logoElement = document.querySelector('div.left > i.logo');
     if (logoElement) {
         const newLogo = document.createElement('img');
         newLogo.src = chrome.runtime.getURL('icon.png');
@@ -11,7 +11,7 @@ function replaceLogo() {
 }
 
 function restoreOriginalLogo() {
-    const customLogo = document.querySelector('mo-banner .custom-logo');
+    const customLogo = document.querySelector('div.left > img.custom-logo');
     if (customLogo) {
         const originalLogo = document.createElement('i');
         originalLogo.className = 'logo';

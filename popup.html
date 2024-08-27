@@ -13,9 +13,8 @@
             <img src="icon.png" alt="EM Prisma Tools" class="logo">
             <h1 class="title">EM Prisma Tools</h1>
         </div>
-
         <h2 class="subtitle">Prisma, But <em>Better</em></h2>
-
+        
         <div class="button-group">
             <button id="prismaButton" class="nav-button">Prisma</button>
             <button id="timesheetsButton" class="nav-button">My Timesheets</button>
@@ -23,17 +22,15 @@
             <button id="expensesButton" class="nav-button">Expenses</button>
             <button id="addCampaignButton" class="nav-button">Add Campaign</button>
         </div>
-
+        
         <div class="input-group">
-            <input type="text" id="campaignId" placeholder="Campaign ID">
+            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
         </div>
-
         <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Campaign month and year (optional)">
+            <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
         </div>
-
         <button id="generateUrl" class="primary-button">Open Campaign</button>
-
+        
         <div class="section">
             <h3>Switch Location:</h3>
             <div class="button-group">
@@ -43,33 +40,35 @@
                 <button id="ngopenButton" class="location-button">NGOPEN</button>
             </div>
         </div>
-
+        
         <div class="section">
-            <h3 id="settingsToggle" class="collapsible">
-                Settings <i class="fas fa-chevron-down"></i>
-            </h3>
+            <div id="settingsToggle" class="collapsible">
+                <h3>Settings</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
             <div id="settingsContent" class="collapsible-content">
                 <div class="toggle-container">
-                    <label for="logoToggle">Replace Prisma Logo:</label>
-                    <input type="checkbox" id="logoToggle">
+                    <span>Replace Prisma Logo:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="logoToggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
-
                 <div class="toggle-container">
-                    <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
-                    <input type="checkbox" id="timesheetReminderToggle">
+                    <span>Enable Timesheet Reminder:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="timesheetReminderToggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
-
                 <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
             </div>
         </div>
-
+        
         <div class="feedback">
-            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">
-                Submit feedback / compliment the chef here!
-            </a>
+            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
         </div>
     </div>
-
     <script src="popup.js"></script>
 </body>
 </html>

@@ -8,9 +8,12 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log("Received message:", request);
     if (request.action === "showTimesheetNotification") {
+        console.log("Showing timesheet notification");
         showTimesheetNotification();
         sendResponse({status: "Notification shown"});
+        console.log("Response sent");
     } else if (request.action === "createTimesheetAlarm") {
         createTimesheetAlarm();
         sendResponse({status: "Alarm created"});
@@ -48,18 +51,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 // Show the notification
 function showTimesheetNotification() {
+  console.log("showTimesheetNotification function called");
   chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
+    console.log("Timesheet reminder enabled:", data.timesheetReminderEnabled);
     if (data.timesheetReminderEnabled !== false) {
       chrome.notifications.create('timesheetReminder', {
-        type: 'basic',
-        iconUrl: 'icon.png',
-        title: 'Timesheet Reminder',
-        message: 'Don\'t forget to complete your timesheet!',
-        buttons: [
-          { title: 'My Timesheets' },
-          { title: 'Snooze (15 min)' }
-        ],
-        requireInteraction: true
+        // ... notification options ...
+      }, function(notificationId) {
+        console.log("Notification created with ID:", notificationId);
+        if (chrome.runtime.lastError) {
+          console.error("Error creating notification:", chrome.runtime.lastError);
+        }
       });
     }
   });

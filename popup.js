@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
     const settingsIcon = settingsToggle.querySelector('i');
+    const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -22,6 +23,18 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsIcon.classList.toggle('fa-chevron-up');
     });
 
+    if (triggerTimesheetReminderButton) {
+        triggerTimesheetReminderButton.addEventListener('click', function() {
+            chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError);
+                } else {
+                    console.log("Timesheet reminder triggered:", response.status);
+                }
+            });
+        });
+    }
+
     // Navigation buttons
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
     addClickListener('timesheetsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo');
@@ -34,30 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addClickListener('ngmcintButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DSU5UIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngmcscoButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DU0NPIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngopenButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR09QRU4ifX0sImZyb20iOnsiaWQiOiIzNS1SRUlLV1hILTYiLCJzdWJDb250ZXh0Ijp7ImlkIjoiTkdNQ0lOVCJ9fX0=');
-
-    addClickListener('triggerTimesheetReminder', null, function() {
-        chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
-            if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError);
-            } else {
-                console.log("Timesheet reminder triggered");
-            }
-        });
-    });
 });
-
-const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
-    if (triggerTimesheetReminderButton) {
-        triggerTimesheetReminderButton.addEventListener('click', function() {
-            chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
-                if (chrome.runtime.lastError) {
-                    console.error(chrome.runtime.lastError);
-                } else {
-                    console.log("Timesheet reminder triggered");
-                }
-            });
-        });
-    }
 
 function setLogoToggleState(data) {
     const logoToggle = document.getElementById('logoToggle');
@@ -111,14 +101,12 @@ function handleTimesheetReminderToggle() {
     });
 }
 
-function addClickListener(id, url, customCallback) {
+function addClickListener(id, url) {
     const button = document.getElementById(id);
     if (button) {
         button.addEventListener('click', () => {
             console.log(`Button ${id} clicked`);
-            if (customCallback) {
-                customCallback();
-            } else if (url) {
+            if (url) {
                 chrome.tabs.create({ url: url });
             }
         });

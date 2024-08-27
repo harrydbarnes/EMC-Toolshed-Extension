@@ -19,26 +19,33 @@ function restoreOriginalLogo() {
     }
 }
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === "checkLogoReplaceEnabled") {
-        if (request.enabled) {
+function checkAndReplaceLogo() {
+    chrome.storage.sync.get('logoReplaceEnabled', function(data) {
+        if (data.logoReplaceEnabled) {
             replaceLogo();
         } else {
             restoreOriginalLogo();
         }
-    }
-});
+    });
+}
 
 // Initial check
-chrome.runtime.sendMessage({action: "getLogoReplaceEnabled"});
+checkAndReplaceLogo();
 
 // Observe DOM changes to handle dynamic content loading
 const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
-            chrome.runtime.sendMessage({action: "getLogoReplaceEnabled"});
+            checkAndReplaceLogo();
         }
     });
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Listen for messages from the popup
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action === "checkLogoReplaceEnabled") {
+        checkAndReplaceLogo();
+    }
+});

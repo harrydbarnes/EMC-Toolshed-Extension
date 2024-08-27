@@ -19,36 +19,24 @@ function restoreOriginalLogo() {
     }
 }
 
-function handleLogoReplaceEnabled(data) {
-    if (data.logoReplaceEnabled) {
-        replaceLogo();
-    } else {
-        restoreOriginalLogo();
-    }
-}
-
-function checkAndReplaceLogo() {
-    chrome.storage.sync.get('logoReplaceEnabled', handleLogoReplaceEnabled);
-}
-
-// Initial check and replace
-if (window.location.hostname.includes('groupmuk-prisma.mediaocean.com') || 
-    window.location.hostname.includes('groupmuk-aura.mediaocean.com')) {
-    checkAndReplaceLogo();
-}
-
-// Listen for messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === "toggleLogo") {
-        checkAndReplaceLogo();
+    if (request.action === "checkLogoReplaceEnabled") {
+        if (request.enabled) {
+            replaceLogo();
+        } else {
+            restoreOriginalLogo();
+        }
     }
 });
+
+// Initial check
+chrome.runtime.sendMessage({action: "getLogoReplaceEnabled"});
 
 // Observe DOM changes to handle dynamic content loading
 const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
-            checkAndReplaceLogo();
+            chrome.runtime.sendMessage({action: "getLogoReplaceEnabled"});
         }
     });
 });

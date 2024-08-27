@@ -46,6 +46,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
+    if (triggerTimesheetReminderButton) {
+        triggerTimesheetReminderButton.addEventListener('click', function() {
+            chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError);
+                } else {
+                    console.log("Timesheet reminder triggered");
+                }
+            });
+        });
+    }
+
 function setLogoToggleState(data) {
     const logoToggle = document.getElementById('logoToggle');
     if (data.logoReplaceEnabled === undefined) {

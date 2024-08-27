@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error(chrome.runtime.lastError);
             } else {
                 console.log("Timesheet reminder triggered");
+                alert("Timesheet reminder triggered!");
             }
         });
     });

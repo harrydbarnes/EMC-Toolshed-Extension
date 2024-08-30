@@ -46,8 +46,8 @@
 
         <div class="section">
             <div id="settingsToggle" class="collapsible">
-                <h3>Settings</h3>
-                <i class="fas fa-chevron-down"></i>
+              <span>Settings</span>
+              <i class="fas fa-chevron-down"></i>
             </div>
             <div id="settingsContent" class="collapsible-content">
                 <div class="toggle-container">
@@ -56,21 +56,22 @@
                 <div class="toggle-container">
                     Enable Timesheet Reminder: <label class="toggle"><input type="checkbox" id="timesheetReminderToggle"><span class="slider"></span></label>
                 </div>
-                <div id="reminderSettings" style="display: none;">
-                    <div class="select-container">
-                        Reminder Day:
-                        <select id="reminderDay">
+               <div id="reminderSettings" style="display: none;">
+                  <div class="select-container">
+                <select id="reminderDay">
                             <option value="Friday">Friday</option>
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
                         </select>
                     </div>
                     <div class="select-container">
-                        Reminder Time:
                         <select id="reminderTime"></select>
                     </div>
+                   <button id="saveReminderSettings" class="pink-button">Save</button>
+  <p id="reminderUpdateMessage" style="display: none;"></p>
+</div>
                 </div>
-                <button id="triggerTimesheetReminder">Trigger Timesheet Reminder Now</button>
+                <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
             </div>
         </div>
 

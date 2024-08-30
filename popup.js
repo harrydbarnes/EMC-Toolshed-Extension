@@ -24,17 +24,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     if (triggerTimesheetReminderButton) {
-    triggerTimesheetReminderButton.addEventListener('click', function() {
-        console.log("Trigger button clicked");
-        chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
-            if (chrome.runtime.lastError) {
-                console.error("Error sending message:", chrome.runtime.lastError);
-            } else {
-                console.log("Timesheet reminder triggered:", response.status);
-            }
+        triggerTimesheetReminderButton.addEventListener('click', function() {
+            console.log("Trigger button clicked");
+            chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
+                if (chrome.runtime.lastError) {
+                    console.error("Error sending message:", chrome.runtime.lastError);
+                } else {
+                    console.log("Timesheet reminder triggered:", response.status);
+                }
+            });
         });
-    });
-}
+    }
 
     // Navigation buttons
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');

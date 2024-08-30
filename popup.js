@@ -6,16 +6,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsContent = document.getElementById('settingsContent');
     const settingsIcon = settingsToggle.querySelector('i');
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
+    const reminderDay = document.getElementById('reminderDay');
+    const reminderTime = document.getElementById('reminderTime');
+    const reminderSettings = document.getElementById('reminderSettings');
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
 
-    // Load saved state for timesheet reminder
-    chrome.storage.sync.get('timesheetReminderEnabled', setTimesheetReminderToggleState);
+    // Load saved state for timesheet reminder, day, and time
+    chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
+        setTimesheetReminderToggleState(data);
+        if (data.reminderDay) {
+            reminderDay.value = data.reminderDay;
+        }
+        updateTimeOptions(data.reminderDay);
+        if (data.reminderTime) {
+            reminderTime.value = data.reminderTime;
+        }
+    });
 
     generateUrlButton.addEventListener('click', handleGenerateUrl);
     logoToggle.addEventListener('change', handleLogoToggle);
     timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
+    reminderDay.addEventListener('change', handleReminderDayChange);
+    reminderTime.addEventListener('change', handleReminderTimeChange);
     
     settingsToggle.addEventListener('click', function() {
         settingsContent.style.maxHeight = settingsContent.style.maxHeight ? null : settingsContent.scrollHeight + "px";
@@ -62,7 +76,9 @@ function setLogoToggleState(data) {
 
 function setTimesheetReminderToggleState(data) {
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
+    const reminderSettings = document.getElementById('reminderSettings');
     timesheetReminderToggle.checked = data.timesheetReminderEnabled !== false;
+    reminderSettings.style.display = timesheetReminderToggle.checked ? 'block' : 'none';
 }
 
 function handleGenerateUrl() {
@@ -97,8 +113,53 @@ function handleLogoToggle() {
 
 function handleTimesheetReminderToggle() {
     const isEnabled = this.checked;
+    const reminderSettings = document.getElementById('reminderSettings');
+    reminderSettings.style.display = isEnabled ? 'block' : 'none';
     chrome.storage.sync.set({timesheetReminderEnabled: isEnabled}, function() {
-        chrome.runtime.sendMessage({action: isEnabled ? "createTimesheetAlarm" : "removeTimesheetAlarm"});
+        if (isEnabled) {
+            updateAlarm();
+        } else {
+            chrome.runtime.sendMessage({action: "removeTimesheetAlarm"});
+        }
+    });
+}
+
+function handleReminderDayChange() {
+    updateTimeOptions(this.value);
+    updateAlarm();
+}
+
+function handleReminderTimeChange() {
+    updateAlarm();
+}
+
+function updateTimeOptions(day) {
+    const reminderTime = document.getElementById('reminderTime');
+    reminderTime.innerHTML = '';
+    let startTime, endTime;
+    if (day === 'Friday') {
+        startTime = 14 * 60;
+        endTime = 16 * 60;
+    } else {
+        startTime = 9 * 60;
+        endTime = 17 * 60 + 30;
+    }
+    for (let i = startTime; i <= endTime; i += 15) {
+        const hour = Math.floor(i / 60);
+        const minute = i % 60;
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const option = document.createElement('option');
+        option.value = timeString;
+        option.textContent = timeString;
+        reminderTime.appendChild(option);
+    }
+}
+
+function updateAlarm() {
+    const reminderDay = document.getElementById('reminderDay').value;
+    const reminderTime = document.getElementById('reminderTime').value;
+    chrome.storage.sync.set({reminderDay: reminderDay, reminderTime: reminderTime}, function() {
+        chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: reminderDay, time: reminderTime});
     });
 }
 

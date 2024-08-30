@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const reminderDay = document.getElementById('reminderDay');
     const reminderTime = document.getElementById('reminderTime');
     const reminderSettings = document.getElementById('reminderSettings');
+    const saveReminderSettings = document.getElementById('saveReminderSettings');
+    const reminderUpdateMessage = document.getElementById('reminderUpdateMessage');
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -49,6 +51,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    saveReminderSettings.addEventListener('click', function() {
+        const day = reminderDay.value;
+        const time = reminderTime.value;
+        chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
+            updateAlarm();
+            reminderUpdateMessage.textContent = `Updated! You will be reminded on ${day} at ${time}`;
+            reminderUpdateMessage.style.display = 'block';
+            setTimeout(() => { reminderUpdateMessage.style.display = 'none'; }, 3000);
+        });
+    });
 
     // Navigation buttons
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');

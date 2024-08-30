@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prisma Tools</title>
     <link rel="stylesheet" href="style.css">
-    <script src="popup.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -46,19 +46,28 @@
 
         <div class="section">
             <div id="settingsToggle" class="collapsible">
-              <span>Settings</span>
-              <i class="fas fa-chevron-down"></i>
+                <h3>Settings</h3>
+                <i class="fas fa-chevron-down"></i>
             </div>
             <div id="settingsContent" class="collapsible-content">
                 <div class="toggle-container">
-                    Replace Prisma Logo: <label class="toggle"><input type="checkbox" id="logoToggle"><span class="slider"></span></label>
+                    <span>Replace Prisma Logo:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="logoToggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
                 <div class="toggle-container">
-                    Enable Timesheet Reminder: <label class="toggle"><input type="checkbox" id="timesheetReminderToggle"><span class="slider"></span></label>
+                    <span>Enable Timesheet Reminder:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="timesheetReminderToggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
-               <div id="reminderSettings" style="display: none;">
-                  <div class="select-container">
-                <select id="reminderDay">
+                <div id="reminderSettings" style="display: none;">
+                    <p class="reminder-text"><em>Remind me on and at:</em></p>
+                    <div class="select-container">
+                        <select id="reminderDay">
                             <option value="Friday">Friday</option>
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
@@ -67,17 +76,18 @@
                     <div class="select-container">
                         <select id="reminderTime"></select>
                     </div>
-                   <button id="saveReminderSettings" class="pink-button">Save</button>
-  <p id="reminderUpdateMessage" style="display: none;"></p>
-</div>
+                    <button id="saveReminderSettings" class="nav-button">Save</button>
+                    <p id="reminderUpdateMessage" style="display: none;"></p>
                 </div>
                 <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
             </div>
         </div>
-
-        <div class="feedback">
-            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
-        </div>
     </div>
+
+    <div class="feedback">
+        <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+    </div>
+
+    <script src="popup.js"></script>
 </body>
 </html>

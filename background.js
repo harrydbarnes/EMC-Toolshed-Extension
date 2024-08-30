@@ -1,4 +1,3 @@
-// Set up the alarm when the extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
     if (data.timesheetReminderEnabled !== false) {
@@ -13,7 +12,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log("Showing timesheet notification");
         showTimesheetNotification();
         sendResponse({status: "Notification shown"});
-        console.log("Response sent");
     } else if (request.action === "createTimesheetAlarm") {
         createTimesheetAlarm();
         sendResponse({status: "Alarm created"});
@@ -24,15 +22,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;  // Indicates that the response is sent asynchronously
 });
 
-// Create the alarm for Friday at 2:30 PM
 function createTimesheetAlarm() {
+  const nextFriday = getNextFriday();
   chrome.alarms.create('timesheetReminder', {
-    when: getNextFriday().getTime(),
+    when: nextFriday.getTime(),
     periodInMinutes: 10080 // 7 days in minutes
   });
+  console.log("Alarm set for:", nextFriday);
 }
 
-// Get the next Friday at 2:30 PM
 function getNextFriday() {
   const now = new Date();
   const nextFriday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (5 - now.getDay() + 7) % 7, 14, 30);
@@ -42,14 +40,12 @@ function getNextFriday() {
   return nextFriday;
 }
 
-// Listen for the alarm
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'timesheetReminder') {
     showTimesheetNotification();
   }
 });
 
-// Show the notification
 function showTimesheetNotification() {
   console.log("showTimesheetNotification function called");
   chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
@@ -75,14 +71,11 @@ function showTimesheetNotification() {
   });
 }
 
-// Handle notification button clicks
 chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
   if (notificationId === 'timesheetReminder') {
     if (buttonIndex === 0) {
-      // Open My Timesheets
       chrome.tabs.create({ url: 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo' });
     } else if (buttonIndex === 1) {
-      // Snooze for 15 minutes
       chrome.alarms.create('timesheetReminder', {
         delayInMinutes: 15
       });

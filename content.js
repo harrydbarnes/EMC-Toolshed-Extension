@@ -1,5 +1,5 @@
 function replaceLogo() {
-    const logoElement = document.querySelector('div.left > i.logo');
+    const logoElement = document.querySelector('mo-banner.hydrated .logo');
     if (logoElement) {
         const newLogo = document.createElement('img');
         newLogo.src = chrome.runtime.getURL('icon.png');
@@ -11,7 +11,7 @@ function replaceLogo() {
 }
 
 function restoreOriginalLogo() {
-    const customLogo = document.querySelector('div.left > img.custom-logo');
+    const customLogo = document.querySelector('mo-banner.hydrated .custom-logo');
     if (customLogo) {
         const originalLogo = document.createElement('i');
         originalLogo.className = 'logo';
@@ -29,16 +29,26 @@ function checkAndReplaceLogo() {
     });
 }
 
+// Check if the current URL matches the specified patterns
+function shouldReplaceLogoOnThisPage() {
+    const url = window.location.href;
+    return url.includes('groupmuk-aura.mediaocean.com') || url.includes('groupmuk-prisma.mediaocean.com');
+}
+
 // Initial check
-checkAndReplaceLogo();
+if (shouldReplaceLogoOnThisPage()) {
+    checkAndReplaceLogo();
+}
 
 // Observe DOM changes to handle dynamic content loading
 const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.type === 'childList') {
-            checkAndReplaceLogo();
-        }
-    });
+    if (shouldReplaceLogoOnThisPage()) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                checkAndReplaceLogo();
+            }
+        });
+    }
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
@@ -46,6 +56,8 @@ observer.observe(document.body, { childList: true, subtree: true });
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === "checkLogoReplaceEnabled") {
-        checkAndReplaceLogo();
+        if (shouldReplaceLogoOnThisPage()) {
+            checkAndReplaceLogo();
+        }
     }
 });

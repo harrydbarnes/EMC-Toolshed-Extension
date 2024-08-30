@@ -79,7 +79,7 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .nav-button:hover, .location-button:hover {
-    background-color: #f8f8f8;
+    background-color: #fafafa;
     animation: vibrate 0.3s ease-in-out;
 }
 
@@ -123,11 +123,110 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .primary-button:hover {
-    animation: vibrate 0.3s ease-in-out;
+    animation: vibrate 0.25s ease-in-out;
 }
 
 .primary-button:active {
     transform: translateY(2px);
 }
 
-/* ... rest of the CSS remains the same ... */
+.section {
+    margin-top: 5px;
+}
+
+.collapsible {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease-out;
+}
+
+#settingsContent {
+    padding-top: 5px;
+}
+
+.section h3 {
+    margin: 10px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+/* Updated toggle switch styles */
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #ff4087;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+#campaignDate::placeholder {
+    font-style: italic;
+}
+
+.feedback {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 11px;
+}
+
+.feedback a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.feedback a:hover {
+    text-decoration: underline;
+}

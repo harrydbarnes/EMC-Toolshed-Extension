@@ -51,35 +51,12 @@ function showTimesheetNotification() {
   chrome.storage.sync.get('timesheetReminderEnabled', function(data) {
     console.log("Timesheet reminder enabled:", data.timesheetReminderEnabled);
     if (data.timesheetReminderEnabled !== false) {
-      chrome.notifications.create('timesheetReminder', {
-        type: 'basic',
-        iconUrl: 'icon.png',
-        title: 'Timesheet Reminder',
-        message: 'Don\'t forget to submit your timesheet!',
-        buttons: [
-          { title: 'Open My Timesheets' },
-          { title: 'Snooze for 15 minutes' }
-        ],
-        priority: 2
-      }, function(notificationId) {
-        console.log("Notification created with ID:", notificationId);
-        if (chrome.runtime.lastError) {
-          console.error("Error creating notification:", chrome.runtime.lastError);
-        }
+      chrome.windows.create({
+        url: chrome.runtime.getURL("notification.html"),
+        type: "popup",
+        width: 400,
+        height: 300
       });
     }
   });
 }
-
-chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
-  if (notificationId === 'timesheetReminder') {
-    if (buttonIndex === 0) {
-      chrome.tabs.create({ url: 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo' });
-    } else if (buttonIndex === 1) {
-      chrome.alarms.create('timesheetReminder', {
-        delayInMinutes: 15
-      });
-    }
-    chrome.notifications.clear(notificationId);
-  }
-});

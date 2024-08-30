@@ -3,7 +3,7 @@ chrome.runtime.onInstalled.addListener(() => {
     if (data.timesheetReminderEnabled !== false) {
       createTimesheetAlarm(data.reminderDay, data.reminderTime);
     }
-    if (data.reminderDay === undefined) {
+    if (data.reminderDay === undefined || data.reminderTime === undefined) {
       chrome.storage.sync.set({ reminderDay: 'Friday', reminderTime: '14:30' });
     }
   });
@@ -26,6 +26,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function createTimesheetAlarm(day, time) {
+  // Default to Friday at 14:30 if day or time is undefined
+  day = day || 'Friday';
+  time = time || '14:30';
+  
   const nextAlarmDate = getNextAlarmDate(day, time);
   chrome.alarms.create('timesheetReminder', {
     when: nextAlarmDate.getTime(),

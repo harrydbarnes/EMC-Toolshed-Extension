@@ -176,3 +176,15 @@ function addClickListener(id, url) {
         console.error(`Button with id ${id} not found`);
     }
 }
+
+document.getElementById('saveReminderSettings').addEventListener('click', function() {
+    const day = document.getElementById('reminderDay').value;
+    const time = document.getElementById('reminderTime').value;
+    chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
+        updateAlarm();
+        const message = document.getElementById('reminderUpdateMessage');
+        message.textContent = `Updated! You will be reminded on ${day} at ${time}`;
+        message.style.display = 'block';
+        setTimeout(() => { message.style.display = 'none'; }, 3000);
+    });
+});

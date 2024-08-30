@@ -56,7 +56,15 @@ function showTimesheetNotification() {
     console.log("Timesheet reminder enabled:", data.timesheetReminderEnabled);
     if (data.timesheetReminderEnabled !== false) {
       chrome.notifications.create('timesheetReminder', {
-        // ... notification options ...
+        type: 'basic',
+        iconUrl: 'icon.png',
+        title: 'Timesheet Reminder',
+        message: 'Don\'t forget to submit your timesheet!',
+        buttons: [
+          { title: 'Open My Timesheets' },
+          { title: 'Snooze for 15 minutes' }
+        ],
+        priority: 2
       }, function(notificationId) {
         console.log("Notification created with ID:", notificationId);
         if (chrome.runtime.lastError) {

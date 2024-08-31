@@ -86,7 +86,7 @@ function showTimesheetNotification() {
 
 function playAlarmSound() {
   const audio = new Audio(chrome.runtime.getURL('alarm.mp3'));
-  audio.play();
+  audio.play().catch(error => console.error('Error playing audio:', error));
 }
 
 chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {

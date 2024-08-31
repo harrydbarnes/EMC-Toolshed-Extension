@@ -11,6 +11,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const reminderSettings = document.getElementById('reminderSettings');
     const saveReminderSettings = document.getElementById('saveReminderSettings');
     const reminderUpdateMessage = document.getElementById('reminderUpdateMessage');
+    const openSettings = document.getElementById('openSettings');
+    const closeSettings = document.getElementById('closeSettings');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+
+     openSettings.addEventListener('click', function() {
+        settingsOverlay.style.display = 'block';
+        document.querySelectorAll('.button-group, .section').forEach(el => el.style.display = 'none');
+    });
+
+    closeSettings.addEventListener('click', function() {
+        settingsOverlay.style.display = 'none';
+        document.querySelectorAll('.button-group, .section').forEach(el => el.style.display = 'block');
+    });
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -94,23 +107,28 @@ function setTimesheetReminderToggleState(data) {
     reminderSettings.style.display = timesheetReminderToggle.checked ? 'block' : 'none';
 }
 
-function handleGenerateUrl() {
-    const campaignId = document.getElementById('campaignId').value;
-    let campaignDate = document.getElementById('campaignDate').value;
+ function handleGenerateUrl() {
+        const campaignId = document.getElementById('campaignId').value;
+        const campaignMonth = document.getElementById('campaignMonth').value;
+        const campaignYear = document.getElementById('campaignYear').value;
 
-    if (campaignId) {
-        const year = new Date().getFullYear();
-        const date = campaignDate ? new Date(`${campaignDate} 1, ${year}`) : new Date();
-        const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+        if (campaignId) {
+            let formattedDate;
+            if (campaignMonth && campaignYear) {
+                formattedDate = `${campaignYear}-${campaignMonth}-01`;
+            } else {
+                const currentDate = new Date();
+                formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`;
+            }
 
-        const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
-        const finalUrl = `${baseUrl}${campaignId}&route=actualize&mos=${formattedDate}`;
-        
-        chrome.tabs.create({ url: finalUrl });
-    } else {
-        alert('Please enter a Campaign ID.');
+            const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
+            const finalUrl = `${baseUrl}${campaignId}&route=actualize&mos=${formattedDate}`;
+            
+            chrome.tabs.create({ url: finalUrl });
+        } else {
+            alert('Please enter a Campaign ID.');
+        }
     }
-}
 
 function handleLogoToggle() {
     const isEnabled = this.checked;
@@ -190,14 +208,37 @@ function addClickListener(id, url) {
     }
 }
 
-document.getElementById('saveReminderSettings').addEventListener('click', function() {
-    const day = document.getElementById('reminderDay').value;
-    const time = document.getElementById('reminderTime').value;
-    chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
-        updateAlarm();
-        const message = document.getElementById('reminderUpdateMessage');
-        message.textContent = `Updated! You will be reminded on ${day} at ${time}`;
-        message.style.display = 'block';
-        setTimeout(() => { message.style.display = 'none'; }, 3000);
+ function showReminderUpdateMessage(message) {
+        const messageElement = document.getElementById('reminderUpdateMessage');
+        messageElement.textContent = message;
+        messageElement.style.display = 'block';
+        messageElement.classList.remove('fade-out');
+        
+        setTimeout(() => {
+            messageElement.classList.add('fade-out');
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 500);
+        }, 8000);
+    }
+
+const campaignYearSelect = document.getElementById('campaignYear');
+    const currentYear = new Date().getFullYear();
+    for (let year = 2018; year <= 2026; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        campaignYearSelect.appendChild(option);
+    }
+
+document.getElementById('generateUrl').addEventListener('click', handleGenerateUrl);
+
+    document.getElementById('saveReminderSettings').addEventListener('click', function() {
+        const day = document.getElementById('reminderDay').value;
+        const time = document.getElementById('reminderTime').value;
+        chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
+            updateAlarm();
+            showReminderUpdateMessage(`Updated! You will be reminded on ${day} at ${time}`);
+        });
     });
 });

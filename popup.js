@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeSettings = document.getElementById('closeSettings');
     const settingsOverlay = document.getElementById('settingsOverlay');
 
-     openSettings.addEventListener('click', function() {
+    openSettings.addEventListener('click', function() {
         settingsOverlay.style.display = 'block';
         document.querySelectorAll('.button-group, .section').forEach(el => el.style.display = 'none');
     });
@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsOverlay.style.display = 'none';
         document.querySelectorAll('.button-group, .section').forEach(el => el.style.display = 'block');
     });
-
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
 

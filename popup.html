@@ -12,65 +12,63 @@
         <div class="header">
             <img src="icon.png" alt="Prisma Tools" class="logo">
             <h1 id="prisma-tools" class="title">Prisma Tools</h1>
-            <div id="settingsToggle" class="settings-toggle">
-                <i class="fas fa-cog"></i>
-            </div>
         </div>
 
-        <h2 id="prisma-but-better" class="subtitle">Prisma, But <em>Better</em></h2>
+        <div class="top-bar">
+            <h2 id="prisma-but-better" class="subtitle">Prisma, But <em>Better</em></h2>
+            <button class="settings-button" id="openSettings">⚙️</button>
+        </div>
 
-        <div id="mainContent">
-            <div class="button-group">
-                <button id="prismaButton" class="nav-button">Prisma</button>
-                <button id="timesheetsButton" class="nav-button">My Timesheets</button>
-                <button id="expensesButton" class="nav-button">Expenses</button>
-                <button id="approvalsButton" class="nav-button">Timesheet Approvals</button>
-                <button id="addCampaignButton" class="nav-button">Add Campaign</button>
-            </div>
+        <div class="button-group">
+            <button id="prismaButton" class="nav-button">Prisma</button>
+            <button id="timesheetsButton" class="nav-button">My Timesheets</button>
+            <button id="expensesButton" class="nav-button">Expenses</button>
+            <button id="approvalsButton" class="nav-button">Timesheet Approvals</button>
+            <button id="addCampaignButton" class="nav-button">Add Campaign</button>
+        </div>
 
-            <div class="input-group">
-                <input type="text" id="campaignId" placeholder="Enter Campaign ID">
-            </div>
+        <div class="input-group">
+            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+        </div>
 
+        <div class="optional-fields">
             <h3>Optional:</h3>
-            <div class="select-container">
-                <select id="campaignMonth">
-                    <option value="">Select Month</option>
-                    <option value="01">January</option>
-                    <option value="02">February</option>
-                    <option value="03">March</option>
-                    <option value="04">April</option>
-                    <option value="05">May</option>
-                    <option value="06">June</option>
-                    <option value="07">July</option>
-                    <option value="08">August</option>
-                    <option value="09">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
-                <select id="campaignYear">
-                    <option value="">Select Year</option>
-                </select>
-            </div>
-
-            <button id="generateUrl" class="primary-button">Open Campaign</button>
-
-            <div class="section">
-                <h3>Switch Location:</h3>
-                <div class="button-group">
-                    <button id="ngmclonButton" class="location-button">NGMCLON</button>
-                    <button id="ngmcintButton" class="location-button">NGMCINT</button>
-                    <button id="ngmcscoButton" class="location-button">NGMCSCO</button>
-                    <button id="ngopenButton" class="location-button">NGOPEN</button>
-                </div>
-            </div>
-
-           
+            <select id="campaignMonth">
+                <option value="">Month</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <select id="campaignYear">
+                <option value="">Year</option>
+                <!-- JavaScript will populate this -->
+            </select>
         </div>
 
-        <div id="settingsOverlay" class="settings-overlay">
-            <div id="settingsContent" class="settings-content">
+        <button id="generateUrl" class="primary-button">Open Campaign</button>
+
+        <div class="section">
+            <h3>Switch Location:</h3>
+            <div class="button-group">
+                <button id="ngmclonButton" class="location-button">NGMCLON</button>
+                <button id="ngmcintButton" class="location-button">NGMCINT</button>
+                <button id="ngmcscoButton" class="location-button">NGMCSCO</button>
+                <button id="ngopenButton" class="location-button">NGOPEN</button>
+            </div>
+        </div>
+
+        <div class="settings-overlay" id="settingsOverlay">
+            <div class="settings-content">
+                <span class="close-settings" id="closeSettings">&times;</span>
                 <h3>Settings</h3>
                 <div class="toggle-container">
                     <span>Replace Prisma Logo:</span>
@@ -96,20 +94,23 @@
                         </select>
                     </div>
                     <div class="select-container">
-                        <select id="reminderTime"></select>
+                        <select id="reminderTime">
+                            <!-- JavaScript will populate this -->
+                        </select>
                     </div>
-                    <button id="saveReminderSettings" class="primary-button">Save</button>
+                    <div class="button-group">
+                        <button id="saveReminderSettings" class="primary-button">Save</button>
+                    </div>
                 </div>
                 <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
-                <div id="reminderUpdateMessage" class="reminder-update-message"></div>
+                <p id="reminderUpdateMessage" style="display: none;"></p>
             </div>
         </div>
-        <div class="feedback">
-        <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
-    </div>
 
+        <div class="feedback">
+            <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+        </div>
     </div>
     <script src="popup.js"></script>
 </body>
 </html>
-

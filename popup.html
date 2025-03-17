@@ -1,120 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prisma Tools</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prisma Tools</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
-
 <body>
-  <div class="container">
-    <div class="header">
-      <img src="icon.png" alt="Prisma Tools" class="logo">
-      <h1 id="prisma-tools" class="title">Prisma Tools</h1>
-    </div>
-
-    <h2 id="prisma-but-better" class="subtitle">Prisma, But <em>Better</em></h2>
-
-    <div class="button-group">
-      <button id="prismaButton" class="nav-button">Prisma</button>
-      <button id="timesheetsButton" class="nav-button">My Timesheets</button>
-      <button id="expensesButton" class="nav-button">Expenses</button>
-      <button id="approvalsButton" class="nav-button">Timesheet Approvals</button>
-      <button id="addCampaignButton" class="nav-button">Add Campaign</button>
-    </div>
-
-    <div class="input-group">
-      <input type="text" id="campaignId" placeholder="Enter Campaign ID">
-    </div>
-
-    <div class="input-group">
-      <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
-    </div>
-
-    <button id="generateUrl" class="primary-button">Open Campaign</button>
-
-    <div class="section">
-      <h3>Switch Location:</h3>
-      <div class="button-group">
-        <button id="ngmclonButton" class="location-button">NGMCLON</button>
-        <button id="ngmcintButton" class="location-button">NGMCINT</button>
-        <button id="ngmcscoButton" class="location-button">NGMCSCO</button>
-        <button id="ngopenButton" class="location-button">NGOPEN</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div id="settingsToggle" class="collapsible">
-        <h3>Settings</h3>
-        <i class="fas fa-chevron-down"></i>
-      </div>
-      <div id="settingsContent" class="collapsible-content">
-        <div class="toggle-container">
-          <span>Replace Prisma Logo:</span>
-          <label class="toggle">
-            <input type="checkbox" id="logoToggle">
-            <span class="slider"></span>
-          </label>
+    <div class="container">
+        <div class="header">
+            <img src="icon.png" alt="Prisma Tools" class="logo">
+            <h1 id="prisma-tools" class="title">Prisma Tools</h1>
         </div>
-        <div class="toggle-container">
-          <span>Enable Timesheet Reminder:</span>
-          <label class="toggle">
-            <input type="checkbox" id="timesheetReminderToggle">
-            <span class="slider"></span>
-          </label>
+
+        <h2 id="prisma-but-better" class="subtitle">Prisma, But <em>Better</em></h2>
+
+        <div class="button-group">
+            <button id="prismaButton" class="nav-button">Prisma</button>
+            <button id="timesheetsButton" class="nav-button">My Timesheets</button>
+            <button id="expensesButton" class="nav-button">Expenses</button>
+            <button id="approvalsButton" class="nav-button">Timesheet Approvals</button>
+            <button id="addCampaignButton" class="nav-button">Add Campaign</button>
         </div>
-        <div id="reminderSettings" style="display: none;">
-          <p class="reminder-text"><em>Remind me on and at:</em></p>
-          <div class="select-container">
-            <select id="reminderDay">
-              <option value="Friday">Friday</option>
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-            </select>
-          </div>
-          <div class="select-container">
-            <select id="reminderTime"></select>
-          </div>
-          <div class="button-group">
-            <button id="saveReminderSettings" class="nav-button">Save</button>
-            <p id="reminderUpdateMessage" style="display: none;"></p>
-          </div>
-        </div>
-        <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
-      </div>
-    </div>
-    <div class="section">
-      <div id="costAdjustorToggle" class="collapsible">
-        <h3>Cost Adjustor</h3>
-        <i class="fas fa-chevron-down"></i>
-      </div>
-      <div id="costAdjustorContent" class="collapsible-content">
+
         <div class="input-group">
-          <label for="originalValue">Original Value:</label>
-          <input type="number" id="originalValue" placeholder="Enter original value">
+            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
         </div>
+
         <div class="input-group">
-          <label for="additionalMoney">Additional Money:</label>
-          <input type="number" id="additionalMoney" placeholder="Enter additional money">
+            <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
         </div>
-        <div class="input-group">
-          <label for="updatedPlannedCost">Updated Planned Cost:</label>
-          <input type="number" id="updatedPlannedCost" placeholder="Updated planned cost" readonly>
+
+        <button id="generateUrl" class="primary-button">Open Campaign</button>
+
+        <div class="section">
+            <h3>Switch Location:</h3>
+            <div class="button-group">
+                <button id="ngmclonButton" class="location-button">NGMCLON</button>
+                <button id="ngmcintButton" class="location-button">NGMCINT</button>
+                <button id="ngmcscoButton" class="location-button">NGMCSCO</button>
+                <button id="ngopenButton" class="location-button">NGOPEN</button>
+            </div>
         </div>
-        <button id="calculateCost" class="primary-button">Calculate Cost</button>
-      </div>
+
+        <div class="section">
+            <div id="settingsToggle" class="collapsible">
+                <h3>Settings</h3>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div id="settingsContent" class="collapsible-content">
+                <div class="toggle-container">
+                    <span>Replace Prisma Logo:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="logoToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-container">
+                    <span>Enable Timesheet Reminder:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="timesheetReminderToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="reminderSettings" style="display: none;">
+                    <p class="reminder-text"><em>Remind me on and at:</em></p>
+                    <div class="select-container">
+                        <select id="reminderDay">
+                            <option value="Friday">Friday</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                        </select>
+                    </div>
+                    <div class="select-container">
+                        <select id="reminderTime"></select>
+                    </div>
+                    <div class="button-group">
+                    <button id="saveReminderSettings" class="nav-button">Save</button>
+                    <p id="reminderUpdateMessage" style="display: none;"></p>
+                      </div>  
+                </div>
+                <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="feedback">
-    <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat"
-      target="_blank">Submit feedback / compliment the chef here!</a>
-  </div>
+    <div class="feedback">
+        <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+    </div>
 
-  <script src="popup.js"></script>
+    <script src="popup.js"></script>
 </body>
-
 </html>

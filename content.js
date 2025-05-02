@@ -29,42 +29,120 @@ function checkAndReplaceLogo() {
     });
 }
 
+// Add Meta reminder styles to the page
+function addMetaReminderStyles() {
+    // Check if styles are already added
+    if (document.getElementById('meta-reminder-styles')) {
+        return;
+    }
+    
+    const metaStyles = document.createElement('style');
+    metaStyles.id = 'meta-reminder-styles';
+    metaStyles.textContent = `
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+        
+        #meta-reminder-popup {
+            font-family: 'Montserrat', sans-serif;
+            position: fixed;
+            z-index: 10000;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ff4087;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        #meta-reminder-popup h3 {
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        #meta-reminder-popup p {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        #meta-reminder-popup ul {
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 14px;
+            padding-left: 20px;
+        }
+        
+        #meta-reminder-popup li {
+            margin-bottom: 5px;
+        }
+        
+        #meta-reminder-close {
+            background-color: white;
+            color: #ff4087;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        #meta-reminder-close:hover {
+            background-color: #f8f8f8;
+            animation: vibrate 0.3s ease-in-out;
+        }
+        
+        #meta-reminder-close:active {
+            transform: translateY(2px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-2px); }
+            40% { transform: translateX(2px); }
+            60% { transform: translateX(-1px); }
+            80% { transform: translateX(1px); }
+        }
+    `;
+    
+    document.head.appendChild(metaStyles);
+}
+
 // Meta reminder functionality
 function createMetaReminderPopup() {
     // Check if popup already exists
     if (document.getElementById('meta-reminder-popup')) {
         return;
     }
+    
+    // Add the styles first
+    addMetaReminderStyles();
 
     // Create popup container
     const popup = document.createElement('div');
     popup.id = 'meta-reminder-popup';
-    popup.style.position = 'fixed';
-    popup.style.zIndex = '10000';
-    popup.style.top = '50%';
-    popup.style.left = '50%';
-    popup.style.transform = 'translate(-50%, -50%)';
-    popup.style.backgroundColor = '#ff4087';
-    popup.style.color = 'white';
-    popup.style.padding = '20px';
-    popup.style.borderRadius = '8px';
-    popup.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    popup.style.maxWidth = '400px';
-    popup.style.fontFamily = 'Montserrat, sans-serif';
-    popup.style.textAlign = 'center';
-
+    
     // Add content to popup
     popup.innerHTML = `
-        <h3 style="margin-top: 0;">⚠️ Meta Reconciliation Reminder ⚠️</h3>
+        <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
         <p>When reconciling Meta (000770), please:</p>
-        <ul style="text-align: left; margin-bottom: 20px;">
+        <ul>
             <li>Use the 'Supplier' option</li>
             <li>Self-accept the IO</li>
             <li>Push through on trafficking tab to Meta</li>
             <li>Verify success each time</li>
             <li>Do not just leave the page!</li>
         </ul>
-        <button id="meta-reminder-close" style="background-color: white; color: #ff4087; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Got it!</button>
+        <button id="meta-reminder-close">Got it!</button>
     `;
 
     // Add popup to body

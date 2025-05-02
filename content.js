@@ -117,10 +117,13 @@ function addMetaReminderStyles() {
     document.head.appendChild(metaStyles);
 }
 
+// Flag to track if popup has been dismissed in current tab session
+let metaReminderDismissed = false;
+
 // Meta reminder functionality
 function createMetaReminderPopup() {
-    // Check if popup already exists
-    if (document.getElementById('meta-reminder-popup')) {
+    // Check if popup already exists or has been dismissed in this session
+    if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
         return;
     }
     
@@ -151,6 +154,8 @@ function createMetaReminderPopup() {
     // Add event listener to close button
     document.getElementById('meta-reminder-close').addEventListener('click', function() {
         document.body.removeChild(popup);
+        // Set flag to prevent showing again in this tab session
+        metaReminderDismissed = true;
     });
 
     // Set timeout to auto-close after 15 seconds
@@ -161,18 +166,28 @@ function createMetaReminderPopup() {
     }, 15000);
 }
 
-// Function to check for Meta vendor code on the page
-function checkForMetaVendorCode() {
+// Function to check for Meta vendor code AND "Redistribute all" on the page
+function checkForMetaConditions() {
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
         // Default to enabled if setting doesn't exist
-        if (data.metaReminderEnabled !== false) {
+        if (data.metaReminderEnabled !== false && !metaReminderDismissed) {
             const pageText = document.body.innerText;
-            if (pageText.includes('000770')) {
+            // Only show the reminder if both conditions are met
+            if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
                 createMetaReminderPopup();
             }
         }
     });
 }
+
+// Reset the dismissed flag when page location changes
+let currentUrl = window.location.href;
+setInterval(() => {
+    if (currentUrl !== window.location.href) {
+        metaReminderDismissed = false;
+        currentUrl = window.location.href;
+    }
+}, 500); // Check every half second
 
 // Check if the current URL matches the specified patterns
 function shouldReplaceLogoOnThisPage() {
@@ -185,7 +200,7 @@ if (shouldReplaceLogoOnThisPage()) {
     checkAndReplaceLogo();
     
     // Wait a bit for the page to fully load before checking for Meta code
-    setTimeout(checkForMetaVendorCode, 2000);
+    setTimeout(checkForMetaConditions, 2000);
 }
 
 // Observe DOM changes to handle dynamic content loading
@@ -194,7 +209,7 @@ const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 checkAndReplaceLogo();
-                checkForMetaVendorCode();
+                checkForMetaConditions();
             }
         });
     }
@@ -209,6 +224,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             checkAndReplaceLogo();
         }
     } else if (request.action === "showMetaReminder") {
+        // Reset the dismissed flag for manual testing
+        metaReminderDismissed = false;
         createMetaReminderPopup();
         sendResponse({status: "Meta reminder shown"});
     }

@@ -130,5 +130,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         if (shouldReplaceLogoOnThisPage()) {
             checkAndReplaceLogo();
         }
+    } else if (request.action === "showMetaReminder") {
+        createMetaReminderPopup();
+        sendResponse({status: "Meta reminder shown"});
     }
+    return true; // Keep the message channel open for asynchronous response
 });

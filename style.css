@@ -94,6 +94,71 @@ body::-webkit-scrollbar-thumb:hover {
     transform: translateY(2px);
 }
 
+/* Meta Reminder Popup Styles */
+#meta-reminder-popup {
+    font-family: 'Montserrat', sans-serif;
+    position: fixed;
+    z-index: 10000;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ff4087;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#meta-reminder-popup h3 {
+    margin-top: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+#meta-reminder-popup p {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#meta-reminder-popup ul {
+    text-align: left;
+    margin-bottom: 20px;
+    font-size: 14px;
+    padding-left: 20px;
+}
+
+#meta-reminder-popup li {
+    margin-bottom: 5px;
+}
+
+#meta-reminder-close {
+    background-color: white;
+    color: #ff4087;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+#meta-reminder-close:hover {
+    background-color: #f8f8f8;
+    animation: vibrate 0.3s ease-in-out;
+}
+
+#meta-reminder-close:active {
+    transform: translateY(2px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -60%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
 @keyframes vibrate {
     0%, 100% { transform: translateX(0); }
     20% { transform: translateX(-2px); }

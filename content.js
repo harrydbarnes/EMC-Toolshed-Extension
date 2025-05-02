@@ -139,7 +139,7 @@ function createMetaReminderPopup() {
         <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
         <p>When reconciling Meta, please:</p>
         <ul>
-            <li>Reconcile to the 'Supplier' option</li>
+            <li>Actualise to the 'Supplier' option</li>
             <li>Self-accept the IO</li>
             <li>Push through on trafficking tab to Meta</li>
             <li>Verify success of the push, every time</li>

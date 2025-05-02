@@ -137,12 +137,12 @@ function createMetaReminderPopup() {
     // Add content to popup
     popup.innerHTML = `
         <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
-        <p>When reconciling Meta (000770), please:</p>
+        <p>When reconciling Meta, please:</p>
         <ul>
-            <li>Use the 'Supplier' option</li>
+            <li>Reconcile to the 'Supplier' option</li>
             <li>Self-accept the IO</li>
             <li>Push through on trafficking tab to Meta</li>
-            <li>Verify success each time</li>
+            <li>Verify success of the push, every time</li>
             <li>Do not just leave the page!</li>
         </ul>
         <button id="meta-reminder-close">Got it!</button>

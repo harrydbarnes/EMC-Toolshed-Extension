@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     const generateUrlButton = document.getElementById('generateUrl');
     const logoToggle = document.getElementById('logoToggle');
+    const metaReminderToggle = document.getElementById('metaReminderToggle');
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
     const settingsIcon = settingsToggle.querySelector('i');
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
+    const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
     const reminderDay = document.getElementById('reminderDay');
     const reminderTime = document.getElementById('reminderTime');
     const reminderSettings = document.getElementById('reminderSettings');
@@ -14,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
+    
+    // Set Meta reminder on by default
+    chrome.storage.sync.get('metaReminderEnabled', setMetaReminderToggleState);
 
     // Load saved state for timesheet reminder, day, and time
     chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
@@ -29,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     generateUrlButton.addEventListener('click', handleGenerateUrl);
     logoToggle.addEventListener('change', handleLogoToggle);
+    metaReminderToggle.addEventListener('change', handleMetaReminderToggle);
     timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
     reminderDay.addEventListener('change', handleReminderDayChange);
     reminderTime.addEventListener('change', handleReminderTimeChange);
@@ -41,13 +47,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (triggerTimesheetReminderButton) {
         triggerTimesheetReminderButton.addEventListener('click', function() {
-            console.log("Trigger button clicked");
+            console.log("Trigger timesheet button clicked");
             chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
                 if (chrome.runtime.lastError) {
                     console.error("Error sending message:", chrome.runtime.lastError);
                 } else {
                     console.log("Timesheet reminder triggered:", response.status);
                 }
+            });
+        });
+    }
+    
+    if (triggerMetaReminderButton) {
+        triggerMetaReminderButton.addEventListener('click', function() {
+            console.log("Trigger Meta reminder button clicked");
+            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "showMetaReminder"
+                }, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.error("Error sending message:", chrome.runtime.lastError);
+                    } else {
+                        console.log("Meta reminder triggered:", response?.status || "No response");
+                    }
+                });
             });
         });
     }
@@ -87,6 +110,16 @@ function setLogoToggleState(data) {
     }
 }
 
+function setMetaReminderToggleState(data) {
+    const metaReminderToggle = document.getElementById('metaReminderToggle');
+    if (data.metaReminderEnabled === undefined) {
+        chrome.storage.sync.set({metaReminderEnabled: true});
+        metaReminderToggle.checked = true;
+    } else {
+        metaReminderToggle.checked = data.metaReminderEnabled;
+    }
+}
+
 function setTimesheetReminderToggleState(data) {
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
     const reminderSettings = document.getElementById('reminderSettings');
@@ -121,6 +154,13 @@ function handleLogoToggle() {
                 enabled: isEnabled
             });
         });
+    });
+}
+
+function handleMetaReminderToggle() {
+    const isEnabled = this.checked;
+    chrome.storage.sync.set({metaReminderEnabled: isEnabled}, function() {
+        console.log("Meta reminder set to:", isEnabled);
     });
 }
 

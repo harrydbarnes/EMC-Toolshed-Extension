@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
-    
+
     // Set Meta reminder on by default
     chrome.storage.sync.get('metaReminderEnabled', setMetaReminderToggleState);
 
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
     reminderDay.addEventListener('change', handleReminderDayChange);
     reminderTime.addEventListener('change', handleReminderTimeChange);
-    
+
     settingsToggle.addEventListener('click', function() {
         settingsContent.style.maxHeight = settingsContent.style.maxHeight ? null : settingsContent.scrollHeight + "px";
         settingsIcon.classList.toggle('fa-chevron-down');
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     if (triggerMetaReminderButton) {
         triggerMetaReminderButton.addEventListener('click', function() {
             console.log("Trigger Meta reminder button clicked");
@@ -91,7 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
     addClickListener('timesheetsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo');
     addClickListener('approvalsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheetApprovals/AwaitingMe');
     addClickListener('expensesButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-exps&osPspId=rod-exps&route=expenses/myApprovals/AwaitingMe');
+    addClickListener('officeHoursButton', 'https://harrydbarnes.github.io/EssenceMediacomTools/'); // Added listener for Office Hours button
     addClickListener('addCampaignButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns&osModalId=prsm-cm-cmpadd&osMOpts=lb');
+
 
     // Location buttons
     addClickListener('ngmclonButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DTE9OIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
@@ -138,7 +140,7 @@ function handleGenerateUrl() {
 
         const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
         const finalUrl = `${baseUrl}${campaignId}&route=actualize&mos=${formattedDate}`;
-        
+
         chrome.tabs.create({ url: finalUrl });
     } else {
         alert('Please enter a Campaign ID.');

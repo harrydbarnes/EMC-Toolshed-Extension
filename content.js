@@ -226,13 +226,13 @@ function checkForMetaConditions() {
     });
 }
 
-// Function to check for "001148" and "Flat" on the page
+// Function to check for "001148", "Flat", and "Unit Type" on the page
 function checkForIASConditions() {
     // No specific setting for IAS reminder, so it's always potentially active unless dismissed
     if (!iasReminderDismissed) {
         const pageText = document.body.innerText;
-        // Only show the reminder if both conditions are met
-        if (pageText.includes('001148') && pageText.includes('Flat')) {
+        // Only show the reminder if all three conditions are met
+        if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
             createIASReminderPopup();
         }
     }

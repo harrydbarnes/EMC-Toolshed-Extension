@@ -20,6 +20,7 @@ function restoreOriginalLogo() {
 }
 
 function checkAndReplaceLogo() {
+    // This function now assumes chrome.storage.sync is available
     chrome.storage.sync.get('logoReplaceEnabled', function(data) {
         if (data.logoReplaceEnabled) {
             replaceLogo();
@@ -255,34 +256,39 @@ function shouldReplaceLogoOnThisPage() {
     return url.includes('groupmuk-aura.mediaocean.com') || url.includes('groupmuk-prisma.mediaocean.com');
 }
 
-// Initial checks
-if (shouldReplaceLogoOnThisPage()) {
-    checkAndReplaceLogo();
-
-    // Wait a bit for the page to fully load before checking for conditions
-    setTimeout(() => {
-        checkForMetaConditions();
-        checkForIASConditions(); // Check for IAS conditions initially
-    }, 2000);
-}
-
-// Observe DOM changes to handle dynamic content loading
-const observer = new MutationObserver(function(mutations) {
+// --- Start of changes ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial checks
     if (shouldReplaceLogoOnThisPage()) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList') {
-                // Use a slight delay for the reminder checks after mutations
-                // This allows the DOM to settle after changes
-                setTimeout(() => {
-                    checkForMetaConditions();
-                    checkForIASConditions(); // Check for IAS conditions on mutations
-                }, 100); // Adjust delay if needed
-            }
-        });
-    }
-});
+        checkAndReplaceLogo();
 
-observer.observe(document.body, { childList: true, subtree: true });
+        // Wait a bit for the page to fully load before checking for conditions
+        setTimeout(() => {
+            checkForMetaConditions();
+            checkForIASConditions(); // Check for IAS conditions initially
+        }, 2000);
+    }
+
+    // Observe DOM changes to handle dynamic content loading
+    const observer = new MutationObserver(function(mutations) {
+        if (shouldReplaceLogoOnThisPage()) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    // Use a slight delay for the reminder checks after mutations
+                    // This allows the DOM to settle after changes
+                    setTimeout(() => {
+                        checkForMetaConditions();
+                        checkForIASConditions(); // Check for IAS conditions on mutations
+                    }, 100); // Adjust delay if needed
+                }
+            });
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+// --- End of changes ---
+
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {

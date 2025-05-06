@@ -94,8 +94,8 @@ body::-webkit-scrollbar-thumb:hover {
     transform: translateY(2px);
 }
 
-/* Meta Reminder Popup Styles */
-#meta-reminder-popup {
+/* Reminder Popup Styles (Applies to both Meta and IAS) */
+#meta-reminder-popup, #ias-reminder-popup {
     font-family: 'Montserrat', sans-serif;
     position: fixed;
     z-index: 10000;
@@ -112,29 +112,29 @@ body::-webkit-scrollbar-thumb:hover {
     animation: fadeIn 0.3s ease-in-out;
 }
 
-#meta-reminder-popup h3 {
+#meta-reminder-popup h3, #ias-reminder-popup h3 {
     margin-top: 0;
     font-size: 18px;
     font-weight: 700;
 }
 
-#meta-reminder-popup p {
+#meta-reminder-popup p, #ias-reminder-popup p {
     margin-bottom: 10px;
     font-size: 14px;
 }
 
-#meta-reminder-popup ul {
+#meta-reminder-popup ul, #ias-reminder-popup ul {
     text-align: left;
     margin-bottom: 20px;
     font-size: 14px;
     padding-left: 20px;
 }
 
-#meta-reminder-popup li {
+#meta-reminder-popup li, #ias-reminder-popup li {
     margin-bottom: 5px;
 }
 
-#meta-reminder-close {
+#meta-reminder-close, #ias-reminder-close {
     background-color: white;
     color: #ff4087;
     border: none;
@@ -145,12 +145,12 @@ body::-webkit-scrollbar-thumb:hover {
     transition: background-color 0.2s, transform 0.1s;
 }
 
-#meta-reminder-close:hover {
+#meta-reminder-close:hover, #ias-reminder-close:hover {
     background-color: #f8f8f8;
     animation: vibrate 0.3s ease-in-out;
 }
 
-#meta-reminder-close:active {
+#meta-reminder-close:active, #ias-reminder-close:active {
     transform: translateY(2px);
 }
 

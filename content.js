@@ -271,9 +271,12 @@ const observer = new MutationObserver(function(mutations) {
     if (shouldReplaceLogoOnThisPage()) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
-                checkAndReplaceLogo();
-                checkForMetaConditions();
-                checkForIASConditions(); // Check for IAS conditions on mutations
+                // Use a slight delay for the reminder checks after mutations
+                // This allows the DOM to settle after changes
+                setTimeout(() => {
+                    checkForMetaConditions();
+                    checkForIASConditions(); // Check for IAS conditions on mutations
+                }, 100); // Adjust delay if needed
             }
         });
     }

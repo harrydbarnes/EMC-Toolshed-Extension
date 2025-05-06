@@ -29,19 +29,19 @@ function checkAndReplaceLogo() {
     });
 }
 
-// Add Meta reminder styles to the page
-function addMetaReminderStyles() {
+// Add reminder styles to the page (reused for both Meta and IAS)
+function addReminderStyles() {
     // Check if styles are already added
-    if (document.getElementById('meta-reminder-styles')) {
+    if (document.getElementById('reminder-styles')) {
         return;
     }
-    
-    const metaStyles = document.createElement('style');
-    metaStyles.id = 'meta-reminder-styles';
-    metaStyles.textContent = `
+
+    const reminderStyles = document.createElement('style');
+    reminderStyles.id = 'reminder-styles';
+    reminderStyles.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-        
-        #meta-reminder-popup {
+
+        #meta-reminder-popup, #ias-reminder-popup { /* Apply styles to both popups */
             font-family: 'Montserrat', sans-serif;
             position: fixed;
             z-index: 10000;
@@ -57,30 +57,30 @@ function addMetaReminderStyles() {
             text-align: center;
             animation: fadeIn 0.3s ease-in-out;
         }
-        
-        #meta-reminder-popup h3 {
+
+        #meta-reminder-popup h3, #ias-reminder-popup h3 {
             margin-top: 0;
             font-size: 18px;
             font-weight: 700;
         }
-        
-        #meta-reminder-popup p {
+
+        #meta-reminder-popup p, #ias-reminder-popup p {
             margin-bottom: 10px;
             font-size: 14px;
         }
-        
-        #meta-reminder-popup ul {
+
+        #meta-reminder-popup ul, #ias-reminder-popup ul {
             text-align: left;
             margin-bottom: 20px;
             font-size: 14px;
             padding-left: 20px;
         }
-        
-        #meta-reminder-popup li {
+
+        #meta-reminder-popup li, #ias-reminder-popup li {
             margin-bottom: 5px;
         }
-        
-        #meta-reminder-close {
+
+        #meta-reminder-close, #ias-reminder-close {
             background-color: white;
             color: #ff4087;
             border: none;
@@ -90,21 +90,21 @@ function addMetaReminderStyles() {
             font-weight: bold;
             transition: background-color 0.2s, transform 0.1s;
         }
-        
-        #meta-reminder-close:hover {
+
+        #meta-reminder-close:hover, #ias-reminder-close:hover {
             background-color: #f8f8f8;
             animation: vibrate 0.3s ease-in-out;
         }
-        
-        #meta-reminder-close:active {
+
+        #meta-reminder-close:active, #ias-reminder-close:active {
             transform: translateY(2px);
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translate(-50%, -60%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
-        
+
         @keyframes vibrate {
             0%, 100% { transform: translateX(0); }
             20% { transform: translateX(-2px); }
@@ -113,12 +113,13 @@ function addMetaReminderStyles() {
             80% { transform: translateX(1px); }
         }
     `;
-    
-    document.head.appendChild(metaStyles);
+
+    document.head.appendChild(reminderStyles);
 }
 
-// Flag to track if popup has been dismissed in current tab session
+// Flags to track if popups have been dismissed in current tab session
 let metaReminderDismissed = false;
+let iasReminderDismissed = false;
 
 // Meta reminder functionality
 function createMetaReminderPopup() {
@@ -126,14 +127,14 @@ function createMetaReminderPopup() {
     if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
         return;
     }
-    
+
     // Add the styles first
-    addMetaReminderStyles();
+    addReminderStyles();
 
     // Create popup container
     const popup = document.createElement('div');
     popup.id = 'meta-reminder-popup';
-    
+
     // Add content to popup
     popup.innerHTML = `
         <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
@@ -166,6 +167,51 @@ function createMetaReminderPopup() {
     }, 15000);
 }
 
+// IAS reminder functionality
+function createIASReminderPopup() {
+    // Check if popup already exists or has been dismissed in this session
+    if (document.getElementById('ias-reminder-popup') || iasReminderDismissed) {
+        return;
+    }
+
+    // Add the styles first
+    addReminderStyles();
+
+    // Create popup container
+    const popup = document.createElement('div');
+    popup.id = 'ias-reminder-popup'; // Use a unique ID
+
+    // Add content to popup
+    popup.innerHTML = `
+        <h3>⚠️ IAS Booking Reminder ⚠️</h3>
+        <p>Please ensure you book as CPM</p>
+        <ul>
+            <li>With correct rate for media type</li>
+            <li>Check the plan</li>
+            <li>Ensure what is planned is what goes live</li>
+        </ul>
+        <button id="ias-reminder-close">Got it!</button>
+    `;
+
+    // Add popup to body
+    document.body.appendChild(popup);
+
+    // Add event listener to close button
+    document.getElementById('ias-reminder-close').addEventListener('click', function() {
+        document.body.removeChild(popup);
+        // Set flag to prevent showing again in this tab session
+        iasReminderDismissed = true;
+    });
+
+    // Set timeout to auto-close after 15 seconds
+    setTimeout(() => {
+        if (document.getElementById('ias-reminder-popup')) {
+            document.body.removeChild(popup);
+        }
+    }, 15000);
+}
+
+
 // Function to check for Meta vendor code AND "Redistribute all" on the page
 function checkForMetaConditions() {
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
@@ -180,11 +226,25 @@ function checkForMetaConditions() {
     });
 }
 
-// Reset the dismissed flag when page location changes
+// Function to check for "001148" and "Flat" on the page
+function checkForIASConditions() {
+    // No specific setting for IAS reminder, so it's always potentially active unless dismissed
+    if (!iasReminderDismissed) {
+        const pageText = document.body.innerText;
+        // Only show the reminder if both conditions are met
+        if (pageText.includes('001148') && pageText.includes('Flat')) {
+            createIASReminderPopup();
+        }
+    }
+}
+
+
+// Reset the dismissed flags when page location changes
 let currentUrl = window.location.href;
 setInterval(() => {
     if (currentUrl !== window.location.href) {
         metaReminderDismissed = false;
+        iasReminderDismissed = false; // Reset IAS flag
         currentUrl = window.location.href;
     }
 }, 500); // Check every half second
@@ -198,9 +258,12 @@ function shouldReplaceLogoOnThisPage() {
 // Initial checks
 if (shouldReplaceLogoOnThisPage()) {
     checkAndReplaceLogo();
-    
-    // Wait a bit for the page to fully load before checking for Meta code
-    setTimeout(checkForMetaConditions, 2000);
+
+    // Wait a bit for the page to fully load before checking for conditions
+    setTimeout(() => {
+        checkForMetaConditions();
+        checkForIASConditions(); // Check for IAS conditions initially
+    }, 2000);
 }
 
 // Observe DOM changes to handle dynamic content loading
@@ -210,6 +273,7 @@ const observer = new MutationObserver(function(mutations) {
             if (mutation.type === 'childList') {
                 checkAndReplaceLogo();
                 checkForMetaConditions();
+                checkForIASConditions(); // Check for IAS conditions on mutations
             }
         });
     }
@@ -229,5 +293,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         createMetaReminderPopup();
         sendResponse({status: "Meta reminder shown"});
     }
+    // No specific action for triggering IAS reminder from popup was requested, but could be added similarly
     return true; // Keep the message channel open for asynchronous response
 });

@@ -8,7 +8,8 @@
     "storage",
     "alarms",
     "notifications",
-    "tabs"
+    "tabs",
+    "offscreen" // Add the offscreen permission here
   ],
   "background": {
     "service_worker": "background.js"
@@ -35,7 +36,7 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["icon.png", "alarm.mp3"],
+    "resources": ["icon.png"], // Only icon.png seems necessary for content script logo replacement
     "matches": ["https://groupmuk-prisma.mediaocean.com/*"]
   }]
 }

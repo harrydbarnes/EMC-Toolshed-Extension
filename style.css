@@ -74,9 +74,16 @@ body::-webkit-scrollbar-thumb:hover {
     margin-bottom: 15px; /* Default margin-bottom for button groups */
 }
 
-/* Reduce margin-bottom for the first button group */
-.container .button-group:first-of-type {
-    margin-bottom: 5px; /* Match the gap between buttons within a row */
+/* Style for the timesheet button group to make buttons equal size on one row */
+.button-group.timesheet-group {
+    flex-wrap: wrap; /* Keep wrap in case width is too small */
+    gap: 5px; /* Maintain gap between buttons */
+    margin-top: -10px; /* Pull this group up by 10px to reduce space above it */
+    margin-bottom: 15px; /* Keep the default bottom margin */
+}
+
+.button-group.timesheet-group .nav-button {
+    flex: 1 0 0; /* Allow buttons to share space equally */
 }
 
 
@@ -98,11 +105,6 @@ body::-webkit-scrollbar-thumb:hover {
 
 .nav-button:active, .location-button:active {
     transform: translateY(2px);
-}
-
-/* Style for the timesheet button group to make buttons equal size on one row */
-.button-group.timesheet-group .nav-button {
-    flex: 1 0 0; /* Allow buttons to share space equally */
 }
 
 

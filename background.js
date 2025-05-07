@@ -74,8 +74,8 @@ async function createOffscreenDocument() {
   }
   await chrome.offscreen.createDocument({
     url: 'offscreen.html',
-    reasons: ['audio_playback'], // Declare the reason for needing the offscreen document
-    justification: 'Plays alarm sound for timesheet reminders', // Justification for the reason
+    reasons: ['AUDIO_PLAYBACK'], // Corrected reason to uppercase
+    justification: 'Plays alarm sound for timesheet reminders',
   });
 }
 

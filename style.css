@@ -94,6 +94,12 @@ body::-webkit-scrollbar-thumb:hover {
     transform: translateY(2px);
 }
 
+/* New style for the timesheet button group */
+.button-group.timesheet-group .nav-button {
+    flex: 1 1 auto; /* Allow buttons to grow and shrink */
+}
+
+
 /* Reminder Popup Styles (Applies to both Meta and IAS) */
 #meta-reminder-popup, #ias-reminder-popup {
     font-family: 'Montserrat', sans-serif;

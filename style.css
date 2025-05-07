@@ -96,7 +96,7 @@ body::-webkit-scrollbar-thumb:hover {
 
 /* New style for the timesheet button group */
 .button-group.timesheet-group .nav-button {
-    flex: 1 1 auto; /* Allow buttons to grow and shrink */
+    flex: 1 0 0; /* Allow buttons to share space equally */
 }
 
 

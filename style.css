@@ -354,3 +354,7 @@ select:focus {
 .feedback a:hover {
     text-decoration: underline;
 }
+
+.hidden-initially {
+    display: none;
+}

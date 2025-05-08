@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
     const reminderDay = document.getElementById('reminderDay');
     const reminderTime = document.getElementById('reminderTime');
-    const reminderSettings = document.getElementById('reminderSettings');
-    const saveReminderSettings = document.getElementById('saveReminderSettings');
-    const reminderUpdateMessage = document.getElementById('reminderUpdateMessage');
+    const reminderSettings = document.getElementById('reminderSettings'); // Keep reference
+    const saveReminderSettingsButton = document.getElementById('saveReminderSettings'); // Use specific ID
+    const reminderUpdateMessage = document.getElementById('reminderUpdateMessage'); // Keep reference
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load saved state for timesheet reminder, day, and time
     chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
-        setTimesheetReminderToggleState(data);
+        setTimesheetReminderToggleState(data); // This will handle reminderSettings visibility
         if (data.reminderDay) {
             reminderDay.value = data.reminderDay;
         }
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     generateUrlButton.addEventListener('click', handleGenerateUrl);
     logoToggle.addEventListener('change', handleLogoToggle);
     metaReminderToggle.addEventListener('change', handleMetaReminderToggle);
-    timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
+    timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle); // This will handle reminderSettings visibility
     reminderDay.addEventListener('change', handleReminderDayChange);
     reminderTime.addEventListener('change', handleReminderTimeChange);
 
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (chrome.runtime.lastError) {
                     console.error("Error sending message:", chrome.runtime.lastError);
                 } else {
-                    console.log("Timesheet reminder triggered:", response.status);
+                    console.log("Timesheet reminder triggered:", response?.status || "No response");
                 }
             });
         });
@@ -62,36 +62,45 @@ document.addEventListener('DOMContentLoaded', function() {
         triggerMetaReminderButton.addEventListener('click', function() {
             console.log("Trigger Meta reminder button clicked");
             chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    action: "showMetaReminder"
-                }, function(response) {
-                    if (chrome.runtime.lastError) {
-                        console.error("Error sending message:", chrome.runtime.lastError);
-                    } else {
-                        console.log("Meta reminder triggered:", response?.status || "No response");
-                    }
-                });
+                if (tabs.length > 0 && tabs[0].id) {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: "showMetaReminder"
+                    }, function(response) {
+                        if (chrome.runtime.lastError) {
+                            console.error("Error sending message to tab:", chrome.runtime.lastError.message);
+                        } else {
+                            console.log("Meta reminder triggered via tab:", response?.status || "No response from tab");
+                        }
+                    });
+                } else {
+                    console.error("No active tab found to send message.");
+                }
             });
         });
     }
 
-    saveReminderSettings.addEventListener('click', function() {
-        const day = reminderDay.value;
-        const time = reminderTime.value;
-        chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
-            updateAlarm();
-            reminderUpdateMessage.textContent = `Updated! You will be reminded on ${day} at ${time}`;
-            reminderUpdateMessage.style.display = 'block';
-            setTimeout(() => { reminderUpdateMessage.style.display = 'none'; }, 3000);
+    // Ensure reminderSettings and reminderUpdateMessage are valid elements before manipulating classes
+    if (saveReminderSettingsButton && reminderSettings && reminderUpdateMessage) {
+        saveReminderSettingsButton.addEventListener('click', function() {
+            const day = reminderDay.value;
+            const time = reminderTime.value;
+            chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
+                updateAlarm();
+                reminderUpdateMessage.textContent = `Updated! You will be reminded on ${day} at ${time}`;
+                reminderUpdateMessage.classList.remove('hidden-initially');
+                setTimeout(() => {
+                    reminderUpdateMessage.classList.add('hidden-initially');
+                }, 3000);
+            });
         });
-    });
+    }
+
 
     // Navigation buttons
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
-    addClickListener('metaHandbookButton', 'https://insidemedia.sharepoint.com/sites/GRM-UK-GMS/Files%20Library/Forms/AllItems.aspx?id=%2Fsites%2FGRM%2DUK%2DGMS%2FFiles%20Library%2FChannel%5FSocial%2FPaid%20Social%20Prisma%20Integration%20Resources%2FLatest%20Handbook&p=true&ga=1'); // Added listener for Meta Handbook button
+    addClickListener('metaHandbookButton', 'https://insidemedia.sharepoint.com/sites/GRM-UK-GMS/Files%20Library/Forms/AllItems.aspx?id=%2Fsites%2FGRM%2DUK%2DGMS%2FFiles%20Library%2FChannel%5FSocial%2FPaid%20Social%20Prisma%20Integration%20Resources%2FLatest%20Handbook&p=true&ga=1');
     addClickListener('timesheetsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo');
     addClickListener('approvalsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheetApprovals/AwaitingMe');
-    // Removed addClickListener for Expenses button
     addClickListener('officeHoursButton', 'https://harrydbarnes.github.io/EssenceMediacomTools/');
     addClickListener('addCampaignButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns&osModalId=prsm-cm-cmpadd&osMOpts=lb');
 
@@ -105,34 +114,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function setLogoToggleState(data) {
     const logoToggle = document.getElementById('logoToggle');
-    if (data.logoReplaceEnabled === undefined) {
-        chrome.storage.sync.set({logoReplaceEnabled: true});
-        logoToggle.checked = true;
-    } else {
-        logoToggle.checked = data.logoReplaceEnabled;
+    if (logoToggle) {
+        if (data.logoReplaceEnabled === undefined) {
+            chrome.storage.sync.set({logoReplaceEnabled: true});
+            logoToggle.checked = true;
+        } else {
+            logoToggle.checked = data.logoReplaceEnabled;
+        }
     }
 }
 
 function setMetaReminderToggleState(data) {
     const metaReminderToggle = document.getElementById('metaReminderToggle');
-    if (data.metaReminderEnabled === undefined) {
-        chrome.storage.sync.set({metaReminderEnabled: true});
-        metaReminderToggle.checked = true;
-    } else {
-        metaReminderToggle.checked = data.metaReminderEnabled;
+    if (metaReminderToggle) {
+        if (data.metaReminderEnabled === undefined) {
+            chrome.storage.sync.set({metaReminderEnabled: true});
+            metaReminderToggle.checked = true;
+        } else {
+            metaReminderToggle.checked = data.metaReminderEnabled;
+        }
     }
 }
 
 function setTimesheetReminderToggleState(data) {
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
     const reminderSettings = document.getElementById('reminderSettings');
-    timesheetReminderToggle.checked = data.timesheetReminderEnabled !== false;
-    reminderSettings.style.display = timesheetReminderToggle.checked ? 'block' : 'none';
+    if (timesheetReminderToggle && reminderSettings) {
+        timesheetReminderToggle.checked = data.timesheetReminderEnabled !== false; // Default to true if undefined
+        if (timesheetReminderToggle.checked) {
+            reminderSettings.classList.remove('hidden-initially');
+        } else {
+            reminderSettings.classList.add('hidden-initially');
+        }
+    }
 }
 
 function handleGenerateUrl() {
-    const campaignId = document.getElementById('campaignId').value;
-    let campaignDate = document.getElementById('campaignDate').value;
+    const campaignIdInput = document.getElementById('campaignId');
+    const campaignDateInput = document.getElementById('campaignDate');
+    if (!campaignIdInput || !campaignDateInput) return;
+
+    const campaignId = campaignIdInput.value;
+    let campaignDate = campaignDateInput.value;
 
     if (campaignId) {
         const year = new Date().getFullYear();
@@ -140,7 +163,7 @@ function handleGenerateUrl() {
         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
 
         const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
-        const finalUrl = `${baseUrl}${encodeURIComponent(campaignId)}&route=actualize&mos=${formattedDate}`; // Applied encodeURIComponent
+        const finalUrl = `${baseUrl}${encodeURIComponent(campaignId)}&route=actualize&mos=${formattedDate}`;
 
         chrome.tabs.create({ url: finalUrl });
     } else {
@@ -152,10 +175,16 @@ function handleLogoToggle() {
     const isEnabled = this.checked;
     chrome.storage.sync.set({logoReplaceEnabled: isEnabled}, function() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-                action: "checkLogoReplaceEnabled",
-                enabled: isEnabled
-            });
+            if (tabs.length > 0 && tabs[0].id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "checkLogoReplaceEnabled",
+                    enabled: isEnabled
+                }, function(response) {
+                    if (chrome.runtime.lastError) {
+                         console.warn("Could not send message to tab for logo toggle (perhaps not on a Prisma page):", chrome.runtime.lastError.message);
+                    }
+                });
+            }
         });
     });
 }
@@ -170,7 +199,13 @@ function handleMetaReminderToggle() {
 function handleTimesheetReminderToggle() {
     const isEnabled = this.checked;
     const reminderSettings = document.getElementById('reminderSettings');
-    reminderSettings.style.display = isEnabled ? 'block' : 'none';
+    if (reminderSettings) {
+        if (isEnabled) {
+            reminderSettings.classList.remove('hidden-initially');
+        } else {
+            reminderSettings.classList.add('hidden-initially');
+        }
+    }
     chrome.storage.sync.set({timesheetReminderEnabled: isEnabled}, function() {
         if (isEnabled) {
             updateAlarm();
@@ -181,8 +216,11 @@ function handleTimesheetReminderToggle() {
 }
 
 function handleReminderDayChange() {
-    updateTimeOptions(this.value);
-    updateAlarm();
+    const reminderDaySelect = document.getElementById('reminderDay');
+    if (reminderDaySelect) {
+        updateTimeOptions(reminderDaySelect.value);
+        updateAlarm();
+    }
 }
 
 function handleReminderTimeChange() {
@@ -190,32 +228,38 @@ function handleReminderTimeChange() {
 }
 
 function updateTimeOptions(day) {
-    const reminderTime = document.getElementById('reminderTime');
-    reminderTime.innerHTML = '';
+    const reminderTimeSelect = document.getElementById('reminderTime');
+    if (!reminderTimeSelect) return;
+
+    reminderTimeSelect.innerHTML = ''; // Clear existing options
     let startTime, endTime;
     if (day === 'Friday') {
-        startTime = 14 * 60;
-        endTime = 16 * 60;
-    } else {
-        startTime = 9 * 60;
-        endTime = 17 * 60 + 30;
+        startTime = 14 * 60; // 2 PM
+        endTime = 16 * 60;   // 4 PM
+    } else { // Monday, Tuesday
+        startTime = 9 * 60;  // 9 AM
+        endTime = 17 * 60 + 30; // 5:30 PM
     }
-    for (let i = startTime; i <= endTime; i += 15) {
+    for (let i = startTime; i <= endTime; i += 15) { // 15-minute intervals
         const hour = Math.floor(i / 60);
         const minute = i % 60;
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         const option = document.createElement('option');
         option.value = timeString;
         option.textContent = timeString;
-        reminderTime.appendChild(option);
+        reminderTimeSelect.appendChild(option);
     }
 }
 
 function updateAlarm() {
-    const reminderDay = document.getElementById('reminderDay').value;
-    const reminderTime = document.getElementById('reminderTime').value;
-    chrome.storage.sync.set({reminderDay: reminderDay, reminderTime: reminderTime}, function() {
-        chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: reminderDay, time: reminderTime});
+    const reminderDaySelect = document.getElementById('reminderDay');
+    const reminderTimeSelect = document.getElementById('reminderTime');
+    if (!reminderDaySelect || !reminderTimeSelect) return;
+
+    const reminderDayValue = reminderDaySelect.value;
+    const reminderTimeValue = reminderTimeSelect.value;
+    chrome.storage.sync.set({reminderDay: reminderDayValue, reminderTime: reminderTimeValue}, function() {
+        chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: reminderDayValue, time: reminderTimeValue});
     });
 }
 
@@ -229,18 +273,9 @@ function addClickListener(id, url) {
             }
         });
     } else {
-        console.error(`Button with id ${id} not found`);
+        console.warn(`Button with id ${id} not found`);
     }
 }
 
-document.getElementById('saveReminderSettings').addEventListener('click', function() {
-    const day = document.getElementById('reminderDay').value;
-    const time = document.getElementById('reminderTime').value;
-    chrome.storage.sync.set({reminderDay: day, reminderTime: time}, function() {
-        updateAlarm();
-        const message = document.getElementById('reminderUpdateMessage');
-        message.textContent = `Updated! You will be reminded on ${day} at ${time}`;
-        message.style.display = 'block';
-        setTimeout(() => { message.style.display = 'none'; }, 3000);
-    });
-});
+// Note: The duplicate event listener for 'saveReminderSettings' that was previously at the end of the file has been removed.
+// The primary one is inside the DOMContentLoaded listener.

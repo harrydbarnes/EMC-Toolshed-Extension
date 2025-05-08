@@ -140,7 +140,7 @@ function handleGenerateUrl() {
         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
 
         const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
-        const finalUrl = `${baseUrl}${campaignId}&route=actualize&mos=${formattedDate}`;
+        const finalUrl = `${baseUrl}${encodeURIComponent(campaignId)}&route=actualize&mos=${formattedDate}`; // Applied encodeURIComponent
 
         chrome.tabs.create({ url: finalUrl });
     } else {

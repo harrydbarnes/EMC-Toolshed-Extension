@@ -9,8 +9,11 @@
     "alarms",
     "notifications",
     "tabs",
-    "offscreen" // Add the offscreen permission here
+    "offscreen"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://cdnjs.cloudflare.com; object-src 'self'"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -36,7 +39,7 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["icon.png"], // Only icon.png seems necessary for content script logo replacement
+    "resources": ["icon.png"],
     "matches": ["https://groupmuk-prisma.mediaocean.com/*"]
   }]
 }

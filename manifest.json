@@ -12,7 +12,7 @@
     "offscreen"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://cdnjs.cloudflare.com; object-src 'self'"
+    "extension_pages": "script-src 'self'; style-src 'self' https://cdnjs.cloudflare.com; object-src 'self'"
   },
   "background": {
     "service_worker": "background.js"

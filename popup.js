@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("[Popup Load] DOMContentLoaded event fired.");
 
     if (triggerMetaReminderButton) {
-        console.log("[Popup Load] 'triggerMetaReminderButton' element found initial state:", triggerMetaReminderButton.outerHTML);
-        triggerMetaReminderButton.disabled = true; // Initial disable
-        triggerMetaReminderButton.title = "Checking page context...";
-        console.log("[Popup Load] 'triggerMetaReminderButton' initially set to disabled=true.");
+        console.log("[Popup Load] 'triggerMetaReminderButton' element found. Initial outerHTML:", triggerMetaReminderButton.outerHTML);
+        // Button starts hidden via "hidden-initially" class in HTML.
+        // We will remove the class if on a Prisma page.
+        triggerMetaReminderButton.title = "This test feature only works on Prisma pages."; // Default title
 
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             console.log("[Popup Load] chrome.tabs.query callback. Tabs array:", tabs);
@@ -30,26 +30,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     const currentUrl = currentTab.url;
                     console.log("[Popup Load] Current URL determined:", currentUrl);
                     if (currentUrl.startsWith("https://groupmuk-prisma.mediaocean.com/")) {
-                        console.log("[Popup Load] Current URL IS a Prisma page. Enabling button.");
-                        triggerMetaReminderButton.disabled = false;
+                        console.log("[Popup Load] Current URL IS a Prisma page. Showing button.");
+                        triggerMetaReminderButton.classList.remove('hidden-initially');
                         triggerMetaReminderButton.title = "Test the Meta Reconciliation Reminder on this page.";
                     } else {
-                        console.log("[Popup Load] Current URL is NOT a Prisma page. Ensuring button is disabled.");
-                        triggerMetaReminderButton.disabled = true;
+                        console.log("[Popup Load] Current URL is NOT a Prisma page. Ensuring button remains hidden.");
+                        triggerMetaReminderButton.classList.add('hidden-initially'); // Ensure it's hidden
                         triggerMetaReminderButton.title = "This test feature only works on Prisma pages.";
                     }
                 } else {
-                    console.log("[Popup Load] Active tab URL is not accessible. Ensuring button is disabled.");
-                    triggerMetaReminderButton.disabled = true;
+                    console.log("[Popup Load] Active tab URL is not accessible. Ensuring button remains hidden.");
+                    triggerMetaReminderButton.classList.add('hidden-initially');
                     triggerMetaReminderButton.title = "Cannot determine current page URL for this test.";
                 }
             } else {
-                console.log("[Popup Load] No active tab found. Ensuring button is disabled.");
-                triggerMetaReminderButton.disabled = true;
+                console.log("[Popup Load] No active tab found. Ensuring button remains hidden.");
+                triggerMetaReminderButton.classList.add('hidden-initially');
                 triggerMetaReminderButton.title = "Could not identify an active tab for this test.";
             }
-            console.log("[Popup Load] Final state of 'triggerMetaReminderButton.disabled' after query:", triggerMetaReminderButton.disabled);
-            console.log("[Popup Load] Button HTML after query logic:", triggerMetaReminderButton.outerHTML);
+            console.log("[Popup Load] Final button outerHTML after visibility check:", triggerMetaReminderButton.outerHTML);
         });
     } else {
         console.error("[Popup Load] CRITICAL: 'triggerMetaReminderButton' element NOT found in the DOM.");
@@ -58,18 +57,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event Listeners
     if (triggerMetaReminderButton) {
         triggerMetaReminderButton.addEventListener('click', function() {
+            // This listener will only be triggered if the button is visible and clicked.
+            // By design, it's only visible on Prisma pages.
             console.log("--------------------------------------------------");
             console.log("[BUTTON CLICK] 'Test Meta Reminder' button clicked.");
-            console.log("[BUTTON CLICK] Current 'this.disabled' state at click time:", this.disabled);
-            console.log("[BUTTON CLICK] Current button HTML at click time:", this.outerHTML);
+            console.log("[BUTTON CLICK] Button HTML at click time:", this.outerHTML);
+            // No need to check this.disabled anymore, as it's controlled by visibility.
 
-            if (this.disabled === true) { // Explicitly check for true
-                console.warn("[BUTTON CLICK] Button is marked as disabled. Aborting action. Message should NOT be sent.");
-                console.log("--------------------------------------------------");
-                return;
-            }
-
-            console.log("[BUTTON CLICK] Button is NOT disabled. Proceeding to send message.");
+            console.log("[BUTTON CLICK] Proceeding to send message (button is visible).");
             chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                 if (tabs.length > 0 && tabs[0] && tabs[0].id) {
                     console.log("[BUTTON CLICK] Sending 'showMetaReminder' message to tab ID:", tabs[0].id);
@@ -90,6 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // --- Rest of your popup.js code remains the same ---
+    // (Make sure to include all functions like setLogoToggleState, handleGenerateUrl, etc.)
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -208,22 +206,33 @@ function handleGenerateUrl() {
     if (!campaignIdInput || !campaignDateInput) return;
 
     const campaignId = campaignIdInput.value;
-    let campaignDate = campaignDateInput.value;
+    let campaignDateStr = campaignDateInput.value; // Renamed for clarity
 
     if (campaignId) {
-        const year = new Date().getFullYear();
-        let date;
-        if (campaignDate && /^[a-zA-Z]+ \d{4}$/.test(campaignDate)) { // e.g. "May 2024"
-             date = new Date(`${campaignDate.split(" ")[0]} 1, ${campaignDate.split(" ")[1]}`);
-        } else if (campaignDate && /^\d{1,2}\/\d{4}$/.test(campaignDate)) { // e.g. "05/2024" or "5/2024"
-            const parts = campaignDate.split("/");
-            date = new Date(parts[1], parseInt(parts[0], 10) - 1, 1);
-        }
-         else {
-            date = new Date(); // Default to current month if format is wrong or empty
+        let dateToUse = new Date(); // Default to current date
+        // Try to parse the date string if provided
+        if (campaignDateStr) {
+            // Attempt to parse formats like "Month YYYY" (e.g., "May 2024") or "MM/YYYY" (e.g., "05/2024")
+            // This is a basic parser; more robust parsing might be needed for other formats.
+            let parsedDate;
+            const monthYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{4})$/); // "May 2024"
+            const slashMonthYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{4})$/); // "05/2024" or "5/2024"
+
+            if (monthYearMatch) {
+                parsedDate = new Date(monthYearMatch[1] + " 1, " + monthYearMatch[2]);
+            } else if (slashMonthYearMatch) {
+                // Month is 0-indexed in JS Date, so subtract 1
+                parsedDate = new Date(parseInt(slashMonthYearMatch[2], 10), parseInt(slashMonthYearMatch[1], 10) - 1, 1);
+            }
+
+            if (parsedDate && !isNaN(parsedDate)) {
+                dateToUse = parsedDate;
+            } else {
+                console.warn("Could not parse campaign date string:", campaignDateStr, ". Using current month.");
+            }
         }
 
-        const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+        const formattedDate = `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}-01`;
 
         const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
         const finalUrl = `${baseUrl}${encodeURIComponent(campaignId)}&route=actualize&mos=${formattedDate}`;
@@ -233,6 +242,7 @@ function handleGenerateUrl() {
         alert('Please enter a Campaign ID.');
     }
 }
+
 
 function handleLogoToggle() {
     const isEnabled = this.checked;
@@ -283,8 +293,8 @@ function handleTimesheetReminderToggle() {
 function handleReminderDayChange() {
     const reminderDaySelect = document.getElementById('reminderDay');
     if (reminderDaySelect) {
-        updateTimeOptions(reminderDaySelect.value);
-        updateAlarm(); // updateAlarm will get values from DOM
+        updateTimeOptions(reminderDaySelect.value); // This will re-populate and set a default time or stored time
+        updateAlarm(); // Then update the alarm with the newly selected day and current/default time
     }
 }
 
@@ -296,6 +306,7 @@ function updateTimeOptions(day) {
     const reminderTimeSelect = document.getElementById('reminderTime');
     if (!reminderTimeSelect) return;
 
+    const currentSelectedTime = reminderTimeSelect.value; // Preserve current time if possible
     reminderTimeSelect.innerHTML = '';
     let startTime, endTime;
     if (day === 'Friday') {
@@ -305,6 +316,8 @@ function updateTimeOptions(day) {
         startTime = 9 * 60;
         endTime = 17 * 60 + 30;
     }
+    let timeWasSetFromStorage = false;
+
     for (let i = startTime; i <= endTime; i += 15) {
         const hour = Math.floor(i / 60);
         const minute = i % 60;
@@ -314,12 +327,24 @@ function updateTimeOptions(day) {
         option.textContent = timeString;
         reminderTimeSelect.appendChild(option);
     }
-    // After repopulating, try to set the stored time if available, or default
+    
+    // Try to set the previously selected/stored time after populating
     chrome.storage.sync.get('reminderTime', function(data) {
         if (data.reminderTime && reminderTimeSelect.querySelector(`option[value="${data.reminderTime}"]`)) {
             reminderTimeSelect.value = data.reminderTime;
+            timeWasSetFromStorage = true;
+        } else if (currentSelectedTime && reminderTimeSelect.querySelector(`option[value="${currentSelectedTime}"]`)) {
+            // If stored time for selected day isn't valid, but a time was already selected, keep it if still valid
+            reminderTimeSelect.value = currentSelectedTime;
         } else if (reminderTimeSelect.options.length > 0) {
-            reminderTimeSelect.value = reminderTimeSelect.options[0].value; // Default to first available time
+             // Default to a sensible time if no specific preference, e.g., first available, or a hardcoded default for the day
+            if (day === 'Friday' && reminderTimeSelect.querySelector(`option[value="14:30"]`)) {
+                reminderTimeSelect.value = "14:30";
+            } else if (day !== 'Friday' && reminderTimeSelect.querySelector(`option[value="09:00"]`)){
+                reminderTimeSelect.value = "09:00";
+            } else {
+                reminderTimeSelect.value = reminderTimeSelect.options[0].value; // Fallback to first
+            }
         }
     });
 }
@@ -327,15 +352,28 @@ function updateTimeOptions(day) {
 function updateAlarm() {
     const reminderDaySelect = document.getElementById('reminderDay');
     const reminderTimeSelect = document.getElementById('reminderTime');
+    
+    // Ensure elements and their values exist before proceeding
     if (!reminderDaySelect || !reminderTimeSelect || !reminderDaySelect.value || !reminderTimeSelect.value) {
-        console.warn("Cannot update alarm, day or time not selected/available.");
-        return;
+        console.warn("Cannot update alarm, day or time not properly selected or available in the DOM.");
+        return; 
     }
 
     const reminderDayValue = reminderDaySelect.value;
     const reminderTimeValue = reminderTimeSelect.value;
+
     chrome.storage.sync.set({reminderDay: reminderDayValue, reminderTime: reminderTimeValue}, function() {
-        chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: reminderDayValue, time: reminderTimeValue});
+        if (chrome.runtime.lastError) {
+            console.error("Error setting reminderDay/Time in storage:", chrome.runtime.lastError.message);
+            return;
+        }
+        chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: reminderDayValue, time: reminderTimeValue}, function(response){
+            if (chrome.runtime.lastError) {
+                console.error("Error sending createTimesheetAlarm message:", chrome.runtime.lastError.message);
+            } else {
+                console.log("createTimesheetAlarm message sent, response:", response?.status);
+            }
+        });
     });
 }
 
@@ -343,13 +381,10 @@ function addClickListener(id, url) {
     const button = document.getElementById(id);
     if (button) {
         button.addEventListener('click', () => {
-            console.log(`Button ${id} clicked`);
+            // console.log(`Button ${id} clicked`); // Less verbose logging for general buttons
             if (url) {
                 chrome.tabs.create({ url: url });
             }
         });
-    } else {
-        // It's okay if some buttons don't exist, maybe they are conditional
-        // console.warn(`Button with id ${id} not found`);
     }
 }

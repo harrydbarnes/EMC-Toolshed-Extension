@@ -6,7 +6,7 @@
     <title>Prisma Tools</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv12wxOvQP9mediumLMtM+NQEHa76Q=="
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
           crossorigin="anonymous">
 </head>
 <body>
@@ -75,7 +75,7 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div id="reminderSettings" style="display: none;">
+                <div id="reminderSettings" class="hidden-initially">
                     <p class="reminder-text"><em>Remind me on and at:</em></p>
                     <div class="select-container">
                         <select id="reminderDay">
@@ -89,7 +89,7 @@
                     </div>
                     <div class="button-group">
                     <button id="saveReminderSettings" class="nav-button">Save</button>
-                    <p id="reminderUpdateMessage" style="display: none;"></p>
+                    <p id="reminderUpdateMessage" class="hidden-initially"></p>
                       </div>
                 </div>
                 <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>

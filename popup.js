@@ -7,12 +7,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsContent = document.getElementById('settingsContent');
     const settingsIcon = settingsToggle.querySelector('i');
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
-    const triggerMetaReminderButton = document.getElementById('triggerMetaReminder'); // Get the button
+    const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
     const reminderDay = document.getElementById('reminderDay');
     const reminderTime = document.getElementById('reminderTime');
     const reminderSettings = document.getElementById('reminderSettings');
     const saveReminderSettingsButton = document.getElementById('saveReminderSettings');
     const reminderUpdateMessage = document.getElementById('reminderUpdateMessage');
+
+    console.log("[Popup] DOMContentLoaded event fired."); // Log A
+
+    if (triggerMetaReminderButton) {
+        console.log("[Popup] 'triggerMetaReminderButton' element found:", triggerMetaReminderButton); // Log B
+        // Initially disable the button until we confirm the URL
+        triggerMetaReminderButton.disabled = true;
+        triggerMetaReminderButton.title = "Checking page context...";
+        console.log("[Popup] 'triggerMetaReminderButton' initially disabled."); // Log C
+
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            console.log("[Popup] chrome.tabs.query callback executed. Tabs array:", tabs); // Log D
+            if (tabs && tabs.length > 0 && tabs[0]) {
+                const currentTab = tabs[0];
+                console.log("[Popup] Active tab object:", currentTab); // Log E
+                if (currentTab.url) {
+                    const currentUrl = currentTab.url;
+                    console.log("[Popup] Current URL determined:", currentUrl); // Log F
+                    if (currentUrl.startsWith("https://groupmuk-prisma.mediaocean.com/")) {
+                        console.log("[Popup] Current URL is a Prisma page. Enabling button."); // Log G
+                        triggerMetaReminderButton.disabled = false;
+                        triggerMetaReminderButton.title = "Test the Meta Reconciliation Reminder on this page.";
+                    } else {
+                        console.log("[Popup] Current URL is NOT a Prisma page. Button should remain disabled."); // Log H
+                        triggerMetaReminderButton.disabled = true; // Ensure it's disabled
+                        triggerMetaReminderButton.title = "This test feature only works on Prisma pages.";
+                    }
+                } else {
+                    console.log("[Popup] Active tab found, but its URL is not accessible or undefined. Button remains disabled."); // Log I
+                    triggerMetaReminderButton.disabled = true; // Ensure it's disabled
+                    triggerMetaReminderButton.title = "Cannot determine current page URL for this test.";
+                }
+            } else {
+                console.log("[Popup] No active tab found or tabs array is empty. Button remains disabled."); // Log J
+                triggerMetaReminderButton.disabled = true; // Ensure it's disabled
+                triggerMetaReminderButton.title = "Could not identify an active tab for this test.";
+            }
+            console.log("[Popup] Final state of 'triggerMetaReminderButton.disabled':", triggerMetaReminderButton.disabled); // Log K
+        });
+    } else {
+        console.error("[Popup] CRITICAL: 'triggerMetaReminderButton' element NOT found in the DOM."); // Log L
+    }
+
 
     // Set logo replacement on by default
     chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
@@ -31,26 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
             reminderTime.value = data.reminderTime;
         }
     });
-
-    // Disable "Test Meta Reminder" button if not on a Prisma page
-    if (triggerMetaReminderButton) {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (tabs.length > 0 && tabs[0].url) {
-                const currentUrl = tabs[0].url;
-                if (currentUrl && currentUrl.startsWith("https://groupmuk-prisma.mediaocean.com/")) {
-                    triggerMetaReminderButton.disabled = false;
-                    triggerMetaReminderButton.title = ""; // Clear title if enabled
-                } else {
-                    triggerMetaReminderButton.disabled = true;
-                    triggerMetaReminderButton.title = "This test feature only works on Prisma pages.";
-                }
-            } else {
-                // Default to disabled if tab/URL can't be determined
-                triggerMetaReminderButton.disabled = true;
-                triggerMetaReminderButton.title = "Could not determine the current page to enable this test.";
-            }
-        });
-    }
 
     generateUrlButton.addEventListener('click', handleGenerateUrl);
     logoToggle.addEventListener('change', handleLogoToggle);
@@ -80,22 +103,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (triggerMetaReminderButton) {
         triggerMetaReminderButton.addEventListener('click', function() {
-            console.log("Trigger Meta reminder button clicked");
+            // This listener will only be effectively triggered if the button is not disabled.
+            console.log("Trigger Meta reminder button clicked (event listener). Disabled state:", this.disabled);
+            // It's good practice to check if the button should even attempt to send a message
+            // This is a secondary check in case the initial disabling failed for an unknown reason
+            if (this.disabled) {
+                console.warn("[Popup] Meta Reminder Test button was clicked but is disabled. Aborting message send.");
+                return;
+            }
+
             chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if (tabs.length > 0 && tabs[0].id) {
+                if (tabs.length > 0 && tabs[0] && tabs[0].id) {
                     chrome.tabs.sendMessage(tabs[0].id, {
                         action: "showMetaReminder"
                     }, function(response) {
                         if (chrome.runtime.lastError) {
-                            // This error will still appear if the button was somehow enabled on a non-Prisma page,
-                            // or if the content script on a Prisma page fails to respond.
-                            console.error("Error sending message to tab (Meta Reminder):", chrome.runtime.lastError.message);
+                            console.error("Error sending message to tab (Meta Reminder):", chrome.runtime.lastError.message); // This is approx line 92
                         } else {
                             console.log("Meta reminder triggered via tab:", response?.status || "No response from tab");
                         }
                     });
                 } else {
-                    console.error("No active tab found to send message for Meta Reminder.");
+                    console.error("No active tab found to send message for Meta Reminder (from click listener).");
                 }
             });
         });
@@ -192,7 +221,7 @@ function handleLogoToggle() {
     const isEnabled = this.checked;
     chrome.storage.sync.set({logoReplaceEnabled: isEnabled}, function() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            if (tabs.length > 0 && tabs[0].id) {
+            if (tabs.length > 0 && tabs[0] && tabs[0].id) {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: "checkLogoReplaceEnabled",
                     enabled: isEnabled
@@ -201,6 +230,8 @@ function handleLogoToggle() {
                          console.warn("Could not send message to tab for logo toggle (not on a Prisma page or content script not ready):", chrome.runtime.lastError.message);
                     }
                 });
+            } else {
+                console.warn("No active tab found for logo toggle message.");
             }
         });
     });

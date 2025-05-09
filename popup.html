@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
           integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-          crossorigin="anonymous">
+          crossorigin="anonymous" referrerpolicy="no-referrer">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <img src="icon.png" alt="Prisma Tools" class="logo">
+            <img src="icon.png" alt="Prisma Tools Logo" class="logo">
             <h1 id="prisma-tools" class="title">Prisma Tools</h1>
         </div>
 
@@ -29,14 +29,14 @@
 
 
         <div class="input-group">
-            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+            <input type="text" id="campaignId" placeholder="Enter Campaign ID (e.g., UK12345)">
         </div>
 
         <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
+            <input type="text" id="campaignDate" placeholder="Month Year (e.g., May 2024 or 05/2024)">
         </div>
 
-        <button id="generateUrl" class="primary-button">Open Campaign</button>
+        <button id="generateUrl" class="primary-button">Open Campaign Actuals</button>
 
         <div class="section">
             <h3>Switch Location:</h3>
@@ -49,27 +49,27 @@
         </div>
 
         <div class="section">
-            <div id="settingsToggle" class="collapsible">
+            <div id="settingsToggle" class="collapsible" role="button" tabindex="0" aria-expanded="false" aria-controls="settingsContent">
                 <h3>Settings</h3>
-                <i class="fas fa-chevron-down"></i>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
             </div>
             <div id="settingsContent" class="collapsible-content">
                 <div class="toggle-container">
-                    <span>Replace Prisma Logo:</span>
+                    <label for="logoToggle">Replace Prisma Logo:</label>
                     <label class="toggle">
                         <input type="checkbox" id="logoToggle">
                         <span class="slider"></span>
                     </label>
                 </div>
                 <div class="toggle-container">
-                    <span>Enable Meta Reconciliation Reminder:</span>
+                    <label for="metaReminderToggle">Enable Meta Reconciliation Reminder:</label>
                     <label class="toggle">
                         <input type="checkbox" id="metaReminderToggle">
                         <span class="slider"></span>
                     </label>
                 </div>
                 <div class="toggle-container">
-                    <span>Enable Timesheet Reminder:</span>
+                    <label for="timesheetReminderToggle">Enable Timesheet Reminder:</label>
                     <label class="toggle">
                         <input type="checkbox" id="timesheetReminderToggle">
                         <span class="slider"></span>
@@ -78,29 +78,31 @@
                 <div id="reminderSettings" class="hidden-initially">
                     <p class="reminder-text"><em>Remind me on and at:</em></p>
                     <div class="select-container">
+                        <label for="reminderDay" class="sr-only">Reminder Day</label>
                         <select id="reminderDay">
                             <option value="Friday">Friday</option>
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
-                        </select>
+                            </select>
                     </div>
                     <div class="select-container">
+                         <label for="reminderTime" class="sr-only">Reminder Time</label>
                         <select id="reminderTime"></select>
                     </div>
-                    <div class="button-group">
-                    <button id="saveReminderSettings" class="nav-button">Save</button>
-                    <p id="reminderUpdateMessage" class="hidden-initially"></p>
-                      </div>
+                    <div class="button-group"> <button id="saveReminderSettings" class="nav-button" style="flex-grow: 1;">Save Reminder</button>
+                    </div>
+                     <p id="reminderUpdateMessage" class="hidden-initially" aria-live="polite"></p>
                 </div>
-                <button id="triggerTimesheetReminder" class="primary-button">Trigger Timesheet Reminder Now</button>
-                <button id="triggerMetaReminder" class="primary-button hidden-initially">Test Meta Reminder</button>
+                <button id="triggerTimesheetReminder" class="primary-button" style="margin-top: 10px;">Test Timesheet Reminder Now</button>
+                <button id="triggerMetaReminder" class="primary-button hidden-initially" style="margin-top: 5px;">Test Meta Reminder (Prisma Page)</button>
             </div>
         </div>
     </div>
 
     <div class="feedback">
-        <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Submit feedback / compliment the chef here!</a>
+        <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicName=PrismaToolsFeedback" target="_blank" rel="noopener noreferrer">Submit feedback / compliment the chef here!</a>
     </div>
 
-    <script src="popup.js"></script></body>
+    <script src="popup.js"></script>
+</body>
 </html>

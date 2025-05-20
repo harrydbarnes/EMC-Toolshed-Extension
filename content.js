@@ -176,14 +176,12 @@ function createMetaReminderPopup() {
             // First time shown today, implement delay
             closeButton.disabled = true;
             let secondsLeft = 5;
-            // Corrected line:
-            closeButton.textContent = `Got it! (${secondsLeft}s)`;
+            closeButton.textContent = \`Got it! (\${secondsLeft}s)\`;
 
             countdownInterval = setInterval(() => {
                 secondsLeft--;
                 if (secondsLeft > 0) {
-                    // Corrected line:
-                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
+                    closeButton.textContent = \`Got it! (\${secondsLeft}s)\`;
                 } else {
                     clearInterval(countdownInterval);
                     closeButton.textContent = 'Got it!';
@@ -201,7 +199,6 @@ function createMetaReminderPopup() {
             console.log("[ContentScript Prisma] Meta reminder popup closed by user.");
         });
     }
-    // Auto-close timeout has been removed. Popup stays until user clicks "Got it!".
 }
 
 

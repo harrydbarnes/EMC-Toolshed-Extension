@@ -36,6 +36,29 @@ function checkAndReplaceLogo() {
 
 function addReminderStyles() {
     if (document.getElementById('reminder-styles')) {
+        // If styles are already added, ensure the overlay style is present or add it
+        const existingStyles = document.getElementById('reminder-styles');
+        if (!existingStyles.textContent.includes('.reminder-overlay')) {
+            existingStyles.textContent += `
+                .reminder-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.2); /* 20% dim */
+                    z-index: 9999; /* Below popup, above page content */
+                    animation: fadeInOverlay 0.3s ease-in-out;
+                }
+                @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+
+                #meta-reminder-close:disabled {
+                    background-color: #cccccc;
+                    color: #666666;
+                    cursor: not-allowed;
+                }
+            `;
+        }
         return;
     }
     const reminderStyles = document.createElement('style');
@@ -64,16 +87,35 @@ function addReminderStyles() {
         #meta-reminder-popup ul, #ias-reminder-popup ul { text-align: left; margin-bottom: 20px; font-size: 14px; padding-left: 20px; }
         #meta-reminder-popup li, #ias-reminder-popup li { margin-bottom: 5px; }
         #meta-reminder-close, #ias-reminder-close { background-color: white; color: #ff4087; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s, transform 0.1s; }
-        #meta-reminder-close:hover, #ias-reminder-close:hover { background-color: #f8f8f8; animation: vibrate 0.3s ease-in-out; }
-        #meta-reminder-close:active, #ias-reminder-close:active { transform: translateY(2px); }
+        #meta-reminder-close:hover:not(:disabled), #ias-reminder-close:hover { background-color: #f8f8f8; animation: vibrate 0.3s ease-in-out; }
+        #meta-reminder-close:active:not(:disabled), #ias-reminder-close:active { transform: translateY(2px); }
+        #meta-reminder-close:disabled {
+            background-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+        }
         @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
         @keyframes vibrate { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-2px); } 40% { transform: translateX(2px); } 60% { transform: translateX(-1px); } 80% { transform: translateX(1px); } }
+
+        /* Dimming Overlay */
+        .reminder-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.2); /* 20% dim */
+            z-index: 9999; /* Below popup, above page content */
+            animation: fadeInOverlay 0.3s ease-in-out;
+        }
+        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
     `;
     document.head.appendChild(reminderStyles);
 }
 
 let metaReminderDismissed = false;
 let iasReminderDismissed = false;
+// Removed metaPopupTimeoutId as it's no longer used
 
 function createMetaReminderPopup() {
     if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
@@ -81,6 +123,13 @@ function createMetaReminderPopup() {
         return;
     }
     addReminderStyles();
+
+    // Create and add the overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay';
+    overlay.id = 'meta-reminder-overlay';
+    document.body.appendChild(overlay);
+
     const popup = document.createElement('div');
     popup.id = 'meta-reminder-popup';
     popup.innerHTML = `
@@ -91,29 +140,63 @@ function createMetaReminderPopup() {
     `;
     document.body.appendChild(popup);
     console.log("[ContentScript Prisma] Meta reminder popup CREATED.");
+
     const closeButton = document.getElementById('meta-reminder-close');
+    let countdownInterval; // For the 5-second timer
+
+    const cleanupPopup = () => {
+        if (popup.parentNode === document.body) {
+            document.body.removeChild(popup);
+        }
+        if (overlay.parentNode === document.body) {
+            document.body.removeChild(overlay);
+        }
+        metaReminderDismissed = true; // Set dismissed flag
+        clearInterval(countdownInterval); // Clear countdown interval if active
+        console.log("[ContentScript Prisma] Meta reminder popup and overlay removed.");
+    };
+
     if (closeButton) {
+        const today = new Date().toDateString();
+        const lastShownDate = localStorage.getItem('metaReminderLastShown');
+
+        if (lastShownDate !== today) {
+            // First time shown today, implement delay
+            closeButton.disabled = true;
+            let secondsLeft = 5;
+            closeButton.textContent = `Got it! (${secondsLeft}s)`;
+
+            countdownInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft > 0) {
+                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
+                } else {
+                    clearInterval(countdownInterval);
+                    closeButton.textContent = 'Got it!';
+                    closeButton.disabled = false;
+                    localStorage.setItem('metaReminderLastShown', today); // Store today's date
+                }
+            }, 1000);
+        } else {
+            // Already shown today, button is active immediately
+            closeButton.disabled = false;
+        }
+
         closeButton.addEventListener('click', function() {
-            if (popup.parentNode === document.body) { // Check if still in DOM
-                document.body.removeChild(popup);
-            }
-            metaReminderDismissed = true;
+            cleanupPopup();
             console.log("[ContentScript Prisma] Meta reminder popup closed by user.");
         });
     }
-    setTimeout(() => {
-        if (document.getElementById('meta-reminder-popup') && popup.parentNode === document.body) {
-            document.body.removeChild(popup);
-            console.log("[ContentScript Prisma] Meta reminder popup auto-closed.");
-        }
-    }, 15000);
+    // Auto-close timeout has been removed. Popup stays until user clicks "Got it!".
 }
+
 
 function createIASReminderPopup() {
     if (document.getElementById('ias-reminder-popup') || iasReminderDismissed) {
         return;
     }
-    addReminderStyles();
+    addReminderStyles(); // Ensure styles are present
+
     const popup = document.createElement('div');
     popup.id = 'ias-reminder-popup';
     popup.innerHTML = `
@@ -123,49 +206,65 @@ function createIASReminderPopup() {
         <button id="ias-reminder-close">Got it!</button>
     `;
     document.body.appendChild(popup);
+
     const closeButton = document.getElementById('ias-reminder-close');
+
+    const cleanupIASPopup = () => {
+        if (popup.parentNode === document.body) {
+            document.body.removeChild(popup);
+        }
+        iasReminderDismissed = true;
+    };
+
     if (closeButton) {
         closeButton.addEventListener('click', function() {
-            if (popup.parentNode === document.body) {
-                document.body.removeChild(popup);
-            }
-            iasReminderDismissed = true;
+            cleanupIASPopup();
         });
     }
+
+    // Auto-close IAS reminder (kept as per original, modify if IAS should also persist)
     setTimeout(() => {
-        if (document.getElementById('ias-reminder-popup') && popup.parentNode === document.body) {
-            document.body.removeChild(popup);
+        if (document.getElementById('ias-reminder-popup')) {
+            cleanupIASPopup();
         }
     }, 15000);
 }
 
 function checkForMetaConditions() {
+    if (metaReminderDismissed && !window.forceShowMetaReminder) return;
+
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
-        if (data.metaReminderEnabled !== false && !metaReminderDismissed) {
+        if (data.metaReminderEnabled !== false) {
             const pageText = document.body.innerText;
             if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
-                createMetaReminderPopup();
+                 if (!document.getElementById('meta-reminder-popup')) {
+                    createMetaReminderPopup();
+                 }
             }
         }
     });
+    window.forceShowMetaReminder = false;
 }
 
 function checkForIASConditions() {
-    if (!iasReminderDismissed) {
-        const pageText = document.body.innerText;
-        if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
+    if (iasReminderDismissed) return;
+
+    const pageText = document.body.innerText;
+    if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
+         if (!document.getElementById('ias-reminder-popup')) {
             createIASReminderPopup();
-        }
+         }
     }
 }
 
 let currentUrlForDismissFlags = window.location.href;
 setInterval(() => {
     if (currentUrlForDismissFlags !== window.location.href) {
+        console.log("[ContentScript Prisma] URL changed, reminder dismissal flags reset.");
         metaReminderDismissed = false;
         iasReminderDismissed = false;
+        // Removed clearTimeout for metaPopupTimeoutId as it's no longer used
         currentUrlForDismissFlags = window.location.href;
-        // console.log("[ContentScript Prisma] URL changed, reminder dismissal flags reset.");
     }
 }, 500);
 
@@ -174,7 +273,6 @@ function shouldReplaceLogoOnThisPage() {
     return url.includes('groupmuk-aura.mediaocean.com') || url.includes('groupmuk-prisma.mediaocean.com');
 }
 
-// Ensure DOM is ready for some operations, though listener can be added immediately.
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mainContentScriptInit);
 } else {
@@ -193,45 +291,40 @@ function mainContentScriptInit() {
 
     const observer = new MutationObserver(function(mutations) {
         if (shouldReplaceLogoOnThisPage()) {
+            checkAndReplaceLogo();
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'childList') {
                     setTimeout(() => {
                         checkForMetaConditions();
                         checkForIASConditions();
-                    }, 100);
+                    }, 300);
                 }
             });
-            // Also check logo again on mutations in case banner reloads
-            checkAndReplaceLogo();
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-
-// Message listener
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    console.log("[ContentScript Prisma] Message received in listener:", request); // Log ALL incoming messages to content script
+    console.log("[ContentScript Prisma] Message received in listener:", request);
 
     if (request.action === "checkLogoReplaceEnabled") {
         console.log("[ContentScript Prisma] 'checkLogoReplaceEnabled' action received.");
         if (shouldReplaceLogoOnThisPage()) {
             checkAndReplaceLogo();
         }
-        sendResponse({status: "Logo check processed by content script"}); // Good practice to send a response
+        sendResponse({status: "Logo check processed by content script"});
     } else if (request.action === "showMetaReminder") {
         console.log("[ContentScript Prisma] 'showMetaReminder' action received. Attempting to create popup.");
         metaReminderDismissed = false;
-        createMetaReminderPopup();
+        window.forceShowMetaReminder = true;
+        checkForMetaConditions();
         sendResponse({status: "Meta reminder shown by content script"});
         console.log("[ContentScript Prisma] Response sent for 'showMetaReminder'.");
     } else {
         console.log("[ContentScript Prisma] Unknown action received or no action taken:", request.action);
-        // It's important to still call sendResponse or return true if you might respond later,
-        // but if no response is ever sent for this message, it's okay not to.
-        // However, to be safe with mixed message types, 'return true' is generally good.
     }
-    return true; // Crucial: Keep the message channel open for asynchronous sendResponse.
+    return true;
 });
 
 console.log("[ContentScript Prisma] Event listeners, including onMessage, should be set up now.");

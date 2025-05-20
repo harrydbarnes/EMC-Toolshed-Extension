@@ -134,20 +134,8 @@ function createMetaReminderPopup() {
     popup.id = 'meta-reminder-popup';
     popup.innerHTML = `
         <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
-        <p>When reconciling integrated Meta lines, please:</p>
-        <ul>
-            <li>Verify the date ranges match between Prisma and Meta
-                <ul style="list-style-type: circle; margin-left: 20px;">
-                    <li>If spend falls outside of Prisma date ranges, Prisma will miss this spend</li>
-                    <li>You either need to match dates here or need another booking to cover this</li>
-                </ul>
-            </li>
-            <li>Actualise to the 'Supplier' option</li>
-            <li>Self-accept the IO</li>
-            <li>Push through on trafficking tab to Meta</li>
-            <li>Verify success of the push, every time</li>
-            <li>Do not just leave the page!</li>
-        </ul>
+        <p>When reconciling Meta, please:</p>
+        <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
         <button id="meta-reminder-close">Got it!</button>
     `;
     document.body.appendChild(popup);
@@ -176,12 +164,12 @@ function createMetaReminderPopup() {
             // First time shown today, implement delay
             closeButton.disabled = true;
             let secondsLeft = 5;
-            closeButton.textContent = \`Got it! (\${secondsLeft}s)\`;
+            closeButton.textContent = `Got it! (${secondsLeft}s)`;
 
             countdownInterval = setInterval(() => {
                 secondsLeft--;
                 if (secondsLeft > 0) {
-                    closeButton.textContent = \`Got it! (\${secondsLeft}s)\`;
+                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
                 } else {
                     clearInterval(countdownInterval);
                     closeButton.textContent = 'Got it!';
@@ -199,6 +187,7 @@ function createMetaReminderPopup() {
             console.log("[ContentScript Prisma] Meta reminder popup closed by user.");
         });
     }
+    // Auto-close timeout has been removed. Popup stays until user clicks "Got it!".
 }
 
 

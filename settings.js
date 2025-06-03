@@ -305,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add this within the DOMContentLoaded listener in settings.js, after Aura Reminders logic
 
+        const reminderNameInput = document.getElementById('reminderName'); // Added
         const reminderUrlPatternInput = document.getElementById('reminderUrlPattern');
         const reminderTextTriggerInput = document.getElementById('reminderTextTrigger');
         const reminderPopupMessageInput = document.getElementById('reminderPopupMessage');
@@ -338,21 +339,67 @@ document.addEventListener('DOMContentLoaded', function() {
                     li.style.alignItems = 'center';
 
                     const textDiv = document.createElement('div');
+                    textDiv.style.flexGrow = '1'; // Allow text to take available space
                     textDiv.innerHTML = `
+                        <strong>Name:</strong> ${escapeHTML(reminder.name || 'N/A')}<br>
                         <strong>URL Pattern:</strong> ${escapeHTML(reminder.urlPattern)}<br>
                         <strong>Trigger Text:</strong> ${reminder.textTrigger ? escapeHTML(reminder.textTrigger) : '<em>N/A</em>'}<br>
                         <strong>Message:</strong> ${escapeHTML(reminder.popupMessage)}
                     `;
 
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.style.display = 'flex';
+                    controlsDiv.style.alignItems = 'center';
+                    controlsDiv.style.marginLeft = '10px'; // Add some space between text and controls
+
+                    const toggleLabel = document.createElement('label');
+                    toggleLabel.classList.add('toggle');
+
+                    const toggleInput = document.createElement('input');
+                    toggleInput.type = 'checkbox';
+                    toggleInput.checked = reminder.enabled;
+                    toggleInput.dataset.reminderId = reminder.id;
+
+                    const sliderSpan = document.createElement('span');
+                    sliderSpan.classList.add('slider');
+
+                    toggleLabel.appendChild(toggleInput);
+                    toggleLabel.appendChild(sliderSpan);
+
+                    toggleInput.addEventListener('change', function(event) {
+                        const reminderIdToToggle = event.target.dataset.reminderId;
+                        const isEnabled = event.target.checked;
+                        chrome.storage.sync.get({customReminders: []}, function(data) {
+                            let reminders = data.customReminders;
+                            const reminderIndex = reminders.findIndex(r => r.id === reminderIdToToggle);
+                            if (reminderIndex !== -1) {
+                                reminders[reminderIndex].enabled = isEnabled;
+                                chrome.storage.sync.set({customReminders: reminders}, function() {
+                                    if (chrome.runtime.lastError) {
+                                        console.error("Error updating custom reminder enabled state:", chrome.runtime.lastError);
+                                    } else {
+                                        console.log('Custom reminder enabled state updated for ID:', reminderIdToToggle, 'to', isEnabled);
+                                        // Notify content scripts about the update
+                                        chrome.runtime.sendMessage({ action: "customRemindersUpdated" }).catch(e => console.log("Error sending customRemindersUpdated message:", e));
+                                    }
+                                });
+                            }
+                        });
+                    });
+
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
                     deleteButton.classList.add('settings-button');
-                    deleteButton.style.backgroundColor = '#dc3545'; // Red color for delete
-                    deleteButton.dataset.index = index;
+                    deleteButton.style.backgroundColor = '#dc3545';
+                    deleteButton.style.marginLeft = '10px'; // Space between toggle and delete button
+                    deleteButton.dataset.index = index; // Keep using index for delete as it's simpler for splice
                     deleteButton.addEventListener('click', deleteCustomReminder);
 
+                    controlsDiv.appendChild(toggleLabel);
+                    controlsDiv.appendChild(deleteButton);
+
                     li.appendChild(textDiv);
-                    li.appendChild(deleteButton);
+                    li.appendChild(controlsDiv);
                     ul.appendChild(li);
                 });
                 customRemindersListDiv.appendChild(ul);
@@ -389,12 +436,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Event listener for Save Custom Reminder button
         if (saveCustomReminderButton) {
             saveCustomReminderButton.addEventListener('click', function() {
+                const reminderName = reminderNameInput.value.trim(); // Added
                 const urlPattern = reminderUrlPatternInput.value.trim();
                 const textTrigger = reminderTextTriggerInput.value.trim();
                 const popupMessage = reminderPopupMessageInput.value.trim();
 
-                if (!urlPattern || !popupMessage) {
-                    customReminderStatus.textContent = 'URL Pattern and Popup Message are required.';
+                if (!reminderName || !urlPattern || !popupMessage) { // Updated validation
+                    customReminderStatus.textContent = 'Reminder Name, URL Pattern and Popup Message are required.';
                     customReminderStatus.style.color = 'red';
                     customReminderStatus.classList.remove('hidden-initially');
                     setTimeout(() => customReminderStatus.classList.add('hidden-initially'), 3000);
@@ -403,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const newReminder = {
                     id: 'custom_' + Date.now(), // Unique ID for the reminder
+                    name: reminderName, // Added
                     urlPattern: urlPattern,
                     textTrigger: textTrigger,
                     popupMessage: popupMessage,
@@ -421,6 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Custom reminder saved.');
                             customReminderStatus.textContent = 'Custom reminder saved!';
                             customReminderStatus.style.color = 'green';
+                            reminderNameInput.value = ''; // Added
                             reminderUrlPatternInput.value = '';
                             reminderTextTriggerInput.value = '';
                             reminderPopupMessageInput.value = '';

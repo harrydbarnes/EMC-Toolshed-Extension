@@ -1,5 +1,17 @@
 console.log("[ContentScript Prisma] Script Injected on URL:", window.location.href, "at", new Date().toLocaleTimeString());
 
+// Global variables for custom reminders
+let activeCustomReminders = [];
+let shownCustomReminderIds = new Set();
+
+// Utility to escape HTML for display (used by custom reminder popup)
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
 function replaceLogo() {
     const specificSvg = document.querySelector('i.logo > svg[width="20"][height="28"]');
     const logoContainer = specificSvg ? specificSvg.parentElement : null; // Should be the <i> tag
@@ -291,14 +303,147 @@ setInterval(() => {
         console.log("[ContentScript Prisma] URL changed, reminder dismissal flags reset.");
         metaReminderDismissed = false;
         iasReminderDismissed = false;
-        // Removed clearTimeout for metaPopupTimeoutId as it's no longer used
+        shownCustomReminderIds.clear(); // Reset shown custom reminders on URL change
         currentUrlForDismissFlags = window.location.href;
+        // Potentially re-fetch or re-check custom reminders if needed immediately on SPA navigation
+        // For now, MutationObserver and initial load handle most cases.
+        // checkCustomReminders(); // Optional: check immediately on navigation
     }
 }, 500);
 
+// --- Custom Reminder Functions ---
+
+function fetchCustomReminders() {
+    chrome.storage.sync.get({customReminders: []}, function(data) {
+        if (chrome.runtime.lastError) {
+            console.error("[ContentScript Prisma] Error fetching custom reminders:", chrome.runtime.lastError);
+            activeCustomReminders = [];
+            return;
+        }
+        activeCustomReminders = data.customReminders.filter(r => r.enabled);
+        // console.log("[ContentScript Prisma] Fetched active custom reminders:", activeCustomReminders);
+        // Resetting shownCustomReminderIds here might be too broad if only one reminder setting changed.
+        // However, the message listener for "customRemindersUpdated" already clears it, which is often sufficient.
+    });
+}
+
+function wildcardToRegex(pattern) {
+    // Escape regex special chars, then convert wildcard * to .*
+    const escapedPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('^' + escapedPattern.replace(/\*/g, '.*') + '$');
+}
+
+function createCustomReminderPopup(reminder) {
+    const popupId = 'custom-reminder-popup-' + reminder.id;
+    if (document.getElementById(popupId)) {
+        // console.log(`[ContentScript Prisma] Custom reminder popup for ${reminder.name} already exists or shown.`);
+        return;
+    }
+
+    addReminderStyles(); // Ensure styles are loaded
+
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay';
+    overlay.id = 'custom-reminder-overlay-' + reminder.id;
+    // Ensure overlay doesn't stack if multiple custom popups appear (though shownCustomReminderIds should prevent this)
+    if (!document.querySelector('.reminder-overlay[id^="custom-reminder-overlay-"]')) {
+        document.body.appendChild(overlay);
+    } else {
+        // If an overlay for a custom reminder is already there, just ensure this new popup is above it.
+        // This scenario should be rare due to shownCustomReminderIds logic.
+        overlay.style.zIndex = (parseInt(document.querySelector('.reminder-overlay[id^="custom-reminder-overlay-"]').style.zIndex || '9999', 10) + 1).toString();
+        document.body.appendChild(overlay);
+    }
+
+
+    const popup = document.createElement('div');
+    popup.id = popupId;
+    // Basic styling - consider creating a shared class if many popups adopt this
+    popup.style.fontFamily = "'Montserrat', sans-serif";
+    popup.style.position = "fixed";
+    popup.style.zIndex = (parseInt(overlay.style.zIndex, 10) + 1).toString(); // Above its own overlay
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.backgroundColor = reminder.color || "#336699"; // Allow custom color or default
+    popup.style.color = "white";
+    popup.style.padding = "20px";
+    popup.style.borderRadius = "8px";
+    popup.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+    popup.style.maxWidth = "450px"; // Slightly wider for more text
+    popup.style.textAlign = "center";
+    popup.style.animation = "fadeIn 0.3s ease-in-out";
+
+    popup.innerHTML = `
+        <h3 style="margin-top:0; font-size: 1.2em;">${escapeHTML(reminder.name)}</h3>
+        <p style="font-size: 1em; margin-bottom: 15px;">${escapeHTML(reminder.popupMessage)}</p>
+        <button id="custom-reminder-close-${reminder.id}" class="settings-button" style="background-color: white; color: ${reminder.color || '#336699'}; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer;">Got it!</button>
+    `;
+    document.body.appendChild(popup);
+
+    const closeButton = document.getElementById('custom-reminder-close-' + reminder.id);
+    closeButton.addEventListener('click', () => {
+        if (popup.parentNode) popup.parentNode.removeChild(popup);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        // Do not remove from shownCustomReminderIds here, so it doesn't reappear on the same page load after dismissal
+        // shownCustomReminderIds.delete(reminder.id);
+        console.log(`[ContentScript Prisma] Custom reminder popup for ${reminder.name} closed by user.`);
+    });
+    console.log(`[ContentScript Prisma] Custom reminder popup created for: ${reminder.name}`);
+}
+
+
+function checkCustomReminders() {
+    if (activeCustomReminders.length === 0) {
+        // console.log("[ContentScript Prisma] No active custom reminders to check.");
+        return;
+    }
+
+    const currentUrl = window.location.href;
+    const pageText = document.body.innerText.toLowerCase(); // For case-insensitive search
+
+    for (const reminder of activeCustomReminders) {
+        if (shownCustomReminderIds.has(reminder.id)) {
+            // console.log(`[ContentScript Prisma] Reminder ${reminder.name} already shown this session.`);
+            continue;
+        }
+
+        const urlRegex = wildcardToRegex(reminder.urlPattern);
+        if (urlRegex.test(currentUrl)) {
+            // console.log(`[ContentScript Prisma] URL match for reminder: ${reminder.name}`);
+            let textMatch = false;
+            if (reminder.textTrigger && reminder.textTrigger.trim() !== '') {
+                const triggerTexts = reminder.textTrigger.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+                if (triggerTexts.length > 0) {
+                    if (triggerTexts.some(text => pageText.includes(text))) {
+                        textMatch = true;
+                        // console.log(`[ContentScript Prisma] Text match for reminder: ${reminder.name}`);
+                    }
+                } else {
+                     textMatch = true; // Text trigger was defined but empty after trim/split (e.g. ", ,")
+                }
+            } else {
+                textMatch = true; // No text trigger defined, URL match is enough
+                // console.log(`[ContentScript Prisma] No text trigger for reminder: ${reminder.name}, URL match sufficient.`);
+            }
+
+            if (textMatch) {
+                console.log(`[ContentScript Prisma] Conditions met for custom reminder: ${reminder.name}. Creating popup.`);
+                createCustomReminderPopup(reminder);
+                shownCustomReminderIds.add(reminder.id);
+                // Optional: break here if only one custom reminder should be shown at a time
+                // break;
+            }
+        }
+    }
+}
+
+// --- End Custom Reminder Functions ---
+
 function shouldReplaceLogoOnThisPage() {
     const url = window.location.href;
-    return url.includes('groupmuk-aura.mediaocean.com') || url.includes('groupmuk-prisma.mediaocean.com');
+    // Updated condition:
+    return url.includes('aura.mediaocean.com') || url.includes('prisma.mediaocean.com');
 }
 
 if (document.readyState === 'loading') {
@@ -310,24 +455,24 @@ if (document.readyState === 'loading') {
 function mainContentScriptInit() {
     console.log("[ContentScript Prisma] DOMContentLoaded or already loaded. Initializing checks.");
     if (shouldReplaceLogoOnThisPage()) {
+        fetchCustomReminders(); // Fetch initial set of custom reminders
         checkAndReplaceLogo();
         setTimeout(() => {
             checkForMetaConditions();
             checkForIASConditions();
+            checkCustomReminders(); // Initial check for custom reminders
         }, 2000);
     }
 
     const observer = new MutationObserver(function(mutations) {
         if (shouldReplaceLogoOnThisPage()) {
             checkAndReplaceLogo();
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList') {
-                    setTimeout(() => {
-                        checkForMetaConditions();
-                        checkForIASConditions();
-                    }, 300);
-                }
-            });
+            // No need to iterate mutations for these checks, just run them if any mutation occurred
+            setTimeout(() => { // Debounce/delay slightly
+                checkForMetaConditions();
+                checkForIASConditions();
+                checkCustomReminders(); // Check for custom reminders on DOM changes
+            }, 300);
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
@@ -349,10 +494,16 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         checkForMetaConditions();
         sendResponse({status: "Meta reminder shown by content script"});
         console.log("[ContentScript Prisma] Response sent for 'showMetaReminder'.");
+    } else if (request.action === "customRemindersUpdated") {
+        console.log("[ContentScript Prisma] Received 'customRemindersUpdated' message. Re-fetching reminders.");
+        fetchCustomReminders();
+        shownCustomReminderIds.clear(); // Allow all reminders to be shown again as settings/list might have changed
+        checkCustomReminders(); // Optional: re-check immediately after update
+        sendResponse({status: "Custom reminders re-fetched and IDs reset by content script"});
     } else {
         console.log("[ContentScript Prisma] Unknown action received or no action taken:", request.action);
     }
-    return true;
+    return true; // Keep the message channel open for asynchronous response if needed
 });
 
 console.log("[ContentScript Prisma] Event listeners, including onMessage, should be set up now.");

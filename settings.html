@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prisma Tools Settings</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap">
     <link rel="stylesheet" href="settings.css">
     <!-- It's good practice to link a specific CSS for the settings page if major styling differences are expected -->
     <!-- <link rel="stylesheet" href="settings.css"> -->
@@ -72,12 +73,16 @@
         <section id="create-reminder">
             <h2>Create Custom Reminder</h2>
             <div>
+                <label for="reminderName">Reminder Name:</label>
+                <input type="text" id="reminderName" placeholder="e.g., Snapchat Task">
+            </div>
+            <div>
                 <label for="reminderUrlPattern">URL Pattern (e.g., *://*.example.com/path*):</label>
                 <input type="text" id="reminderUrlPattern" placeholder="*://*.example.com/*">
             </div>
             <div>
                 <label for="reminderTextTrigger">Text to look for on site (leave blank if URL match is enough):</label>
-                <input type="text" id="reminderTextTrigger" placeholder="e.g., 'Submit Order'">
+                <input type="text" id="reminderTextTrigger" placeholder="e.g., 'Order Complete, Submitted, Thank You'">
             </div>
             <div>
                 <label for="reminderPopupMessage">Popup message to display:</label>

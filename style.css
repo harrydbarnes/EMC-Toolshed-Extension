@@ -358,3 +358,32 @@ select:focus {
 .hidden-initially {
     display: none;
 }
+
+/* Revised styles for settings link in style.css */
+
+.settings-link-container {
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+a.settings-page-link {
+    color: #007bff; /* Using a common blue link color, can be adjusted */
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 500; /* Or bold, depending on desired emphasis */
+    cursor: pointer;
+    display: inline-block;
+    transition: color 0.2s ease-in-out; /* Transition for color change */
+}
+
+a.settings-page-link:hover {
+    color: #0056b3; /* Darken text color on hover */
+    text-decoration: underline; /* Optional: underline on hover for more link affordance */
+}
+
+a.settings-page-link:active {
+    color: #004085;
+    transform: translateY(1px); /* Slight press effect */
+}

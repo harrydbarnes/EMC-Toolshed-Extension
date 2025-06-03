@@ -1,25 +1,53 @@
 console.log("[ContentScript Prisma] Script Injected on URL:", window.location.href, "at", new Date().toLocaleTimeString());
 
 function replaceLogo() {
-    const logoElement = document.querySelector('mo-banner.hydrated .logo');
-    if (logoElement) {
-        const newLogo = document.createElement('img');
-        newLogo.src = chrome.runtime.getURL('icon.png');
-        newLogo.style.width = '32px';
-        newLogo.style.height = '32px';
-        newLogo.className = 'custom-logo';
-        logoElement.parentNode.replaceChild(newLogo, logoElement);
-        // console.log("[ContentScript Prisma] Logo replaced.");
+    const specificSvg = document.querySelector('i.logo > svg[width="20"][height="28"]');
+    const logoContainer = specificSvg ? specificSvg.parentElement : null; // Should be the <i> tag
+
+    if (logoContainer) {
+        // Check if custom logo already exists by checking for our specific class within the container
+        if (logoContainer.querySelector('.custom-prisma-logo')) {
+            return; // Already replaced
+        }
+
+        // Store original content (the SVG itself) if not already stored
+        if (!logoContainer.dataset.originalSvgContent && specificSvg) {
+            logoContainer.dataset.originalSvgContent = specificSvg.outerHTML;
+        }
+
+        // Remove the original SVG
+        if (specificSvg) {
+            specificSvg.remove();
+        }
+
+        const newLogoImg = document.createElement('img');
+        newLogoImg.src = chrome.runtime.getURL('icon.png');
+        newLogoImg.style.width = '32px'; // Or use dimensions from the original SVG if desired
+        newLogoImg.style.height = '28px'; // Match height of original SVG container
+        newLogoImg.style.objectFit = 'contain';
+        newLogoImg.className = 'custom-prisma-logo';
+
+        logoContainer.appendChild(newLogoImg);
+        // console.log("[ContentScript Prisma] Prisma logo SVG replaced with custom image.");
     }
 }
 
 function restoreOriginalLogo() {
-    const customLogo = document.querySelector('mo-banner.hydrated .custom-logo');
-    if (customLogo) {
-        const originalLogo = document.createElement('i');
-        originalLogo.className = 'logo';
-        customLogo.parentNode.replaceChild(originalLogo, customLogo);
-        // console.log("[ContentScript Prisma] Original logo restored.");
+    const customLogoImg = document.querySelector('i.logo > img.custom-prisma-logo');
+    if (customLogoImg) {
+        const logoContainer = customLogoImg.parentElement; // The <i> tag
+        if (logoContainer && logoContainer.dataset.originalSvgContent) {
+            customLogoImg.remove(); // Remove the custom image
+            // Prepend original SVG. Ensure it's not added multiple times if logic re-runs.
+            if (!logoContainer.querySelector('svg[width="20"][height="28"]')) {
+                 logoContainer.innerHTML = logoContainer.dataset.originalSvgContent + logoContainer.innerHTML;
+            }
+            // console.log("[ContentScript Prisma] Original Prisma SVG logo restored from stored content.");
+        } else if (logoContainer) {
+            // Fallback if original content wasn't stored: just remove the custom logo
+            customLogoImg.remove();
+            // console.log("[ContentScript Prisma] Custom logo image removed (no stored original SVG). Page may need refresh for original logo.");
+        }
     }
 }
 

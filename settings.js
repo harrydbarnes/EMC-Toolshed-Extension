@@ -1,0 +1,482 @@
+// Prepend to settings.js or ensure it's within DOMContentLoaded
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Settings page loaded');
+
+    const logoToggle = document.getElementById('logoToggle');
+
+    // Load saved state for logo toggle
+    chrome.storage.sync.get('logoReplaceEnabled', function(data) {
+        if (logoToggle) {
+            if (data.logoReplaceEnabled === undefined) {
+                // Default to true if no setting is stored
+                logoToggle.checked = true;
+                chrome.storage.sync.set({logoReplaceEnabled: true});
+            } else {
+                logoToggle.checked = data.logoReplaceEnabled;
+            }
+        }
+    });
+
+    // Event listener for logo toggle
+    if (logoToggle) {
+        logoToggle.addEventListener('change', function() {
+            const isEnabled = this.checked;
+            chrome.storage.sync.set({logoReplaceEnabled: isEnabled}, function() {
+                console.log('Logo replacement setting saved:', isEnabled);
+                // Send message to active tabs to update logo status
+                chrome.tabs.query({url: ["*://*.mediaocean.com/*"]}, function(tabs) { // Query for Prisma/Aura URLs
+                    tabs.forEach(tab => {
+                        if (tab.id) {
+                            chrome.tabs.sendMessage(tab.id, {
+                                action: "checkLogoReplaceEnabled", // This action should be handled by content.js
+                                enabled: isEnabled
+                            }, function(response) {
+                                if (chrome.runtime.lastError) {
+                                    // console.warn("Could not send logo toggle message to tab ID " + tab.id + ":", chrome.runtime.lastError.message);
+                                } else {
+                                    // console.log("Logo toggle message sent to tab ID " + tab.id + ", response:", response?.status);
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+        });
+    }
+
+    // Added code for Prisma Reminders
+    const metaReminderToggle = document.getElementById('metaReminderToggle');
+    const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
+    const metaTestInfo = document.getElementById('metaTestInfo');
+
+    // Load saved state for Meta reminder toggle
+    chrome.storage.sync.get('metaReminderEnabled', function(data) {
+        if (metaReminderToggle) {
+            if (data.metaReminderEnabled === undefined) {
+                // Default to true if no setting is stored
+                metaReminderToggle.checked = true;
+                chrome.storage.sync.set({metaReminderEnabled: true});
+            } else {
+                metaReminderToggle.checked = data.metaReminderEnabled;
+            }
+        }
+    });
+
+    // Event listener for Meta reminder toggle
+    if (metaReminderToggle) {
+        metaReminderToggle.addEventListener('change', function() {
+            const isEnabled = this.checked;
+            chrome.storage.sync.set({metaReminderEnabled: isEnabled}, function() {
+                console.log('Meta reminder setting saved:', isEnabled);
+                // No immediate message to content script is typically needed for this toggle,
+                // as content.js checks storage when it runs or when specific conditions are met.
+            });
+        });
+    }
+
+    // Event listener for Trigger Meta Reminder button
+    if (triggerMetaReminderButton) {
+        triggerMetaReminderButton.addEventListener('click', function() {
+            console.log("[Settings] 'Test Meta Reminder' button clicked.");
+            if (metaTestInfo) metaTestInfo.classList.remove('hidden-initially');
+
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (tabs && tabs.length > 0 && tabs[0] && tabs[0].id) {
+                    const currentTab = tabs[0];
+                    if (currentTab.url && currentTab.url.startsWith("https://groupmuk-prisma.mediaocean.com/")) {
+                        console.log("[Settings] Sending 'showMetaReminder' message to active Prisma tab ID:", currentTab.id);
+                        chrome.tabs.sendMessage(currentTab.id, {
+                            action: "showMetaReminder" // This action should be handled by content.js
+                        }, function(response) {
+                            if (chrome.runtime.lastError) {
+                                console.error("[Settings] Error sending message to tab (Meta Reminder):", chrome.runtime.lastError.message);
+                                alert("Could not send message to the active Prisma tab. Ensure you are on a Prisma page and try again, or that the page has finished loading.");
+                            } else {
+                                console.log("[Settings] Meta reminder triggered via tab:", response?.status || "No response from tab");
+                                // alert("Meta test reminder sent to the active Prisma tab.");
+                            }
+                        });
+                    } else {
+                        console.log("[Settings] Active tab is not a Prisma page. Informing user.");
+                        alert("The 'Test Meta Reminder' button works best when a Prisma page is currently active and selected. The reminder itself will only appear automatically on specific Prisma pages based on content.");
+                    }
+                } else {
+                    console.error("[Settings] No active tab found to send message for Meta Reminder.");
+                    alert("No active tab identified. Please open and select a Prisma tab to test the reminder.");
+                }
+            });
+        });
+    }
+    // End of new code for Prisma Reminders
+
+    // Add this within the DOMContentLoaded listener in settings.js, after Prisma Reminders logic
+
+        const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
+        const timesheetReminderSettingsDiv = document.getElementById('timesheetReminderSettings');
+        const reminderDaySelect = document.getElementById('reminderDay');
+        const reminderTimeSelect = document.getElementById('reminderTime');
+        const saveTimesheetReminderSettingsButton = document.getElementById('saveTimesheetReminderSettings');
+        const timesheetReminderUpdateMessage = document.getElementById('timesheetReminderUpdateMessage');
+        const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
+
+        function updateTimesheetTimeOptions(day) {
+            if (!reminderTimeSelect) return;
+            const currentSelectedTime = reminderTimeSelect.value;
+            reminderTimeSelect.innerHTML = '';
+            let startTime, endTime;
+
+            // Define time ranges based on day
+            if (day === 'Friday') {
+                startTime = 12 * 60; // 12:00 PM
+                endTime = 17 * 60;   // 5:00 PM
+            } else { // Monday - Thursday
+                startTime = 9 * 60;  // 9:00 AM
+                endTime = 17 * 60 + 30; // 5:30 PM
+            }
+
+            for (let i = startTime; i <= endTime; i += 15) { // 15-minute intervals
+                const hour = Math.floor(i / 60);
+                const minute = i % 60;
+                const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                const option = document.createElement('option');
+                option.value = timeString;
+                option.textContent = timeString;
+                reminderTimeSelect.appendChild(option);
+            }
+
+            // Restore previously selected/stored time
+            chrome.storage.sync.get('reminderTime', function(data) {
+                if (data.reminderTime && reminderTimeSelect.querySelector(`option[value="${data.reminderTime}"]`)) {
+                    reminderTimeSelect.value = data.reminderTime;
+                } else if (currentSelectedTime && reminderTimeSelect.querySelector(`option[value="${currentSelectedTime}"]`)) {
+                    reminderTimeSelect.value = currentSelectedTime;
+                } else {
+                    // Default to a sensible time if none stored for the current day
+                    if (day === 'Friday' && reminderTimeSelect.querySelector(`option[value="14:30"]`)) {
+                        reminderTimeSelect.value = "14:30";
+                    } else if (day !== 'Friday' && reminderTimeSelect.querySelector(`option[value="09:00"]`)) {
+                        reminderTimeSelect.value = "09:00";
+                    } else if (reminderTimeSelect.options.length > 0) {
+                        reminderTimeSelect.value = reminderTimeSelect.options[0].value; // Fallback to first option
+                    }
+                }
+            });
+        }
+
+        function updateTimesheetAlarm() {
+            if (!reminderDaySelect || !reminderTimeSelect || !reminderDaySelect.value || !reminderTimeSelect.value) {
+                console.warn("[Settings] Cannot update timesheet alarm, day or time not selected.");
+                return;
+            }
+            const dayValue = reminderDaySelect.value;
+            const timeValue = reminderTimeSelect.value;
+
+            chrome.storage.sync.set({reminderDay: dayValue, reminderTime: timeValue}, function() {
+                if (chrome.runtime.lastError) {
+                    console.error("[Settings] Error setting timesheet reminderDay/Time in storage:", chrome.runtime.lastError.message);
+                    return;
+                }
+                // Send message to background script to create/update the alarm
+                chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: dayValue, time: timeValue}, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Settings] Error sending createTimesheetAlarm message:", chrome.runtime.lastError.message);
+                        if (timesheetReminderUpdateMessage) {
+                            timesheetReminderUpdateMessage.textContent = "Error updating alarm.";
+                            timesheetReminderUpdateMessage.style.color = "red";
+                            timesheetReminderUpdateMessage.classList.remove('hidden-initially');
+                        }
+                    } else {
+                        console.log("[Settings] createTimesheetAlarm message sent, response:", response?.status);
+                        if (timesheetReminderUpdateMessage) {
+                            timesheetReminderUpdateMessage.textContent = `Reminder updated for ${dayValue} at ${timeValue}.`;
+                            timesheetReminderUpdateMessage.style.color = "green";
+                            timesheetReminderUpdateMessage.classList.remove('hidden-initially');
+                            setTimeout(() => {
+                                timesheetReminderUpdateMessage.classList.add('hidden-initially');
+                            }, 3000);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Load saved state for Timesheet reminder toggle and settings
+        chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
+            if (timesheetReminderToggle) {
+                timesheetReminderToggle.checked = data.timesheetReminderEnabled !== false; // Default to true
+                if (timesheetReminderSettingsDiv) {
+                    timesheetReminderSettingsDiv.style.display = timesheetReminderToggle.checked ? 'block' : 'none';
+                }
+            }
+            if (reminderDaySelect && data.reminderDay) {
+                reminderDaySelect.value = data.reminderDay;
+            } else if (reminderDaySelect) {
+                reminderDaySelect.value = "Friday"; // Default day
+            }
+
+            // Initialize time options based on loaded/default day
+            updateTimesheetTimeOptions(reminderDaySelect ? reminderDaySelect.value : 'Friday');
+            // Value for reminderTimeSelect is set within updateTimesheetTimeOptions after options are populated
+        });
+
+        // Event listener for Timesheet reminder toggle
+        if (timesheetReminderToggle) {
+            timesheetReminderToggle.addEventListener('change', function() {
+                const isEnabled = this.checked;
+                if (timesheetReminderSettingsDiv) {
+                    timesheetReminderSettingsDiv.style.display = isEnabled ? 'block' : 'none';
+                }
+                chrome.storage.sync.set({timesheetReminderEnabled: isEnabled}, function() {
+                    console.log('Timesheet reminder setting saved:', isEnabled);
+                    if (isEnabled) {
+                        updateTimesheetAlarm(); // Update/create alarm if enabled
+                    } else {
+                        // Send message to background script to remove the alarm
+                        chrome.runtime.sendMessage({action: "removeTimesheetAlarm"}, function(response) {
+                            if (chrome.runtime.lastError) {
+                                console.error("[Settings] Error sending removeTimesheetAlarm message:", chrome.runtime.lastError.message);
+                            } else {
+                                console.log("[Settings] removeTimesheetAlarm message sent, response:", response?.status);
+                                if (timesheetReminderUpdateMessage) {
+                                    timesheetReminderUpdateMessage.textContent = "Timesheet reminder disabled.";
+                                    timesheetReminderUpdateMessage.style.color = "orange";
+                                    timesheetReminderUpdateMessage.classList.remove('hidden-initially');
+                                    setTimeout(() => {
+                                        timesheetReminderUpdateMessage.classList.add('hidden-initially');
+                                    }, 3000);
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // Event listener for Reminder Day change
+        if (reminderDaySelect) {
+            reminderDaySelect.addEventListener('change', function() {
+                updateTimesheetTimeOptions(this.value);
+                // No automatic save here; user clicks "Save Reminder"
+            });
+        }
+
+        // Event listener for Reminder Time change (optional, as save is explicit)
+        // if (reminderTimeSelect) {
+        //     reminderTimeSelect.addEventListener('change', function() {
+        //         // User needs to click "Save Reminder"
+        //     });
+        // }
+
+        // Event listener for Save Timesheet Reminder Settings button
+        if (saveTimesheetReminderSettingsButton) {
+            saveTimesheetReminderSettingsButton.addEventListener('click', function() {
+                if (timesheetReminderToggle && timesheetReminderToggle.checked) {
+                    updateTimesheetAlarm(); // This function now also handles saving day/time to storage
+                } else {
+                    if (timesheetReminderUpdateMessage) {
+                        timesheetReminderUpdateMessage.textContent = "Enable timesheet reminder first to save.";
+                        timesheetReminderUpdateMessage.style.color = "orange";
+                        timesheetReminderUpdateMessage.classList.remove('hidden-initially');
+                        setTimeout(() => {
+                            timesheetReminderUpdateMessage.classList.add('hidden-initially');
+                        }, 3000);
+                    }
+                }
+            });
+        }
+
+        // Event listener for Trigger Timesheet Reminder Now button
+        if (triggerTimesheetReminderButton) {
+            triggerTimesheetReminderButton.addEventListener('click', function() {
+                console.log("[Settings] 'Trigger Timesheet Reminder Now' button clicked.");
+                chrome.runtime.sendMessage({action: "showTimesheetNotification"}, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Settings] Error sending message for timesheet notification:", chrome.runtime.lastError.message);
+                        alert("Error triggering timesheet reminder: " + chrome.runtime.lastError.message);
+                    } else {
+                        console.log("[Settings] Timesheet reminder triggered:", response?.status || "No response");
+                        alert("Test timesheet reminder notification sent!");
+                    }
+                });
+            });
+        }
+    // End of new code for Aura Reminders
+
+    // Add this within the DOMContentLoaded listener in settings.js, after Aura Reminders logic
+
+        const reminderUrlPatternInput = document.getElementById('reminderUrlPattern');
+        const reminderTextTriggerInput = document.getElementById('reminderTextTrigger');
+        const reminderPopupMessageInput = document.getElementById('reminderPopupMessage');
+        const saveCustomReminderButton = document.getElementById('saveCustomReminder');
+        const customReminderStatus = document.getElementById('customReminderStatus');
+        const customRemindersListDiv = document.getElementById('customRemindersList');
+
+        // Function to display custom reminders
+        function displayCustomReminders() {
+            chrome.storage.sync.get({customReminders: []}, function(data) {
+                const reminders = data.customReminders;
+                customRemindersListDiv.innerHTML = ''; // Clear current list
+
+                if (reminders.length === 0) {
+                    customRemindersListDiv.innerHTML = '<p>No custom reminders saved yet.</p>';
+                    return;
+                }
+
+                const ul = document.createElement('ul');
+                ul.style.listStyleType = 'none';
+                ul.style.paddingLeft = '0';
+
+                reminders.forEach((reminder, index) => {
+                    const li = document.createElement('li');
+                    li.style.padding = '10px';
+                    li.style.border = '1px solid #eee';
+                    li.style.marginBottom = '5px';
+                    li.style.borderRadius = '4px';
+                    li.style.display = 'flex';
+                    li.style.justifyContent = 'space-between';
+                    li.style.alignItems = 'center';
+
+                    const textDiv = document.createElement('div');
+                    textDiv.innerHTML = `
+                        <strong>URL Pattern:</strong> ${escapeHTML(reminder.urlPattern)}<br>
+                        <strong>Trigger Text:</strong> ${reminder.textTrigger ? escapeHTML(reminder.textTrigger) : '<em>N/A</em>'}<br>
+                        <strong>Message:</strong> ${escapeHTML(reminder.popupMessage)}
+                    `;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.classList.add('settings-button');
+                    deleteButton.style.backgroundColor = '#dc3545'; // Red color for delete
+                    deleteButton.dataset.index = index;
+                    deleteButton.addEventListener('click', deleteCustomReminder);
+
+                    li.appendChild(textDiv);
+                    li.appendChild(deleteButton);
+                    ul.appendChild(li);
+                });
+                customRemindersListDiv.appendChild(ul);
+            });
+        }
+
+        // Utility to escape HTML for display
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // Function to delete a custom reminder
+        function deleteCustomReminder(event) {
+            const indexToDelete = parseInt(event.target.dataset.index, 10);
+            chrome.storage.sync.get({customReminders: []}, function(data) {
+                let reminders = data.customReminders;
+                reminders.splice(indexToDelete, 1); // Remove the reminder
+                chrome.storage.sync.set({customReminders: reminders}, function() {
+                    if (chrome.runtime.lastError) {
+                        console.error("Error deleting custom reminder:", chrome.runtime.lastError);
+                        // Handle error (e.g., show message to user)
+                    } else {
+                        console.log('Custom reminder deleted.');
+                        displayCustomReminders(); // Refresh the list
+                        // Potentially notify background/content scripts if needed
+                        chrome.runtime.sendMessage({ action: "customRemindersUpdated" }).catch(e => console.log("Error sending customRemindersUpdated message after delete:", e));
+                    }
+                });
+            });
+        }
+
+        // Event listener for Save Custom Reminder button
+        if (saveCustomReminderButton) {
+            saveCustomReminderButton.addEventListener('click', function() {
+                const urlPattern = reminderUrlPatternInput.value.trim();
+                const textTrigger = reminderTextTriggerInput.value.trim();
+                const popupMessage = reminderPopupMessageInput.value.trim();
+
+                if (!urlPattern || !popupMessage) {
+                    customReminderStatus.textContent = 'URL Pattern and Popup Message are required.';
+                    customReminderStatus.style.color = 'red';
+                    customReminderStatus.classList.remove('hidden-initially');
+                    setTimeout(() => customReminderStatus.classList.add('hidden-initially'), 3000);
+                    return;
+                }
+
+                const newReminder = {
+                    id: 'custom_' + Date.now(), // Unique ID for the reminder
+                    urlPattern: urlPattern,
+                    textTrigger: textTrigger,
+                    popupMessage: popupMessage,
+                    enabled: true // By default, new reminders are enabled
+                };
+
+                chrome.storage.sync.get({customReminders: []}, function(data) {
+                    let reminders = data.customReminders;
+                    reminders.push(newReminder);
+                    chrome.storage.sync.set({customReminders: reminders}, function() {
+                        if (chrome.runtime.lastError) {
+                            console.error("Error saving custom reminder:", chrome.runtime.lastError);
+                            customReminderStatus.textContent = 'Error saving reminder: ' + chrome.runtime.lastError.message;
+                            customReminderStatus.style.color = 'red';
+                        } else {
+                            console.log('Custom reminder saved.');
+                            customReminderStatus.textContent = 'Custom reminder saved!';
+                            customReminderStatus.style.color = 'green';
+                            reminderUrlPatternInput.value = '';
+                            reminderTextTriggerInput.value = '';
+                            reminderPopupMessageInput.value = '';
+                            displayCustomReminders(); // Refresh the list
+                             // Notify background/content scripts that reminders have changed
+                            chrome.runtime.sendMessage({ action: "customRemindersUpdated" }).catch(e => console.log("Error sending customRemindersUpdated message after save:", e));
+                        }
+                        customReminderStatus.classList.remove('hidden-initially');
+                        setTimeout(() => customReminderStatus.classList.add('hidden-initially'), 3000);
+                    });
+                });
+            });
+        }
+
+        // Initial display of custom reminders on page load
+        displayCustomReminders();
+
+    // End of new code for Create Reminder
+
+    // Add a listener for messages from background/content scripts if needed for syncing
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        if (request.action === "refreshCustomRemindersDisplay") {
+            displayCustomReminders();
+            sendResponse({status: "Custom reminders display refreshed"});
+            return true;
+        }
+    });
+    // Future JavaScript for other settings will be added below this
+
+    // Add this within the DOMContentLoaded listener in settings.js, typically after other sections
+
+        const generateExportDataButton = document.getElementById('generateExportData');
+        const exportDataTextarea = document.getElementById('exportDataTextarea');
+
+        if (generateExportDataButton && exportDataTextarea) {
+            generateExportDataButton.addEventListener('click', function() {
+                chrome.storage.sync.get({customReminders: []}, function(data) {
+                    const reminders = data.customReminders;
+                    if (reminders.length === 0) {
+                        exportDataTextarea.value = "No custom reminders to export.";
+                        return;
+                    }
+                    try {
+                        // Pretty print the JSON data with an indent of 2 spaces
+                        const jsonString = JSON.stringify(reminders, null, 2);
+                        exportDataTextarea.value = jsonString;
+                        // Optionally, auto-select the text for easy copying
+                        exportDataTextarea.select();
+                        // document.execCommand('copy'); // Modern way is navigator.clipboard.writeText, but select() is good enough for a textarea
+                        alert("Custom reminder data generated in the textarea. You can now copy it.");
+                    } catch (error) {
+                        console.error("Error stringifying custom reminders for export:", error);
+                        exportDataTextarea.value = "Error generating export data. Check console for details.";
+                    }
+                });
+            });
+        }
+    // End of new code for Export Settings
+});

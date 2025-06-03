@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prisma Tools Settings</title>
+    <link rel="stylesheet" href="settings.css">
+    <!-- It's good practice to link a specific CSS for the settings page if major styling differences are expected -->
+    <!-- <link rel="stylesheet" href="settings.css"> -->
+</head>
+<body>
+    <div class="container">
+        <header class="settings-header">
+            <h1>Settings</h1>
+        </header>
+
+        <section id="general-settings">
+            <h2>General</h2>
+            <div class="toggle-container">
+                <span>Replace Prisma Logo:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="logoToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <section id="prisma-reminders">
+            <h2>Prisma Reminders</h2>
+            <div class="toggle-container">
+                <span>Enable Meta Reconciliation Reminder:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="metaReminderToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button id="triggerMetaReminder" class="settings-button">Test Meta Reminder</button>
+            <p id="metaTestInfo" class="hidden-initially" style="font-size:0.8em; color: #666; margin-top:5px;"><em>Note: The test button works best when a Prisma tab is active. The reminder itself will only appear on relevant Prisma pages.</em></p>
+        </section>
+
+        <section id="aura-reminders">
+            <h2>Aura Reminders</h2>
+            <div class="toggle-container">
+                <span>Enable Timesheet Reminder:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="timesheetReminderToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="timesheetReminderSettings" class="hidden-initially"> <!-- This div will be shown/hidden by the toggle -->
+                <p class="reminder-text" style="font-size:0.9em; margin-top:10px;"><em>Remind me on and at:</em></p>
+                <div class="select-container">
+                    <select id="reminderDay">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                </div>
+                <div class="select-container">
+                    <select id="reminderTime"></select> <!-- Options populated by JS -->
+                </div>
+                <div class="button-group">
+                    <button id="saveTimesheetReminderSettings" class="settings-button">Save Reminder</button>
+                    <p id="timesheetReminderUpdateMessage" class="reminder-update-message hidden-initially"></p>
+                </div>
+            </div>
+            <button id="triggerTimesheetReminder" class="settings-button" style="margin-top:10px;">Trigger Timesheet Reminder Now</button>
+        </section>
+
+        <section id="create-reminder">
+            <h2>Create Custom Reminder</h2>
+            <div>
+                <label for="reminderUrlPattern">URL Pattern (e.g., *://*.example.com/path*):</label>
+                <input type="text" id="reminderUrlPattern" placeholder="*://*.example.com/*">
+            </div>
+            <div>
+                <label for="reminderTextTrigger">Text to look for on site (leave blank if URL match is enough):</label>
+                <input type="text" id="reminderTextTrigger" placeholder="e.g., 'Submit Order'">
+            </div>
+            <div>
+                <label for="reminderPopupMessage">Popup message to display:</label>
+                <textarea id="reminderPopupMessage" placeholder="e.g., 'Remember to double check the order details!'"></textarea>
+            </div>
+            <button id="saveCustomReminder" class="settings-button">Save Custom Reminder</button>
+            <p id="customReminderStatus" class="reminder-update-message hidden-initially"></p>
+
+            <h3>Saved Custom Reminders</h3>
+            <div id="customRemindersList">
+                <!-- Custom reminders will be listed here by JavaScript -->
+                <p>No custom reminders saved yet.</p>
+            </div>
+        </section>
+
+        <section id="export-settings">
+            <h2>Export Custom Reminders</h2>
+            <p>Click the button below to generate a JSON representation of your custom reminders. You can copy this to back them up or share them.</p>
+            <button id="generateExportData" class="settings-button">Generate Export Data</button>
+            <textarea id="exportDataTextarea" readonly style="width: 100%; min-height: 150px; margin-top: 10px; font-family: monospace; white-space: pre; box-sizing: border-box;" placeholder="Exported JSON data will appear here..."></textarea>
+        </section>
+    </div>
+    <script src="settings.js"></script>
+</body>
+</html>

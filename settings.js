@@ -8,167 +8,106 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
-// Adapted addReminderStyles for settings page
-function addReminderStylesToSettings() {
-    if (document.getElementById('settings-reminder-styles')) {
-        // Styles already added
-        return;
-    }
-    const reminderStyles = document.createElement('style');
-    reminderStyles.id = 'settings-reminder-styles';
-    // Styles are similar to content.js, ensure all necessary styles are included
-    // Copied from content.js and adapted IDs if necessary (though not strictly necessary for this self-contained test)
-    reminderStyles.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-        #settings-meta-reminder-popup { /* Changed ID for settings page context */
-            font-family: 'Montserrat', sans-serif;
-            position: fixed;
-            z-index: 10001; /* Ensure it's above other settings content if any overlap */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #ff4087;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            max-width: 400px;
-            text-align: center;
-            animation: fadeInSettingsPopup 0.3s ease-in-out;
-        }
-        #settings-meta-reminder-popup h3 { margin-top: 0; font-size: 18px; font-weight: 700; }
-        #settings-meta-reminder-popup p { margin-bottom: 10px; font-size: 14px; }
-        #settings-meta-reminder-popup ul { text-align: left; margin-bottom: 20px; font-size: 14px; padding-left: 20px; }
-        #settings-meta-reminder-popup li { margin-bottom: 5px; }
-        #settings-meta-reminder-close { /* Shared ID, assuming no conflict on settings page */
-            background-color: white; color: #ff4087; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s, transform 0.1s;
-        }
-        #settings-meta-reminder-close:hover:not(:disabled) { background-color: #f8f8f8; animation: vibrateSettingsPopup 0.3s ease-in-out; }
-        #settings-meta-reminder-close:active:not(:disabled) { transform: translateY(2px); }
-        #settings-meta-reminder-close:disabled {
-            background-color: #cccccc;
-            color: #666666;
-            cursor: not-allowed;
-        }
-        @keyframes fadeInSettingsPopup { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-        @keyframes vibrateSettingsPopup { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-2px); } 40% { transform: translateX(2px); } 60% { transform: translateX(-1px); } 80% { transform: translateX(1px); } }
-
-        .settings-reminder-overlay { /* Changed class for settings page context */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.2); /* 20% dim */
-            z-index: 10000; /* Below popup, above page content */
-            animation: fadeInSettingsOverlay 0.3s ease-in-out;
-        }
-        @keyframes fadeInSettingsOverlay { from { opacity: 0; } to { opacity: 1; } }
-    `;
-    document.head.appendChild(reminderStyles);
-}
+// addReminderStylesToSettings function is now removed as styles are in style.css
+// Ensure style.css is linked in settings.html
 
 // Function to show a test custom reminder on the settings page
 function showTestCustomReminderOnSettingsPage(reminder) {
-    // Remove any existing test custom reminder popup first
-    const existingPopupId = `settings-custom-reminder-popup-${reminder.id}`;
-    const existingOverlayId = `settings-custom-reminder-overlay-${reminder.id}`;
-    const existingPopup = document.getElementById(existingPopupId);
-    if (existingPopup) existingPopup.remove();
-    const existingOverlay = document.getElementById(existingOverlayId);
-    if (existingOverlay) existingOverlay.remove();
+    // Remove any existing test custom reminder popup first to avoid ID clashes
+    const existingGenericPopup = document.getElementById('custom-reminder-display-popup');
+    if (existingGenericPopup) existingGenericPopup.remove();
+    // Also remove any overlay associated with it (assuming it might be 'settings-custom-reminder-overlay-' + previous reminder.id)
+    // This is a bit broad, but safer if multiple test popups are clicked rapidly.
+    // A more robust way would be to store the current test overlay and remove it specifically.
+    const existingTestOverlays = document.querySelectorAll('[id^="settings-custom-reminder-overlay-"]');
+    existingTestOverlays.forEach(ov => ov.remove());
 
-    addReminderStylesToSettings(); // Ensure base styles are loaded
 
+    // addReminderStylesToSettings(); // Removed call
+
+    const overlayId = `settings-custom-reminder-overlay-${reminder.id}`; // Keep a unique ID for the test overlay
     const overlay = document.createElement('div');
-    overlay.className = 'settings-reminder-overlay'; // Use generic overlay class from settings
-    overlay.id = existingOverlayId;
-    // Make sure z-index is high enough if multiple overlays could somehow exist (though logic tries to prevent it)
-    overlay.style.zIndex = '10002';
+    overlay.className = 'reminder-overlay'; // Use shared class for styling
+    overlay.id = overlayId;
+    // z-index is handled by .reminder-overlay in style.css
     document.body.appendChild(overlay);
 
     const popup = document.createElement('div');
-    popup.id = existingPopupId;
-    // Apply styles similar to content.js custom reminders, but within settings page context
-    popup.style.fontFamily = "'Montserrat', sans-serif";
-    popup.style.position = "fixed";
-    popup.style.zIndex = '10003'; // Above its overlay
-    popup.style.top = "50%";
-    popup.style.left = "50%";
-    popup.style.transform = "translate(-50%, -50%)";
-    popup.style.backgroundColor = reminder.color || "#336699"; // Use reminder color or default
-    popup.style.color = "white";
-    popup.style.padding = "20px";
-    popup.style.borderRadius = "8px";
-    popup.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
-    popup.style.maxWidth = "450px";
-    popup.style.textAlign = "center";
-    popup.style.animation = "fadeInSettingsPopup 0.3s ease-in-out"; // Use existing animation
+    popup.id = 'custom-reminder-display-popup'; // Use shared ID for styling
+
+    // Inline styles are removed; relies on #custom-reminder-display-popup from style.css
+    // Note: This means custom background color from reminder.color will not apply here.
+    // The popup will have the standard pink background defined in style.css.
 
     popup.innerHTML = `
-        <h3 style="margin-top:0; font-size: 1.2em;">${escapeHTML(reminder.name)}</h3>
-        <p style="font-size: 1em; margin-bottom: 15px;">${escapeHTML(reminder.popupMessage)}</p>
-        <button id="settings-custom-reminder-close-${reminder.id}" class="settings-button" style="background-color: white; color: ${reminder.color || '#336699'}; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer;">Got it!</button>
-    `;
+        <h3>${escapeHTML(reminder.name)}</h3>
+        <p>${escapeHTML(reminder.popupMessage)}</p>
+        <button id="custom-reminder-display-close">Got it!</button>
+    `; // Use shared button ID
     document.body.appendChild(popup);
 
-    const closeButton = document.getElementById(`settings-custom-reminder-close-${reminder.id}`);
+    const closeButton = document.getElementById('custom-reminder-display-close'); // Use shared ID
     closeButton.addEventListener('click', () => {
-        if (popup.parentNode) popup.parentNode.removeChild(popup);
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        const popupToRemove = document.getElementById('custom-reminder-display-popup');
+        if (popupToRemove) popupToRemove.remove();
+        const overlayToRemove = document.getElementById(overlayId); // Remove specific test overlay
+        if (overlayToRemove) overlayToRemove.remove();
         console.log(`[Settings] Test custom reminder popup for ${reminder.name} closed.`);
     });
-    console.log(`[Settings] Test custom reminder popup created for: ${reminder.name}`);
+    console.log(`[Settings] Test custom reminder popup created for: ${reminder.name} using shared styles.`);
 }
 
 
-// Adapted createMetaReminderPopup for settings page
+// Function to show a test Meta Reminder on the settings page (mimicking content.js)
 function showTestMetaReminderOnSettingsPage() {
-    if (document.getElementById('settings-meta-reminder-popup')) {
-        // Optional: remove existing before showing new, or just return
-        const existingPopup = document.getElementById('settings-meta-reminder-popup');
+    // Check if a meta reminder popup (from content script or another test) already exists
+    if (document.getElementById('meta-reminder-popup')) {
+        const existingPopup = document.getElementById('meta-reminder-popup');
         if (existingPopup) existingPopup.remove();
-        const existingOverlay = document.getElementById('settings-meta-reminder-overlay');
+        const existingOverlay = document.getElementById('meta-reminder-overlay'); // Assume overlay has this ID if popup exists
         if (existingOverlay) existingOverlay.remove();
     }
 
-    addReminderStylesToSettings(); // Use the settings-specific style function
+    // addReminderStylesToSettings(); // Ensure the styles (now including #meta-reminder-popup) are loaded // Removed call
 
+    // Create and add the overlay, identical to content.js
     const overlay = document.createElement('div');
-    overlay.className = 'settings-reminder-overlay'; // Use settings-specific class
-    overlay.id = 'settings-meta-reminder-overlay'; // Use settings-specific ID
+    overlay.className = 'reminder-overlay'; // Use the standard class name
+    overlay.id = 'meta-reminder-overlay';   // Use the standard ID
     document.body.appendChild(overlay);
 
+    // Create the popup, identical to content.js
     const popup = document.createElement('div');
-    popup.id = 'settings-meta-reminder-popup'; // Use settings-specific ID
-    // HTML content is the same as original meta reminder
+    popup.id = 'meta-reminder-popup'; // Use the standard ID
     popup.innerHTML = `
         <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
         <p>When reconciling Meta, please:</p>
         <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
-        <button id="settings-meta-reminder-close">Got it!</button>
-    `;
-    // Note: button ID is 'settings-meta-reminder-close'
+        <button id="meta-reminder-close">Got it!</button>
+    `; // Use the standard button ID
     document.body.appendChild(popup);
-    console.log("[Settings] Test Meta reminder popup CREATED.");
+    console.log("[Settings] Test Meta reminder popup CREATED with standard IDs.");
 
-    const closeButton = document.getElementById('settings-meta-reminder-close');
+    const closeButton = document.getElementById('meta-reminder-close'); // Use standard ID
     let countdownInterval;
 
     const cleanupPopup = () => {
-        if (popup.parentNode === document.body) {
-            document.body.removeChild(popup);
+        // Remove elements by their standard IDs
+        const popupToRemove = document.getElementById('meta-reminder-popup');
+        if (popupToRemove && popupToRemove.parentNode === document.body) {
+            document.body.removeChild(popupToRemove);
         }
-        if (overlay.parentNode === document.body) {
-            document.body.removeChild(overlay);
+        const overlayToRemove = document.getElementById('meta-reminder-overlay');
+        if (overlayToRemove && overlayToRemove.parentNode === document.body) {
+            document.body.removeChild(overlayToRemove);
         }
         clearInterval(countdownInterval);
-        console.log("[Settings] Test Meta reminder popup and overlay removed.");
+        console.log("[Settings] Test Meta reminder popup and overlay removed using standard IDs.");
     };
 
     if (closeButton) {
         const today = new Date().toDateString();
-        // Use a unique localStorage item for the settings page test to not interfere with content script's logic
+        // Use a unique localStorage item for the settings page test to avoid conflict with content script
         const lastShownDateKey = 'settingsMetaReminderLastShown';
         const lastShownDate = localStorage.getItem(lastShownDateKey);
 
@@ -194,7 +133,7 @@ function showTestMetaReminderOnSettingsPage() {
 
         closeButton.addEventListener('click', function() {
             cleanupPopup();
-            console.log("[Settings] Test Meta reminder popup closed by user.");
+            console.log("[Settings] Test Meta reminder popup (standard ID) closed by user.");
         });
     }
 }

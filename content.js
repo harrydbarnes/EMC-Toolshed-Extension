@@ -74,84 +74,8 @@ function checkAndReplaceLogo() {
     });
 }
 
-function addReminderStyles() {
-    if (document.getElementById('reminder-styles')) {
-        // If styles are already added, ensure the overlay style is present or add it
-        const existingStyles = document.getElementById('reminder-styles');
-        if (!existingStyles.textContent.includes('.reminder-overlay')) {
-            existingStyles.textContent += `
-                .reminder-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, 0.2); /* 20% dim */
-                    z-index: 9999; /* Below popup, above page content */
-                    animation: fadeInOverlay 0.3s ease-in-out;
-                }
-                @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-
-                #meta-reminder-close:disabled {
-                    background-color: #cccccc;
-                    color: #666666;
-                    cursor: not-allowed;
-                }
-            `;
-        }
-        return;
-    }
-    const reminderStyles = document.createElement('style');
-    reminderStyles.id = 'reminder-styles';
-    reminderStyles.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-        /* ... (rest of your existing reminder styles) ... */
-        #meta-reminder-popup, #ias-reminder-popup { /* Apply styles to both popups */
-            font-family: 'Montserrat', sans-serif;
-            position: fixed;
-            z-index: 10000;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #ff4087;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            max-width: 400px;
-            text-align: center;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        #meta-reminder-popup h3, #ias-reminder-popup h3 { margin-top: 0; font-size: 18px; font-weight: 700; }
-        #meta-reminder-popup p, #ias-reminder-popup p { margin-bottom: 10px; font-size: 14px; }
-        #meta-reminder-popup ul, #ias-reminder-popup ul { text-align: left; margin-bottom: 20px; font-size: 14px; padding-left: 20px; }
-        #meta-reminder-popup li, #ias-reminder-popup li { margin-bottom: 5px; }
-        #meta-reminder-close, #ias-reminder-close { background-color: white; color: #ff4087; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s, transform 0.1s; }
-        #meta-reminder-close:hover:not(:disabled), #ias-reminder-close:hover { background-color: #f8f8f8; animation: vibrate 0.3s ease-in-out; }
-        #meta-reminder-close:active:not(:disabled), #ias-reminder-close:active { transform: translateY(2px); }
-        #meta-reminder-close:disabled {
-            background-color: #cccccc;
-            color: #666666;
-            cursor: not-allowed;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-        @keyframes vibrate { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-2px); } 40% { transform: translateX(2px); } 60% { transform: translateX(-1px); } 80% { transform: translateX(1px); } }
-
-        /* Dimming Overlay */
-        .reminder-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.2); /* 20% dim */
-            z-index: 9999; /* Below popup, above page content */
-            animation: fadeInOverlay 0.3s ease-in-out;
-        }
-        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-    `;
-    document.head.appendChild(reminderStyles);
-}
+// addReminderStyles function is now removed as styles are in style.css
+// Ensure style.css is listed in manifest.json's content_scripts css array.
 
 let metaReminderDismissed = false;
 let iasReminderDismissed = false;
@@ -162,7 +86,7 @@ function createMetaReminderPopup() {
         console.log("[ContentScript Prisma] Meta reminder popup skipped (already exists or dismissed).");
         return;
     }
-    addReminderStyles();
+    // addReminderStyles(); // Removed call
 
     // Create and add the overlay
     const overlay = document.createElement('div');
@@ -235,7 +159,7 @@ function createIASReminderPopup() {
     if (document.getElementById('ias-reminder-popup') || iasReminderDismissed) {
         return;
     }
-    addReminderStyles(); // Ensure styles are present
+    // addReminderStyles(); // Ensure styles are present // Removed call
 
     const popup = document.createElement('div');
     popup.id = 'ias-reminder-popup';
@@ -328,65 +252,63 @@ function fetchCustomReminders() {
 }
 
 function wildcardToRegex(pattern) {
-    // Escape regex special chars, then convert wildcard * to .*
-    const escapedPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp('^' + escapedPattern.replace(/\*/g, '.*') + '$');
+    // Escape regex special chars
+    let escapedPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    // If no wildcard '*' is present in the original pattern, assume it means 'contains'
+    // So, add '.*' to the beginning and end of the escaped pattern.
+    // Otherwise, just convert user-defined '*' to '.*'
+    if (!pattern.includes('*')) {
+        escapedPattern = '.*' + escapedPattern + '.*';
+    } else {
+        // Convert user-defined '*' to '.*'
+        escapedPattern = escapedPattern.replace(/\*/g, '.*');
+    }
+    // Always ensure the regex is case-insensitive for URL matching, and still use ^$ to match the whole URL against the pattern
+    return new RegExp('^' + escapedPattern + '$', 'i'); // Added 'i' flag for case-insensitivity
 }
 
 function createCustomReminderPopup(reminder) {
-    const popupId = 'custom-reminder-popup-' + reminder.id;
-    if (document.getElementById(popupId)) {
-        // console.log(`[ContentScript Prisma] Custom reminder popup for ${reminder.name} already exists or shown.`);
-        return;
+    // const popupId = 'custom-reminder-popup-' + reminder.id; // Old ID
+    if (document.getElementById('custom-reminder-display-popup')) { // Check for the new generic ID
+        // console.log(`[ContentScript Prisma] Custom reminder popup for ${reminder.name} already exists or another custom reminder is shown.`);
+        return; // Avoid showing multiple custom popups if one is already up with the generic ID
     }
 
-    addReminderStyles(); // Ensure styles are loaded
+    // addReminderStyles(); // Ensure styles are loaded // Removed call
 
     const overlay = document.createElement('div');
     overlay.className = 'reminder-overlay';
-    overlay.id = 'custom-reminder-overlay-' + reminder.id;
+    overlay.id = 'custom-reminder-overlay-' + reminder.id; // Keep overlay ID specific for now
     // Ensure overlay doesn't stack if multiple custom popups appear (though shownCustomReminderIds should prevent this)
-    if (!document.querySelector('.reminder-overlay[id^="custom-reminder-overlay-"]')) {
+    // And also check generic overlays from meta/ias
+    if (!document.querySelector('.reminder-overlay')) { // Simpler check: if ANY .reminder-overlay exists, don't add another one if this logic is flawed
         document.body.appendChild(overlay);
-    } else {
-        // If an overlay for a custom reminder is already there, just ensure this new popup is above it.
-        // This scenario should be rare due to shownCustomReminderIds logic.
-        overlay.style.zIndex = (parseInt(document.querySelector('.reminder-overlay[id^="custom-reminder-overlay-"]').style.zIndex || '9999', 10) + 1).toString();
+    } else if (!document.getElementById(overlay.id)) { // Only add if this specific overlay isn't already there
+        // If an overlay for another reminder (meta, ias, or another custom) is already there,
+        // this new custom popup will appear over it, which is fine.
+        // The z-index for popups is higher than overlays.
+        // We still append this specific overlay to ensure its removal logic is tied to this popup.
         document.body.appendChild(overlay);
     }
 
 
     const popup = document.createElement('div');
-    popup.id = popupId;
-    // Basic styling - consider creating a shared class if many popups adopt this
-    popup.style.fontFamily = "'Montserrat', sans-serif";
-    popup.style.position = "fixed";
-    popup.style.zIndex = (parseInt(overlay.style.zIndex, 10) + 1).toString(); // Above its own overlay
-    popup.style.top = "50%";
-    popup.style.left = "50%";
-    popup.style.transform = "translate(-50%, -50%)";
-    popup.style.backgroundColor = reminder.color || "#336699"; // Allow custom color or default
-    popup.style.color = "white";
-    popup.style.padding = "20px";
-    popup.style.borderRadius = "8px";
-    popup.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
-    popup.style.maxWidth = "450px"; // Slightly wider for more text
-    popup.style.textAlign = "center";
-    popup.style.animation = "fadeIn 0.3s ease-in-out";
+    popup.id = 'custom-reminder-display-popup'; // Standardized ID
+
+    // Inline styles are removed, will be handled by addReminderStyles
 
     popup.innerHTML = `
-        <h3 style="margin-top:0; font-size: 1.2em;">${escapeHTML(reminder.name)}</h3>
-        <p style="font-size: 1em; margin-bottom: 15px;">${escapeHTML(reminder.popupMessage)}</p>
-        <button id="custom-reminder-close-${reminder.id}" class="settings-button" style="background-color: white; color: ${reminder.color || '#336699'}; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer;">Got it!</button>
+        <h3>${escapeHTML(reminder.name)}</h3>
+        <p>${escapeHTML(reminder.popupMessage)}</p>
+        <button id="custom-reminder-display-close">Got it!</button>
     `;
     document.body.appendChild(popup);
 
-    const closeButton = document.getElementById('custom-reminder-close-' + reminder.id);
+    const closeButton = document.getElementById('custom-reminder-display-close'); // Use new ID
     closeButton.addEventListener('click', () => {
         if (popup.parentNode) popup.parentNode.removeChild(popup);
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        // Do not remove from shownCustomReminderIds here, so it doesn't reappear on the same page load after dismissal
-        // shownCustomReminderIds.delete(reminder.id);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay); // Remove its specific overlay
+        // shownCustomReminderIds.add(reminder.id) happens in checkCustomReminders, which is correct.
         console.log(`[ContentScript Prisma] Custom reminder popup for ${reminder.name} closed by user.`);
     });
     console.log(`[ContentScript Prisma] Custom reminder popup created for: ${reminder.name}`);
@@ -394,8 +316,18 @@ function createCustomReminderPopup(reminder) {
 
 
 function checkCustomReminders() {
+    console.log("[ContentScript Prisma] Running checkCustomReminders...");
     if (activeCustomReminders.length === 0) {
-        // console.log("[ContentScript Prisma] No active custom reminders to check.");
+        console.log("[ContentScript Prisma] No active custom reminders to check.");
+        return;
+    }
+
+    // If a custom reminder is already displayed using the generic ID, don't try to show another one.
+    if (document.getElementById('custom-reminder-display-popup')) {
+        console.log("[ContentScript Prisma] Another custom reminder popup is already visible. Skipping further checks.");
+        // Log which reminder is being skipped IF we were iterating, but here we are aborting early.
+        // To log the specific reminder that would have been shown, this check needs to be inside the loop.
+        // However, the current logic is to prevent ANY new custom reminder if one is up.
         return;
     }
 
@@ -403,39 +335,61 @@ function checkCustomReminders() {
     const pageText = document.body.innerText.toLowerCase(); // For case-insensitive search
 
     for (const reminder of activeCustomReminders) {
+        console.log("[ContentScript Prisma] Checking custom reminder:", reminder.name, "ID:", reminder.id);
+        console.log("[ContentScript Prisma] Current URL:", currentUrl);
+        console.log("[ContentScript Prisma] Reminder URL Pattern:", reminder.urlPattern);
+
         if (shownCustomReminderIds.has(reminder.id)) {
-            // console.log(`[ContentScript Prisma] Reminder ${reminder.name} already shown this session.`);
+            console.log("[ContentScript Prisma] Reminder", reminder.name, "already shown on this page load. Skipping.");
             continue;
         }
 
+        // Moved this check inside the loop so we can log which reminder is skipped due to an existing popup
+        if (document.getElementById('custom-reminder-display-popup')) {
+            console.log("[ContentScript Prisma] Another custom reminder popup is already visible. Skipping reminder:", reminder.name);
+            // Since only one custom popup can be shown at a time due to the generic ID,
+            // if one is already up, we must not attempt to show another.
+            // We can break here as no other reminder can be shown.
+            break;
+        }
+
         const urlRegex = wildcardToRegex(reminder.urlPattern);
-        if (urlRegex.test(currentUrl)) {
-            // console.log(`[ContentScript Prisma] URL match for reminder: ${reminder.name}`);
+        console.log("[ContentScript Prisma] Generated Regex:", urlRegex.toString());
+        const urlMatches = urlRegex.test(currentUrl);
+        console.log("[ContentScript Prisma] URL Match Result:", urlMatches);
+
+        if (urlMatches) {
+            console.log("[ContentScript Prisma] Reminder Text Trigger:", reminder.textTrigger);
             let textMatch = false;
             if (reminder.textTrigger && reminder.textTrigger.trim() !== '') {
                 const triggerTexts = reminder.textTrigger.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
                 if (triggerTexts.length > 0) {
-                    if (triggerTexts.some(text => pageText.includes(text))) {
+                    if (triggerTexts.some(text => {
+                        const pageIncludesText = pageText.includes(text);
+                        // console.log(`[ContentScript Prisma] Checking page text for: "${text}", Found: ${pageIncludesText}`); // Potentially too verbose
+                        return pageIncludesText;
+                    })) {
                         textMatch = true;
-                        // console.log(`[ContentScript Prisma] Text match for reminder: ${reminder.name}`);
                     }
                 } else {
-                     textMatch = true; // Text trigger was defined but empty after trim/split (e.g. ", ,")
+                     textMatch = true; // Text trigger was defined but empty after trim/split (e.g. ", ,") means match.
                 }
             } else {
                 textMatch = true; // No text trigger defined, URL match is enough
-                // console.log(`[ContentScript Prisma] No text trigger for reminder: ${reminder.name}, URL match sufficient.`);
             }
+            console.log("[ContentScript Prisma] Text Match Result:", textMatch);
 
             if (textMatch) {
-                console.log(`[ContentScript Prisma] Conditions met for custom reminder: ${reminder.name}. Creating popup.`);
+                console.log("[ContentScript Prisma] Conditions MET for custom reminder:", reminder.name);
                 createCustomReminderPopup(reminder);
                 shownCustomReminderIds.add(reminder.id);
-                // Optional: break here if only one custom reminder should be shown at a time
-                // break;
+                // Since custom popups now use a generic ID, we should break after finding the first one to show.
+                // This prevents multiple custom reminders from trying to use the same popup ID simultaneously.
+                break;
             }
         }
     }
+    console.log("[ContentScript Prisma] Finished checkCustomReminders.");
 }
 
 // --- End Custom Reminder Functions ---

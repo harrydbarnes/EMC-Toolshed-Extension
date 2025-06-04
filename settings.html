@@ -96,34 +96,6 @@
             </div>
         </section>
 
-        <section id="customReminderEditor" style="display: none;"> <!-- Initially hidden -->
-            <h2>Edit Custom Reminder Content</h2>
-            <div>
-                <p><strong>Name:</strong> <span id="editorReminderNameDisplay"></span></p>
-                <p><strong>URL Pattern:</strong> <span id="editorReminderUrlPatternDisplay"></span></p>
-                <p><strong>Text Trigger:</strong> <span id="editorReminderTextTriggerDisplay"></span></p>
-            </div>
-            <hr>
-            <div>
-                <label for="reminderEditorTitle">Reminder Title:</label>
-                <input type="text" id="reminderEditorTitle" placeholder="⚠️ Your Title Here ⚠️">
-            </div>
-            <div>
-                <label for="reminderEditorIntro">Intro Sentence:</label>
-                <textarea id="reminderEditorIntro" placeholder="e.g., This is a reminder to..."></textarea>
-            </div>
-            <div>
-                <label for="reminderEditorBullets">Bullet Points (one per line):</label>
-                <textarea id="reminderEditorBullets" placeholder="• Do this first
-• Then do this
-• Finally, this"></textarea>
-            </div>
-            <div class="button-group">
-                <button id="backButton" class="settings-button">Back</button>
-                <button id="saveCustomReminderNew" class="settings-button">Save Custom Reminder</button>
-            </div>
-        </section>
-
         <section id="export-settings">
             <h2>Export Custom Reminders</h2>
             <p>Click the button below to generate a JSON representation of your custom reminders. You can copy this to back them up or share them.</p>
@@ -132,5 +104,40 @@
         </section>
     </div>
     <script src="settings.js"></script>
+
+    <!-- New Reminder Modal Editor -->
+    <div id="reminderModalOverlay" class="reminder-modal-overlay" style="display: none;"></div>
+    <div id="reminderModalEditor" class="reminder-modal" style="display: none;">
+        <div class="reminder-modal-content">
+            <div class="reminder-modal-header">
+                <h2 id="modalEditorTitle">Create Custom Reminder</h2>
+                <button id="modalCloseButton" class="modal-close-button">&times;</button>
+            </div>
+            <div class="reminder-modal-body">
+                <p><strong>Name:</strong> <span id="modalReminderNameDisplay"></span></p>
+                <p><strong>URL Pattern:</strong> <span id="modalReminderUrlPatternDisplay"></span></p>
+                <p><strong>Text Trigger:</strong> <span id="modalReminderTextTriggerDisplay"></span></p>
+                <hr>
+                <div>
+                    <label for="modalInputReminderTitle">Reminder Title:</label>
+                    <input type="text" id="modalInputReminderTitle" placeholder="⚠️ Your Title Here ⚠️">
+                </div>
+                <div>
+                    <label for="modalInputIntroSentence">Intro Sentence:</label>
+                    <textarea id="modalInputIntroSentence" placeholder="e.g., This is a reminder to..."></textarea>
+                </div>
+                <div>
+                    <label for="modalInputBulletPoints">Bullet Points (one per line):</label>
+                    <textarea id="modalInputBulletPoints" placeholder="• Do this first
+• Then do this
+• Finally, this"></textarea>
+                </div>
+            </div>
+            <div class="reminder-modal-footer">
+                <button id="modalSaveButton" class="settings-button">Save Reminder</button>
+                <button id="modalCancelButton" class="settings-button settings-button-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

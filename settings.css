@@ -5,22 +5,31 @@ body {
     font-family: 'Outfit', sans-serif;
     margin: 0;
     padding: 20px;
-    /* Adjust width as needed, or make it more responsive */
     background-color: #f4f4f4;
-    min-width: 600px; /* Ensure body can allow .container to center */
+
+    width: auto; /* Override fixed width from style.css if settings.html uses both css files */
+    min-height: 100vh; /* Ensure body takes at least full viewport height */
+    display: flex;
+    /* flex-direction: column; /* Not strictly necessary if .container is the only main child */
+    align-items: center; /* Horizontally center .container */
+    justify-content: flex-start; /* Aligns .container to the top; use 'center' to also vertically center.
+                                  Given the settings page can be long, flex-start is better. */
+    box-sizing: border-box; /* padding will be included in 100vh calculation */
 }
 
 .container {
     background-color: #fff;
-    padding-top: 20px; /* Explicitly set for uniformity */
-    padding-bottom: 20px; /* Explicitly set for uniformity */
+    padding-top: 20px;
+    padding-bottom: 20px;
     padding-left: 20px;
     padding-right: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     max-width: 550px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%; /* Allow container to take full width up to max-width */
+    /* margin-left: auto; /* No longer needed with flex centering on body */
+    /* margin-right: auto; /* No longer needed with flex centering on body */
+    box-sizing: border-box; /* Good practice */
 }
 
 .settings-header {
@@ -89,6 +98,21 @@ button, .settings-button { /* Added .settings-button for consistency */
 
 button:hover, .settings-button:hover {
     background-color: #4a2fdc; /* Darker shade for hover */
+}
+
+.settings-button-secondary {
+    background-color: #6c757d; /* A common secondary button color (grey) */
+}
+.settings-button-secondary:hover {
+    background-color: #5a6268;
+}
+
+.settings-button-edit {
+    background-color: #ffc107; /* Amber */
+    /* color: black; /* Or white, depending on contrast */
+}
+.settings-button-edit:hover {
+    background-color: #e0a800; /* Darker amber */
 }
 
 .toggle-container {
@@ -207,67 +231,120 @@ input:checked + .slider:before {
     white-space: pre; /* Ensures spaces and newlines are preserved like <pre> */
     box-sizing: border-box; /* Includes padding and border in the element's total width and height */
     line-height: 1.5; /* Improves readability for monospace fonts */
-    /* Padding, border, border-radius, font-size inherited from general textarea or can be set here */
 }
 
-/* Styles for the new Custom Reminder Editor */
-#customReminderEditor {
-    /* display: none; /* HTML handles initial state. JS will toggle. */
-    padding-top: 15px; /* Add some space above the content */
-    /* border-top: 1px solid #eee; /* This section already has a border-bottom from the one above it, and its own border-bottom if not last */
-    /* margin-top: 20px; /* section already has margin-bottom */
+/* Reminder Modal Editor Styles */
+.reminder-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 100; /* Below modal, above page content */
+    display: none; /* Initially hidden */
 }
 
-/* section h2 styling already covers #customReminderEditor h2 */
-
-#customReminderEditor div p strong { /* Making sure the labels for displayed data are clear */
-    color: #333; /* Darker text for emphasis */
-    font-weight: bold; /* Explicitly bold */
+.reminder-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px; /* Max width of the modal */
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 101; /* Above overlay */
+    display: none; /* Initially hidden */
+    overflow: hidden; /* Prevent content from spilling unstylishly */
 }
-#customReminderEditor div span { /* Displayed data from step 1 */
-    margin-left: 5px;
-    color: #555; /* Standard text color */
+
+.reminder-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh; /* Max height relative to viewport */
 }
 
-#customReminderEditor hr {
+.reminder-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f7f7f7; /* Light grey header */
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.reminder-modal-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.modal-close-button {
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+    padding: 0 5px;
+}
+.modal-close-button:hover {
+    color: #333;
+}
+
+.reminder-modal-body {
+    padding: 20px;
+    overflow-y: auto; /* Scrollable body if content exceeds max-height */
+}
+
+.reminder-modal-body p {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+.reminder-modal-body p strong {
+    color: #333;
+}
+.reminder-modal-body span {
+    color: #555;
+}
+.reminder-modal-body hr {
     margin-top: 15px;
     margin-bottom: 15px;
     border: 0;
-    border-top: 1px solid #eee; /* Standard separator color */
+    border-top: 1px solid #eee;
 }
-
-#customReminderEditor label {
-    display: block; /* Makes label take full width */
-    margin-bottom: 5px; /* Space below label */
+.reminder-modal-body label {
+    display: block;
+    margin-bottom: 5px;
     font-weight: bold;
-    color: #333; /* Darker text for labels */
+    color: #333;
+    font-size: 0.95em;
 }
 
-/* Inputs and textareas in the editor */
-#customReminderEditor input[type="text"],
-#customReminderEditor textarea {
-    width: calc(100% - 22px); /* Adjusted for padding: 10px and border: 1px on each side */
+.reminder-modal-body input[type="text"],
+.reminder-modal-body textarea {
+    width: calc(100% - 22px); /* Full width minus padding & border */
     padding: 10px;
-    margin-bottom: 15px; /* More space below each editor field */
+    margin-bottom: 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1em;
     box-sizing: border-box;
-    font-family: 'Outfit', sans-serif; /* Ensure consistent font */
+    font-family: 'Outfit', sans-serif;
+}
+.reminder-modal-body textarea {
+    min-height: 80px; /* Default height for intro and bullets */
+    line-height: 1.4;
 }
 
-#customReminderEditor textarea {
-    min-height: 100px; /* Good default height for intro and bullets */
-    line-height: 1.4; /* Consistent line height */
-}
-
-/* Button group in editor */
-#customReminderEditor .button-group {
+.reminder-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
     display: flex;
     justify-content: flex-end; /* Align buttons to the right */
     gap: 10px;
-    margin-top: 15px; /* Space above the button group */
+    background-color: #f7f7f7;
 }
-
-/* .settings-button is already globally styled, so no specific styles for
-   #customReminderEditor .button-group .settings-button needed unless overriding */

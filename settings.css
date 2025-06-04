@@ -7,11 +7,15 @@ body {
     padding: 20px;
     /* Adjust width as needed, or make it more responsive */
     background-color: #f4f4f4;
+    min-width: 600px; /* Ensure body can allow .container to center */
 }
 
 .container {
     background-color: #fff;
-    padding: 20px;
+    padding-top: 20px; /* Explicitly set for uniformity */
+    padding-bottom: 20px; /* Explicitly set for uniformity */
+    padding-left: 20px;
+    padding-right: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     max-width: 550px;
@@ -29,7 +33,7 @@ body {
 .settings-header h1 {
     font-size: 1.8em;
     color: #333;
-    margin: 0;
+    margin: 0; /* This is key for controlling top space */
 }
 
 section {
@@ -54,19 +58,21 @@ section h2 {
 /* General styling for input elements, buttons, etc. within settings */
 input[type="text"],
 input[type="url"],
-textarea {
-    width: calc(100% - 20px); /* Account for padding */
+textarea { /* General textarea, will be overridden by more specific selectors if needed */
+    width: calc(100% - 20px); /* Account for padding of 10px on each side */
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1em;
     box-sizing: border-box;
+    font-family: 'Outfit', sans-serif; /* Consistent font */
 }
 
-textarea {
+textarea { /* General textarea styling */
     min-height: 80px;
     resize: vertical;
+    line-height: 1.4; /* Improved readability */
 }
 
 button, .settings-button { /* Added .settings-button for consistency */
@@ -100,7 +106,6 @@ button:hover, .settings-button:hover {
     color: #333;
 }
 
-/* Using existing toggle styles from style.css for consistency, but ensure they are available or copy them here if settings.css is separate */
 .toggle {
     position: relative;
     display: inline-block;
@@ -149,7 +154,7 @@ input:checked + .slider:before {
 .button-group {
     display: flex;
     gap: 10px; /* Space between buttons */
-    align-items: center;
+    align-items: center; /* Vertically align items if they have different heights */
 }
 
 .select-container {
@@ -183,6 +188,86 @@ input:checked + .slider:before {
 
 .reminder-update-message { /* For success/status messages */
     font-size: 0.9em;
-    color: green;
+    color: green; /* Consider a less aggressive green, e.g., #28a745 */
     margin-top: 10px;
 }
+
+/* Styles for elements previously with inline styles */
+#aura-reminders .reminder-text { /* More specific selector */
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+#exportDataTextarea {
+    width: 100%; /* Overrides general textarea width if different */
+    min-height: 150px;
+    margin-top: 10px; /* Space above the textarea */
+    margin-bottom: 0; /* Reset default margin if any from general textarea */
+    font-family: monospace;
+    white-space: pre; /* Ensures spaces and newlines are preserved like <pre> */
+    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+    line-height: 1.5; /* Improves readability for monospace fonts */
+    /* Padding, border, border-radius, font-size inherited from general textarea or can be set here */
+}
+
+/* Styles for the new Custom Reminder Editor */
+#customReminderEditor {
+    /* display: none; /* HTML handles initial state. JS will toggle. */
+    padding-top: 15px; /* Add some space above the content */
+    /* border-top: 1px solid #eee; /* This section already has a border-bottom from the one above it, and its own border-bottom if not last */
+    /* margin-top: 20px; /* section already has margin-bottom */
+}
+
+/* section h2 styling already covers #customReminderEditor h2 */
+
+#customReminderEditor div p strong { /* Making sure the labels for displayed data are clear */
+    color: #333; /* Darker text for emphasis */
+    font-weight: bold; /* Explicitly bold */
+}
+#customReminderEditor div span { /* Displayed data from step 1 */
+    margin-left: 5px;
+    color: #555; /* Standard text color */
+}
+
+#customReminderEditor hr {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border: 0;
+    border-top: 1px solid #eee; /* Standard separator color */
+}
+
+#customReminderEditor label {
+    display: block; /* Makes label take full width */
+    margin-bottom: 5px; /* Space below label */
+    font-weight: bold;
+    color: #333; /* Darker text for labels */
+}
+
+/* Inputs and textareas in the editor */
+#customReminderEditor input[type="text"],
+#customReminderEditor textarea {
+    width: calc(100% - 22px); /* Adjusted for padding: 10px and border: 1px on each side */
+    padding: 10px;
+    margin-bottom: 15px; /* More space below each editor field */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif; /* Ensure consistent font */
+}
+
+#customReminderEditor textarea {
+    min-height: 100px; /* Good default height for intro and bullets */
+    line-height: 1.4; /* Consistent line height */
+}
+
+/* Button group in editor */
+#customReminderEditor .button-group {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px;
+    margin-top: 15px; /* Space above the button group */
+}
+
+/* .settings-button is already globally styled, so no specific styles for
+   #customReminderEditor .button-group .settings-button needed unless overriding */

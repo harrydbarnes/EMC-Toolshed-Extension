@@ -49,7 +49,7 @@
                 </label>
             </div>
             <div id="timesheetReminderSettings" class="hidden-initially"> <!-- This div will be shown/hidden by the toggle -->
-                <p class="reminder-text" style="font-size:0.9em; margin-top:10px;"><em>Remind me on and at:</em></p>
+                <p class="reminder-text"><em>Remind me on and at:</em></p>
                 <div class="select-container">
                     <select id="reminderDay">
                         <option value="Monday">Monday</option>
@@ -72,24 +72,22 @@
 
         <section id="create-reminder">
             <h2>Create Custom Reminder</h2>
-            <div>
-                <label for="reminderName">Reminder Name:</label>
-                <input type="text" id="reminderName" placeholder="e.g., Snapchat Task">
+            <div id="createReminderInitialStep">
+                <div>
+                    <label for="reminderName">Reminder Name:</label>
+                    <input type="text" id="reminderName" placeholder="e.g., Snapchat Task">
+                </div>
+                <div>
+                    <label for="reminderUrlPattern">URL Pattern (e.g., *://*.example.com/path*):</label>
+                    <input type="text" id="reminderUrlPattern" placeholder="*://*.example.com/*">
+                </div>
+                <div>
+                    <label for="reminderTextTrigger">Text to look for on site (leave blank if URL match is enough):</label>
+                    <input type="text" id="reminderTextTrigger" placeholder="e.g., 'Order Complete, Submitted, Thank You'">
+                </div>
+                <button id="nextButton" class="settings-button">Next</button>
+                <p id="customReminderStatus" class="reminder-update-message hidden-initially"></p>
             </div>
-            <div>
-                <label for="reminderUrlPattern">URL Pattern (e.g., *://*.example.com/path*):</label>
-                <input type="text" id="reminderUrlPattern" placeholder="*://*.example.com/*">
-            </div>
-            <div>
-                <label for="reminderTextTrigger">Text to look for on site (leave blank if URL match is enough):</label>
-                <input type="text" id="reminderTextTrigger" placeholder="e.g., 'Order Complete, Submitted, Thank You'">
-            </div>
-            <div>
-                <label for="reminderPopupMessage">Popup message to display:</label>
-                <textarea id="reminderPopupMessage" placeholder="e.g., 'Remember to double check the order details!'"></textarea>
-            </div>
-            <button id="saveCustomReminder" class="settings-button">Save Custom Reminder</button>
-            <p id="customReminderStatus" class="reminder-update-message hidden-initially"></p>
 
             <h3>Saved Custom Reminders</h3>
             <div id="customRemindersList">
@@ -98,11 +96,39 @@
             </div>
         </section>
 
+        <section id="customReminderEditor" style="display: none;"> <!-- Initially hidden -->
+            <h2>Edit Custom Reminder Content</h2>
+            <div>
+                <p><strong>Name:</strong> <span id="editorReminderNameDisplay"></span></p>
+                <p><strong>URL Pattern:</strong> <span id="editorReminderUrlPatternDisplay"></span></p>
+                <p><strong>Text Trigger:</strong> <span id="editorReminderTextTriggerDisplay"></span></p>
+            </div>
+            <hr>
+            <div>
+                <label for="reminderEditorTitle">Reminder Title:</label>
+                <input type="text" id="reminderEditorTitle" placeholder="⚠️ Your Title Here ⚠️">
+            </div>
+            <div>
+                <label for="reminderEditorIntro">Intro Sentence:</label>
+                <textarea id="reminderEditorIntro" placeholder="e.g., This is a reminder to..."></textarea>
+            </div>
+            <div>
+                <label for="reminderEditorBullets">Bullet Points (one per line):</label>
+                <textarea id="reminderEditorBullets" placeholder="• Do this first
+• Then do this
+• Finally, this"></textarea>
+            </div>
+            <div class="button-group">
+                <button id="backButton" class="settings-button">Back</button>
+                <button id="saveCustomReminderNew" class="settings-button">Save Custom Reminder</button>
+            </div>
+        </section>
+
         <section id="export-settings">
             <h2>Export Custom Reminders</h2>
             <p>Click the button below to generate a JSON representation of your custom reminders. You can copy this to back them up or share them.</p>
             <button id="generateExportData" class="settings-button">Generate Export Data</button>
-            <textarea id="exportDataTextarea" readonly style="width: 100%; min-height: 150px; margin-top: 10px; font-family: monospace; white-space: pre; box-sizing: border-box;" placeholder="Exported JSON data will appear here..."></textarea>
+            <textarea id="exportDataTextarea" readonly placeholder="Exported JSON data will appear here..."></textarea>
         </section>
     </div>
     <script src="settings.js"></script>

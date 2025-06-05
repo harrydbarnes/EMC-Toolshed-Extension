@@ -1,35 +1,38 @@
-/* Placeholder for settings.css */
-/* Styles specific to settings.html can go here */
+html {
+    height: 100%; /* Or min-height: 100% for flexibility */
+    box-sizing: border-box;
+}
 
 body {
     font-family: 'Outfit', sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 20px; /* This is the buffer around the .container */
     background-color: #f4f4f4;
+    box-sizing: border-box; /* Crucial for height calculations with padding */
 
-    width: auto; /* Override fixed width from style.css if settings.html uses both css files */
-    min-height: 100vh; /* Ensure body takes at least full viewport height */
-    display: flex;
-    /* flex-direction: column; /* Not strictly necessary if .container is the only main child */
-    align-items: center; /* Horizontally center .container */
-    justify-content: flex-start; /* Aligns .container to the top; use 'center' to also vertically center.
-                                  Given the settings page can be long, flex-start is better. */
-    box-sizing: border-box; /* padding will be included in 100vh calculation */
+    /* --- Layout Overrides for settings.html --- */
+    /* Using !important to fight potential overrides from style.css */
+    width: 100% !important;
+    min-width: 0 !important; /* Reset any problematic min-width */
+    min-height: 100vh !important; /* Make body at least full viewport height */
+    display: flex !important;
+    flex-direction: column !important; /* Stack .container and other body children vertically */
+    align-items: center !important; /* Center .container horizontally */
+    justify-content: flex-start !important; /* Align .container to the top */
+    overflow-y: auto !important; /* Allow body to scroll if .container's content is too tall */
 }
 
 .container {
     background-color: #fff;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     max-width: 550px;
-    width: 100%; /* Allow container to take full width up to max-width */
-    /* margin-left: auto; /* No longer needed with flex centering on body */
-    /* margin-right: auto; /* No longer needed with flex centering on body */
-    box-sizing: border-box; /* Good practice */
+    width: 100%; /* Occupy available width given by flex parent, up to max-width */
+    box-sizing: border-box;
+    flex-shrink: 0; /* Prevent .container from shrinking if body had other flex items */
+    /* height: auto; /* Default, ensure no fixed height is set */
+    /* overflow: visible; /* Default, ensure content isn't clipped by container itself unless intended */
 }
 
 .settings-header {
@@ -49,6 +52,7 @@ section {
     margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: 1px solid #eee;
+    /* Default overflow is visible. If any section had overflow:hidden or a fixed height, that could be an issue. */
 }
 
 section:last-of-type {

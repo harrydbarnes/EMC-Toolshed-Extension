@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addClickListener('timesheetsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo');
     addClickListener('approvalsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheetApprovals/AwaitingMe');
     addClickListener('officeHoursButton', 'https://harrydbarnes.github.io/EssenceMediacomTools/');
-    addClickListener('approversListButton', 'https://insidemedia-my.sharepoint.com/:x:/r/personal/harry_barnes_essencemediacom_com/Documents/EssenceMediacom%20Approver%20list%2017012025.xlsx?d=w7bbea28ef6f147de95bba4c95bf98973&csf=1&web=1&e=B0k6Tl');
+    addClickListener('approversListButton', 'https://insidemedia.sharepoint.com/:x:/s/TPO-SharePoint/EYxRbLkQU_xLpMSvnQQFIt4Bug1w9CJupONy6sIdr6IuFw?email=harry.barnes%40wppmedia.com&e=Mi9JPh');
     addClickListener('tpoSharepointButton', 'https://insidemedia.sharepoint.com/sites/TPO-SharePoint');
     addClickListener('addCampaignButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns&osModalId=prsm-cm-cmpadd&osMOpts=lb');
 

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Prisma Tools",
+  "name": "Ops Toolshed",
   "version": "1.0",
   "description": "Enhances Prisma functionality and provides quick access to various tools. Built by Harry Barnes.",
   "permissions": [

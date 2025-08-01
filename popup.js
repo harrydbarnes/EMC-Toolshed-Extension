@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
     const generateUrlButton = document.getElementById('generateUrl');
-    const logoToggle = document.getElementById('logoToggle');
-    const metaReminderToggle = document.getElementById('metaReminderToggle');
-    const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
-    const settingsToggle = document.getElementById('settingsToggle');
-    const settingsContent = document.getElementById('settingsContent');
-    const settingsIcon = settingsToggle.querySelector('i');
+    // const logoToggle = document.getElementById('logoToggle'); // Removed
+    // const metaReminderToggle = document.getElementById('metaReminderToggle'); // Removed
+    // const timesheetReminderToggle = document.getElementById('timesheetReminderToggle'); // Removed
+    // const settingsToggle = document.getElementById('settingsToggle'); // Removed
+    // const settingsContent = document.getElementById('settingsContent'); // Removed
+    // const settingsIcon = settingsToggle.querySelector('i'); // Removed
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
     const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
-    const reminderDay = document.getElementById('reminderDay');
-    const reminderTime = document.getElementById('reminderTime');
-    const reminderSettings = document.getElementById('reminderSettings');
-    const saveReminderSettingsButton = document.getElementById('saveReminderSettings');
-    const reminderUpdateMessage = document.getElementById('reminderUpdateMessage');
+    // const reminderDay = document.getElementById('reminderDay'); // Removed
+    // const reminderTime = document.getElementById('reminderTime'); // Removed
+    // const reminderSettings = document.getElementById('reminderSettings'); // Removed
+    // const saveReminderSettingsButton = document.getElementById('saveReminderSettings'); // Removed
+    // const reminderUpdateMessage = document.getElementById('reminderUpdateMessage'); // Removed
 
     console.log("[Popup Load] DOMContentLoaded event fired.");
 
@@ -86,41 +86,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- Rest of your popup.js code remains the same ---
-    // (Make sure to include all functions like setLogoToggleState, handleGenerateUrl, etc.)
-
-    // Set logo replacement on by default
-    chrome.storage.sync.get('logoReplaceEnabled', setLogoToggleState);
-    // Set Meta reminder on by default
-    chrome.storage.sync.get('metaReminderEnabled', setMetaReminderToggleState);
-    // Load saved state for timesheet reminder, day, and time
-    chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
-        setTimesheetReminderToggleState(data);
-        if (reminderDay && data.reminderDay) {
-            reminderDay.value = data.reminderDay;
-        }
-        updateTimeOptions(reminderDay ? reminderDay.value : 'Friday'); // Pass current or default day
-        if (reminderTime && data.reminderTime) {
-            reminderTime.value = data.reminderTime;
-        }
-    });
+    // --- Settings UI related initializations and event listeners are removed ---
 
     if(generateUrlButton) generateUrlButton.addEventListener('click', handleGenerateUrl);
-    if(logoToggle) logoToggle.addEventListener('change', handleLogoToggle);
-    if(metaReminderToggle) metaReminderToggle.addEventListener('change', handleMetaReminderToggle);
-    if(timesheetReminderToggle) timesheetReminderToggle.addEventListener('change', handleTimesheetReminderToggle);
-    if(reminderDay) reminderDay.addEventListener('change', handleReminderDayChange);
-    if(reminderTime) reminderTime.addEventListener('change', handleReminderTimeChange);
-
-    if(settingsToggle) {
-        settingsToggle.addEventListener('click', function() {
-            if(settingsContent && settingsIcon) {
-                settingsContent.style.maxHeight = settingsContent.style.maxHeight ? null : settingsContent.scrollHeight + "px";
-                settingsIcon.classList.toggle('fa-chevron-down');
-                settingsIcon.classList.toggle('fa-chevron-up');
-            }
-        });
-    }
+    // Event listeners for logoToggle, metaReminderToggle, timesheetReminderToggle, reminderDay, reminderTime, settingsToggle, saveReminderSettingsButton are removed.
 
     if (triggerTimesheetReminderButton) {
         triggerTimesheetReminderButton.addEventListener('click', function() {
@@ -135,27 +104,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (saveReminderSettingsButton && reminderDay && reminderTime && reminderUpdateMessage) {
-        saveReminderSettingsButton.addEventListener('click', function() {
-            const dayValue = reminderDay.value;
-            const timeValue = reminderTime.value;
-            chrome.storage.sync.set({reminderDay: dayValue, reminderTime: timeValue}, function() {
-                updateAlarm();
-                reminderUpdateMessage.textContent = `Updated! You will be reminded on ${dayValue} at ${timeValue}`;
-                if(reminderUpdateMessage.classList) reminderUpdateMessage.classList.remove('hidden-initially');
-                setTimeout(() => {
-                    if(reminderUpdateMessage.classList) reminderUpdateMessage.classList.add('hidden-initially');
-                }, 3000);
-            });
-        });
-    }
+    // Logic for saveReminderSettingsButton is removed.
 
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
     addClickListener('metaHandbookButton', 'https://insidemedia.sharepoint.com/sites/GRM-UK-GMS/Files%20Library/Forms/AllItems.aspx?id=%2Fsites%2FGRM%2DUK%2DGMS%2FFiles%20Library%2FChannel%5FSocial%2FPaid%20Social%20Prisma%20Integration%20Resources%2FLatest%20Handbook&p=true&ga=1');
     addClickListener('timesheetsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo');
     addClickListener('approvalsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheetApprovals/AwaitingMe');
-    addClickListener('officeHoursButton', 'https://harrydbarnes.github.io/EssenceMediacomTools/');
-    addClickListener('approversListButton', 'https://insidemedia-my.sharepoint.com/:x:/r/personal/harry_barnes_essencemediacom_com/Documents/EssenceMediacom%20Approver%20list%2017012025.xlsx?d=w7bbea28ef6f147de95bba4c95bf98973&csf=1&web=1&e=B0k6Tl');
+    addClickListener('officeHoursButton', 'https://myofficedays.netlify.app/');
+    addClickListener('approversListButton', 'https://insidemedia.sharepoint.com/:x:/s/TPO-SharePoint/EYxRbLkQU_xLpMSvnQQFIt4Bug1w9CJupONy6sIdr6IuFw?email=harry.barnes%40wppmedia.com&e=Mi9JPh');
     addClickListener('tpoSharepointButton', 'https://insidemedia.sharepoint.com/sites/TPO-SharePoint');
     addClickListener('addCampaignButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns&osModalId=prsm-cm-cmpadd&osMOpts=lb');
 
@@ -163,44 +119,23 @@ document.addEventListener('DOMContentLoaded', function() {
     addClickListener('ngmcintButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DSU5UIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngmcscoButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DU0NPIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngopenButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR09QRU4ifX0sImZyb20iOnsiaWQiOiIzNS1SRUlLV1hILTYiLCJzdWJDb250ZXh0Ijp7ImlkIjoiTkdNQ0lOVCJ9fX0=');
+
+    const openSettingsPageButton = document.getElementById('openSettingsPage');
+    if (openSettingsPageButton) {
+        openSettingsPageButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
+            chrome.runtime.openOptionsPage(() => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error opening options page:', chrome.runtime.lastError);
+                    // Fallback if openOptionsPage is not set up or fails:
+                    chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
+                }
+            });
+        });
+    }
 });
 
-function setLogoToggleState(data) {
-    const logoToggle = document.getElementById('logoToggle');
-    if (logoToggle) {
-        if (data.logoReplaceEnabled === undefined) {
-            chrome.storage.sync.set({logoReplaceEnabled: true});
-            logoToggle.checked = true;
-        } else {
-            logoToggle.checked = data.logoReplaceEnabled;
-        }
-    }
-}
-
-function setMetaReminderToggleState(data) {
-    const metaReminderToggle = document.getElementById('metaReminderToggle');
-    if (metaReminderToggle) {
-        if (data.metaReminderEnabled === undefined) {
-            chrome.storage.sync.set({metaReminderEnabled: true});
-            metaReminderToggle.checked = true;
-        } else {
-            metaReminderToggle.checked = data.metaReminderEnabled;
-        }
-    }
-}
-
-function setTimesheetReminderToggleState(data) {
-    const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
-    const reminderSettings = document.getElementById('reminderSettings');
-    if (timesheetReminderToggle && reminderSettings) {
-        timesheetReminderToggle.checked = data.timesheetReminderEnabled !== false;
-        if (timesheetReminderToggle.checked) {
-            if(reminderSettings.classList) reminderSettings.classList.remove('hidden-initially');
-        } else {
-            if(reminderSettings.classList) reminderSettings.classList.add('hidden-initially');
-        }
-    }
-}
+// Removed setLogoToggleState, setMetaReminderToggleState, setTimesheetReminderToggleState functions
 
 function handleGenerateUrl() {
     const campaignIdInput = document.getElementById('campaignId');
@@ -208,29 +143,54 @@ function handleGenerateUrl() {
     if (!campaignIdInput || !campaignDateInput) return;
 
     const campaignId = campaignIdInput.value;
-    let campaignDateStr = campaignDateInput.value; // Renamed for clarity
+    let campaignDateStr = campaignDateInput.value.trim(); // Ensure to trim whitespace
 
     if (campaignId) {
         let dateToUse = new Date(); // Default to current date
+        dateToUse.setDate(1); // Set to the first of the month to avoid month-end issues
+
         // Try to parse the date string if provided
         if (campaignDateStr) {
-            // Attempt to parse formats like "Month YYYY" (e.g., "May 2024") or "MM/YYYY" (e.g., "05/2024")
-            // This is a basic parser; more robust parsing might be needed for other formats.
             let parsedDate;
-            const monthYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{4})$/); // "May 2024"
-            const slashMonthYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{4})$/); // "05/2024" or "5/2024"
+            const currentYear = new Date().getFullYear();
+            const currentCentury = Math.floor(currentYear / 100) * 100; // e.g., 2000
 
-            if (monthYearMatch) {
-                parsedDate = new Date(monthYearMatch[1] + " 1, " + monthYearMatch[2]);
-            } else if (slashMonthYearMatch) {
-                // Month is 0-indexed in JS Date, so subtract 1
-                parsedDate = new Date(parseInt(slashMonthYearMatch[2], 10), parseInt(slashMonthYearMatch[1], 10) - 1, 1);
+            // Attempt "Month YY" (e.g., "July 25")
+            const monthShortYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{2})$/i);
+            if (monthShortYearMatch) {
+                parsedDate = new Date(monthShortYearMatch[1] + " 1, " + (currentCentury + parseInt(monthShortYearMatch[2], 10)));
+            } else {
+                // Else, attempt "MM/YY" (e.g., "07/25")
+                const slashMonthShortYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{2})$/);
+                if (slashMonthShortYearMatch) {
+                    parsedDate = new Date(currentCentury + parseInt(slashMonthShortYearMatch[2], 10), parseInt(slashMonthShortYearMatch[1], 10) - 1, 1);
+                } else {
+                    // Else, attempt existing "Month YYYY" (e.g., "May 2024")
+                    const monthFullYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{4})$/i);
+                    if (monthFullYearMatch) {
+                        parsedDate = new Date(monthFullYearMatch[1] + " 1, " + monthFullYearMatch[2]);
+                    } else {
+                        // Else, attempt existing "MM/YYYY" (e.g., "05/2024")
+                        const slashMonthFullYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{4})$/);
+                        if (slashMonthFullYearMatch) {
+                            parsedDate = new Date(parseInt(slashMonthFullYearMatch[2], 10), parseInt(slashMonthFullYearMatch[1], 10) - 1, 1);
+                        } else {
+                            // Else, attempt "YYYY-MM-DD" or "YYYY-MM" (ISO-like)
+                            const isoMatch = campaignDateStr.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
+                            if (isoMatch) {
+                                parsedDate = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, 1);
+                            }
+                        }
+                    }
+                }
             }
 
             if (parsedDate && !isNaN(parsedDate)) {
                 dateToUse = parsedDate;
-            } else {
-                console.warn("Could not parse campaign date string:", campaignDateStr, ". Using current month.");
+            } else if (campaignDateStr) { // Only warn if there was input
+                console.warn("Could not parse campaign date string:", campaignDateStr, ". Using current month as fallback (after attempting all formats).");
+                alert("Could not parse date: '" + campaignDateStr + "'. Please use formats like 'July 25', '07/25', 'July 2025', '07/2025', '2025-07', or leave blank for current month.");
+                return; // Prevent URL generation with default date if specific input was invalid
             }
         }
 
@@ -245,139 +205,11 @@ function handleGenerateUrl() {
     }
 }
 
-
-function handleLogoToggle() {
-    const isEnabled = this.checked;
-    chrome.storage.sync.set({logoReplaceEnabled: isEnabled}, function() {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            if (tabs.length > 0 && tabs[0] && tabs[0].id) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    action: "checkLogoReplaceEnabled",
-                    enabled: isEnabled
-                }, function(response) {
-                    if (chrome.runtime.lastError) {
-                         console.warn("Could not send message to tab for logo toggle (not on a Prisma page or content script not ready):", chrome.runtime.lastError.message);
-                    }
-                });
-            } else {
-                console.warn("No active tab found for logo toggle message.");
-            }
-        });
-    });
-}
-
-function handleMetaReminderToggle() {
-    const isEnabled = this.checked;
-    chrome.storage.sync.set({metaReminderEnabled: isEnabled}, function() {
-        console.log("Meta reminder set to:", isEnabled);
-    });
-}
-
-function handleTimesheetReminderToggle() {
-    const isEnabled = this.checked;
-    const reminderSettings = document.getElementById('reminderSettings');
-    if (reminderSettings) {
-        if (isEnabled) {
-            if(reminderSettings.classList) reminderSettings.classList.remove('hidden-initially');
-        } else {
-            if(reminderSettings.classList) reminderSettings.classList.add('hidden-initially');
-        }
-    }
-    chrome.storage.sync.set({timesheetReminderEnabled: isEnabled}, function() {
-        if (isEnabled) {
-            updateAlarm();
-        } else {
-            chrome.runtime.sendMessage({action: "removeTimesheetAlarm"});
-        }
-    });
-}
-
-function handleReminderDayChange() {
-    const reminderDaySelect = document.getElementById('reminderDay');
-    if (reminderDaySelect) {
-        updateTimeOptions(reminderDaySelect.value); // This will re-populate and set a default time or stored time
-        updateAlarm(); // Then update the alarm with the newly selected day and current/default time
-    }
-}
-
-function handleReminderTimeChange() {
-    updateAlarm(); // updateAlarm will get values from DOM
-}
-
-function updateTimeOptions(day) {
-    const reminderTimeSelect = document.getElementById('reminderTime');
-    if (!reminderTimeSelect) return;
-
-    const currentSelectedTime = reminderTimeSelect.value; // Preserve current time if possible
-    reminderTimeSelect.innerHTML = '';
-    let startTime, endTime;
-    if (day === 'Friday') {
-        startTime = 14 * 60;
-        endTime = 16 * 60;
-    } else { // Monday, Tuesday
-        startTime = 9 * 60;
-        endTime = 17 * 60 + 30;
-    }
-    let timeWasSetFromStorage = false;
-
-    for (let i = startTime; i <= endTime; i += 15) {
-        const hour = Math.floor(i / 60);
-        const minute = i % 60;
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const option = document.createElement('option');
-        option.value = timeString;
-        option.textContent = timeString;
-        reminderTimeSelect.appendChild(option);
-    }
-    
-    // Try to set the previously selected/stored time after populating
-    chrome.storage.sync.get('reminderTime', function(data) {
-        if (data.reminderTime && reminderTimeSelect.querySelector(`option[value="${data.reminderTime}"]`)) {
-            reminderTimeSelect.value = data.reminderTime;
-            timeWasSetFromStorage = true;
-        } else if (currentSelectedTime && reminderTimeSelect.querySelector(`option[value="${currentSelectedTime}"]`)) {
-            // If stored time for selected day isn't valid, but a time was already selected, keep it if still valid
-            reminderTimeSelect.value = currentSelectedTime;
-        } else if (reminderTimeSelect.options.length > 0) {
-             // Default to a sensible time if no specific preference, e.g., first available, or a hardcoded default for the day
-            if (day === 'Friday' && reminderTimeSelect.querySelector(`option[value="14:30"]`)) {
-                reminderTimeSelect.value = "14:30";
-            } else if (day !== 'Friday' && reminderTimeSelect.querySelector(`option[value="09:00"]`)){
-                reminderTimeSelect.value = "09:00";
-            } else {
-                reminderTimeSelect.value = reminderTimeSelect.options[0].value; // Fallback to first
-            }
-        }
-    });
-}
-
-function updateAlarm() {
-    const reminderDaySelect = document.getElementById('reminderDay');
-    const reminderTimeSelect = document.getElementById('reminderTime');
-    
-    // Ensure elements and their values exist before proceeding
-    if (!reminderDaySelect || !reminderTimeSelect || !reminderDaySelect.value || !reminderTimeSelect.value) {
-        console.warn("Cannot update alarm, day or time not properly selected or available in the DOM.");
-        return; 
-    }
-
-    const reminderDayValue = reminderDaySelect.value;
-    const reminderTimeValue = reminderTimeSelect.value;
-
-    chrome.storage.sync.set({reminderDay: reminderDayValue, reminderTime: reminderTimeValue}, function() {
-        if (chrome.runtime.lastError) {
-            console.error("Error setting reminderDay/Time in storage:", chrome.runtime.lastError.message);
-            return;
-        }
-        chrome.runtime.sendMessage({action: "createTimesheetAlarm", day: reminderDayValue, time: reminderTimeValue}, function(response){
-            if (chrome.runtime.lastError) {
-                console.error("Error sending createTimesheetAlarm message:", chrome.runtime.lastError.message);
-            } else {
-                console.log("createTimesheetAlarm message sent, response:", response?.status);
-            }
-        });
-    });
-}
+// Removed handleLogoToggle, handleMetaReminderToggle, handleTimesheetReminderToggle,
+// handleReminderDayChange, handleReminderTimeChange, updateTimeOptions, and updateAlarm functions.
+// Note: If `updateAlarm` or parts of it were used by other functionalities not being removed,
+// those parts would need to be preserved or refactored. Based on the current context,
+// they seem exclusively tied to the removed settings UI.
 
 function addClickListener(id, url) {
     const button = document.getElementById(id);

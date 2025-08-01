@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prisma Tools Settings</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap">
+    <link rel="stylesheet" href="style.css"> <!-- Added link to shared style.css -->
+    <link rel="stylesheet" href="settings.css">
+    <!-- It's good practice to link a specific CSS for the settings page if major styling differences are expected -->
+    <!-- <link rel="stylesheet" href="settings.css"> -->
+</head>
+<body>
+    <div class="container">
+        <header class="settings-header">
+            <h1>Settings</h1>
+        </header>
+
+        <section id="general-settings">
+            <h2>General</h2>
+            <div class="toggle-container">
+                <span>Replace Prisma Logo:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="logoToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <section id="prisma-reminders">
+            <h2>Prisma Reminders</h2>
+            <div class="toggle-container">
+                <span>Enable Meta Reconciliation Reminder:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="metaReminderToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button id="triggerMetaReminder" class="settings-button">Test Meta Reminder</button>
+        </section>
+
+        <section id="aura-reminders">
+            <h2>Aura Reminders</h2>
+            <div class="toggle-container">
+                <span>Enable Timesheet Reminder:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="timesheetReminderToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="timesheetReminderSettings" class="hidden-initially"> <!-- This div will be shown/hidden by the toggle -->
+                <p class="reminder-text"><em>Remind me on and at:</em></p>
+                <div class="select-container">
+                    <select id="reminderDay">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                </div>
+                <div class="select-container">
+                    <select id="reminderTime"></select> <!-- Options populated by JS -->
+                </div>
+                <div class="button-group">
+                    <button id="saveTimesheetReminderSettings" class="settings-button">Save Reminder</button>
+                    <button id="triggerTimesheetReminder" class="settings-button">Trigger Timesheet Reminder Now</button>
+                    <p id="timesheetReminderUpdateMessage" class="reminder-update-message hidden-initially"></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="create-reminder">
+            <h2>Create Custom Reminder</h2>
+            <div id="createReminderInitialStep">
+                <div>
+                    <label for="reminderName">Reminder Name:</label>
+                    <input type="text" id="reminderName" placeholder="e.g., Snapchat Task">
+                </div>
+                <div>
+                    <label for="reminderUrlPattern">URL Pattern (e.g., *://*.example.com/path*):</label>
+                    <input type="text" id="reminderUrlPattern" placeholder="*://*.example.com/*">
+                </div>
+                <div>
+                    <label for="reminderTextTrigger">Text to look for on site (leave blank if URL match is enough):</label>
+                    <input type="text" id="reminderTextTrigger" placeholder="e.g., 'Order Complete, Submitted, Thank You'">
+                </div>
+                <button id="nextButton" class="settings-button">Next</button>
+                <p id="customReminderStatus" class="reminder-update-message hidden-initially"></p>
+            </div>
+
+            <h3>Saved Custom Reminders</h3>
+            <div id="customRemindersList">
+                <!-- Custom reminders will be listed here by JavaScript -->
+                <p>No custom reminders saved yet.</p>
+            </div>
+        </section>
+
+        <section id="export-settings">
+            <h2>Export Custom Reminders</h2>
+            <p>Click the button below to generate a JSON representation of your custom reminders. You can copy this to back them up or share them.</p>
+            <button id="generateExportData" class="settings-button">Generate Export Data</button>
+            <textarea id="exportDataTextarea" readonly placeholder="Exported JSON data will appear here..."></textarea>
+        </section>
+    </div>
+    <script src="settings.js"></script>
+
+    <!-- New Reminder Modal Editor -->
+    <div id="reminderModalOverlay" class="reminder-modal-overlay"></div>
+    <div id="reminderModalEditor" class="reminder-modal">
+        <div class="reminder-modal-content">
+            <div class="reminder-modal-header">
+                <h2 id="modalEditorTitle">Create Custom Reminder</h2>
+                <button id="modalCloseButton" class="modal-close-button">&times;</button>
+            </div>
+            <div class="reminder-modal-body">
+                <p><strong>Name:</strong> <span id="modalReminderNameDisplay"></span></p>
+                <p><strong>URL Pattern:</strong> <span id="modalReminderUrlPatternDisplay"></span></p>
+                <p><strong>Text Trigger:</strong> <span id="modalReminderTextTriggerDisplay"></span></p>
+                <hr>
+                <div>
+                    <label for="modalInputReminderTitle">Reminder Title:</label>
+                    <input type="text" id="modalInputReminderTitle" placeholder="⚠️ Your Title Here ⚠️">
+                </div>
+                <div>
+                    <label for="modalInputIntroSentence">Intro Sentence:</label>
+                    <textarea id="modalInputIntroSentence" placeholder="e.g., This is a reminder to..."></textarea>
+                </div>
+                <div>
+                    <label for="modalInputBulletPoints">Bullet Points (one per line):</label>
+                    <textarea id="modalInputBulletPoints" placeholder="• Do this first
+• Then do this
+• Finally, this"></textarea>
+                </div>
+            </div>
+            <div class="reminder-modal-footer">
+                <button id="modalSaveButton" class="settings-button">Save Reminder</button>
+                <button id="modalCancelButton" class="settings-button settings-button-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

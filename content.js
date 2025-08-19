@@ -479,8 +479,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
             const allRows = Array.from(table.querySelectorAll('[role="row"]'));
 
-            // Filter out the header row if it exists in the selection
-            const dataRows = allRows.filter(row => !row.querySelector('[role="columnheader"]'));
+            // Filter for rows that contain actual data cells, which is more reliable.
+            const dataRows = allRows.filter(row => row.querySelector('[role="gridcell"], [role="cell"]'));
+
+            if (dataRows.length === 0) {
+                alert("Found table headers, but no data rows were found. The generated file will be empty.");
+                sendResponse({status: "error", message: "No data rows found"});
+                return;
+            }
 
             dataRows.forEach(row => {
                 const rowData = [];

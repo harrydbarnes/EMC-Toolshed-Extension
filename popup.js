@@ -115,6 +115,30 @@ document.addEventListener('DOMContentLoaded', function() {
     addClickListener('tpoSharepointButton', 'https://insidemedia.sharepoint.com/sites/TPO-SharePoint');
     addClickListener('addCampaignButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns&osModalId=prsm-cm-cmpadd&osMOpts=lb');
 
+    const metaBillingCheckButton = document.getElementById('metaBillingCheckButton');
+    if (metaBillingCheckButton) {
+        metaBillingCheckButton.addEventListener('click', function() {
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (tabs.length > 0 && tabs[0] && tabs[0].url) {
+                    const currentUrl = tabs[0].url;
+                    if (currentUrl.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
+                        chrome.tabs.sendMessage(tabs[0].id, { action: "metaBillingCheck" }, function(response) {
+                            if (chrome.runtime.lastError) {
+                                console.error("Error sending message for Meta Billing Check:", chrome.runtime.lastError.message);
+                            } else {
+                                console.log("Meta Billing Check triggered:", response?.status || "No response");
+                            }
+                        });
+                    } else {
+                        alert('You need to be on Meta Ads Manager for this to work.');
+                    }
+                } else {
+                    alert('Could not determine the current URL.');
+                }
+            });
+        });
+    }
+
     addClickListener('ngmclonButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DTE9OIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngmcintButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DSU5UIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');
     addClickListener('ngmcscoButton', 'https://groupmuk-prisma.mediaocean.com/ideskos-viewport/launchapp?workflowid=buyers-workflow&moduleid=prsm-cm-spa&context=eyJ0byI6eyJpZCI6IjM1LVJFSUtXWEgtNiIsInN1YkNvbnRleHQiOnsiaWQiOiJOR01DU0NPIn19LCJmcm9tIjp7ImlkIjoiMzUtUkVJS1dYSC02Iiwic3ViQ29udGV4dCI6eyJpZCI6Ik5HTUNJTlQifX19');

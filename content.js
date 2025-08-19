@@ -454,6 +454,55 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         shownCustomReminderIds.clear(); // Allow all reminders to be shown again as settings/list might have changed
         checkCustomReminders(); // Optional: re-check immediately after update
         sendResponse({status: "Custom reminders re-fetched and IDs reset by content script"});
+    } else if (request.action === "metaBillingCheck") {
+        console.log("[ContentScript Prisma] 'metaBillingCheck' action received.");
+        try {
+            const headers = ["Campaign", "Tags", "Budget", "Amount Spent", "Ends"];
+            const table = document.querySelector('table'); // This is a guess, might need a more specific selector
+            if (!table) {
+                alert("Could not find a table on the page.");
+                sendResponse({status: "error", message: "No table found"});
+                return;
+            }
+
+            const headerCells = Array.from(table.querySelectorAll('th'));
+            const columnIndices = headers.map(header => headerCells.findIndex(cell => cell.innerText.trim() === header));
+
+            if (columnIndices.some(index => index === -1)) {
+                alert("Could not find all required columns: " + headers.join(', '));
+                sendResponse({status: "error", message: "Missing columns"});
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+            rows.forEach(row => {
+                const rowData = [];
+                const cells = Array.from(row.querySelectorAll('td'));
+                columnIndices.forEach(index => {
+                    if (cells[index]) {
+                        rowData.push(`"${cells[index].innerText.trim()}"`);
+                    } else {
+                        rowData.push('""');
+                    }
+                });
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "meta_billing_check.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            sendResponse({status: "success"});
+        } catch (e) {
+            console.error("Error during Meta Billing Check:", e);
+            alert("An error occurred while trying to extract the data.");
+            sendResponse({status: "error", message: e.message});
+        }
     } else {
         console.log("[ContentScript Prisma] Unknown action received or no action taken:", request.action);
     }

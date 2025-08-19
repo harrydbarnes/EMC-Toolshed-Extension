@@ -458,31 +458,38 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         console.log("[ContentScript Prisma] 'metaBillingCheck' action received.");
         try {
             const headers = ["Campaign", "Tags", "Budget", "Amount Spent", "Ends"];
-            const table = document.querySelector('table'); // This is a guess, might need a more specific selector
+            const table = document.querySelector('[role="grid"], [role="table"], div.table');
+
             if (!table) {
-                alert("Could not find a table on the page.");
-                sendResponse({status: "error", message: "No table found"});
+                alert("Could not find a data table on the page. This tool works with tables that have 'grid' or 'table' roles, or are a div with the class 'table'.");
+                sendResponse({status: "error", message: "No compatible table found"});
                 return;
             }
 
-            const headerCells = Array.from(table.querySelectorAll('th'));
-            const columnIndices = headers.map(header => headerCells.findIndex(cell => cell.innerText.trim() === header));
+            const headerCells = Array.from(table.querySelectorAll('[role="columnheader"]'));
+            const columnIndices = headers.map(headerText => headerCells.findIndex(cell => cell.innerText.trim() === headerText));
 
-            if (columnIndices.some(index => index === -1)) {
-                alert("Could not find all required columns: " + headers.join(', '));
-                sendResponse({status: "error", message: "Missing columns"});
+            const missingColumns = headers.filter((_, i) => columnIndices[i] === -1);
+            if (missingColumns.length > 0) {
+                alert("Could not find the following required columns: " + missingColumns.join(', '));
+                sendResponse({status: "error", message: `Missing columns: ${missingColumns.join(', ')}`});
                 return;
             }
 
             let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const allRows = Array.from(table.querySelectorAll('[role="row"]'));
 
-            rows.forEach(row => {
+            // Filter out the header row if it exists in the selection
+            const dataRows = allRows.filter(row => !row.querySelector('[role="columnheader"]'));
+
+            dataRows.forEach(row => {
                 const rowData = [];
-                const cells = Array.from(row.querySelectorAll('td'));
+                const cells = Array.from(row.querySelectorAll('[role="gridcell"], [role="cell"]'));
                 columnIndices.forEach(index => {
                     if (cells[index]) {
-                        rowData.push(`"${cells[index].innerText.trim()}"`);
+                        // Replace newlines and trim, then enclose in quotes
+                        const cellText = cells[index].innerText.replace(/\n/g, ' ').trim();
+                        rowData.push(`"${cellText}"`);
                     } else {
                         rowData.push('""');
                     }
@@ -500,7 +507,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             sendResponse({status: "success"});
         } catch (e) {
             console.error("Error during Meta Billing Check:", e);
-            alert("An error occurred while trying to extract the data.");
+            alert("An error occurred while trying to extract the data. Check the console for more details.");
             sendResponse({status: "error", message: e.message});
         }
     } else {

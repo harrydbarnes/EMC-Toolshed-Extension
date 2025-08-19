@@ -457,7 +457,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     } else if (request.action === "metaBillingCheck") {
         console.log("[ContentScript Prisma] 'metaBillingCheck' action received.");
         try {
-            const headers = ["Campaign", "Tags", "Budget", "Amount Spent", "Ends"];
+            const headers = ["Campaign", "Tags", "Budget", "Amount spent", "Ends"];
             const table = document.querySelector('[role="grid"], [role="table"], div.table');
 
             if (!table) {

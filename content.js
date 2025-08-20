@@ -456,7 +456,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         sendResponse({status: "Custom reminders re-fetched and IDs reset by content script"});
     } else if (request.action === "metaBillingCheck") {
         try {
-            const wantedHeaders = ["Campaign", "Tags", "Budget", "Amount spent", "Ends"];
+            const wantedHeaders = ["Campaign", "Starts", "Ends", "Tags", "Impressions", "Budget", "Amount spent"];
             const grid = document.querySelector('[role="table"]');
 
             if (!grid) {
@@ -465,44 +465,58 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 return;
             }
 
-            // Step 1: Get all visible column headers to establish order
             const allHeaderElements = Array.from(grid.querySelectorAll('[role="columnheader"]'));
             const allHeaderTexts = allHeaderElements.map(el => el.innerText.trim());
 
-            // Step 2: Find the indices of the headers we want
-            const wantedHeaderIndices = wantedHeaders.map(wantedHeader => {
+            const wantedHeaderInfo = wantedHeaders.map(wantedHeader => {
                 const index = allHeaderTexts.findIndex(header => header.startsWith(wantedHeader));
                 if (index === -1) {
                     alert(`Could not find column: "${wantedHeader}"`);
                 }
-                return index;
+                return { name: wantedHeader, index: index };
             });
 
-            if (wantedHeaderIndices.some(index => index === -1)) {
+            if (wantedHeaderInfo.some(info => info.index === -1)) {
                 sendResponse({status: "error", message: "Missing required columns"});
                 return;
             }
 
-            // Step 3: Select all data rows using the specific class name
             const dataRowElements = Array.from(grid.querySelectorAll('._1gda'));
-
             if (dataRowElements.length === 0) {
-                alert("Found table headers, but could not find any data rows using the expected class name (._1gda). The website structure may have changed.");
+                alert("Found table headers, but could not find any data rows using the expected class name (._1gda).");
                 sendResponse({status: "error", message: "No data rows found"});
                 return;
             }
 
+            const getCellText = (cell, headerName) => {
+                if (!cell) return "";
+
+                if (headerName === "Budget" || headerName === "Amount spent") {
+                    const valueSpan = cell.querySelector('span.x108nfp6, span._3dfi._3dfj');
+                    return valueSpan ? valueSpan.innerText.trim() : cell.innerText.trim();
+                }
+
+                if (headerName === "Ends") {
+                    const tooltipSpan = cell.querySelector('span[data-tooltip-content]');
+                    if (tooltipSpan) {
+                         // e.g., "22 Aug 2025, 23:59"
+                        return tooltipSpan.getAttribute('data-tooltip-content').split(',')[0];
+                    }
+                    // Fallback if tooltip is not there
+                    return cell.innerText.split('\n')[0];
+                }
+
+                return cell.innerText.replace(/\n/g, ' ').trim();
+            };
+
             let csvContent = "data:text/csv;charset=utf-8," + wantedHeaders.join(",") + "\n";
 
-            // Step 4: Process each row
             dataRowElements.forEach(rowEl => {
-                // Step 5: Select all cell containers in the row
                 const cellElements = Array.from(rowEl.querySelectorAll('._4lg0'));
-                const cellTexts = cellElements.map(cell => cell.innerText.replace(/\n/g, ' ').trim());
 
-                // Step 6: Pick the cells we want based on the indices
-                const rowData = wantedHeaderIndices.map(index => {
-                    const text = cellTexts[index] || "";
+                const rowData = wantedHeaderInfo.map(info => {
+                    const cell = cellElements[info.index];
+                    const text = getCellText(cell, info.name);
                     return `"${text}"`;
                 });
 

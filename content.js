@@ -455,51 +455,57 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         checkCustomReminders(); // Optional: re-check immediately after update
         sendResponse({status: "Custom reminders re-fetched and IDs reset by content script"});
     } else if (request.action === "metaBillingCheck") {
-        console.log("[ContentScript Prisma] 'metaBillingCheck' action received.");
         try {
-            const headers = ["Campaign", "Tags", "Budget", "Amount spent", "Ends"];
-            const table = document.querySelector('[role="grid"], [role="table"], div.table');
+            const wantedHeaders = ["Campaign", "Tags", "Budget", "Amount spent", "Ends"];
+            const grid = document.querySelector('[role="table"]');
 
-            if (!table) {
-                alert("Could not find a data table on the page. This tool works with tables that have 'grid' or 'table' roles, or are a div with the class 'table'.");
-                sendResponse({status: "error", message: "No compatible table found"});
+            if (!grid) {
+                alert("Could not find the main data table (element with role='table').");
+                sendResponse({status: "error", message: "No table/grid found"});
                 return;
             }
 
-            const headerCells = Array.from(table.querySelectorAll('[role="columnheader"]'));
-            const columnIndices = headers.map(headerText => headerCells.findIndex(cell => cell.innerText.trim() === headerText));
+            // Step 1: Get all visible column headers to establish order
+            const allHeaderElements = Array.from(grid.querySelectorAll('[role="columnheader"]'));
+            const allHeaderTexts = allHeaderElements.map(el => el.innerText.trim());
 
-            const missingColumns = headers.filter((_, i) => columnIndices[i] === -1);
-            if (missingColumns.length > 0) {
-                alert("Could not find the following required columns: " + missingColumns.join(', '));
-                sendResponse({status: "error", message: `Missing columns: ${missingColumns.join(', ')}`});
+            // Step 2: Find the indices of the headers we want
+            const wantedHeaderIndices = wantedHeaders.map(wantedHeader => {
+                const index = allHeaderTexts.findIndex(header => header.startsWith(wantedHeader));
+                if (index === -1) {
+                    alert(`Could not find column: "${wantedHeader}"`);
+                }
+                return index;
+            });
+
+            if (wantedHeaderIndices.some(index => index === -1)) {
+                sendResponse({status: "error", message: "Missing required columns"});
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-            const allRows = Array.from(table.querySelectorAll('[role="row"]'));
+            // Step 3: Select all data rows using the specific class name
+            const dataRowElements = Array.from(grid.querySelectorAll('._1gda'));
 
-            // Filter for rows that contain actual data cells, which is more reliable.
-            const dataRows = allRows.filter(row => row.querySelector('[role="gridcell"], [role="cell"]'));
-
-            if (dataRows.length === 0) {
-                alert("Found table headers, but no data rows were found. The generated file will be empty.");
+            if (dataRowElements.length === 0) {
+                alert("Found table headers, but could not find any data rows using the expected class name (._1gda). The website structure may have changed.");
                 sendResponse({status: "error", message: "No data rows found"});
                 return;
             }
 
-            dataRows.forEach(row => {
-                const rowData = [];
-                const cells = Array.from(row.querySelectorAll('[role="gridcell"], [role="cell"]'));
-                columnIndices.forEach(index => {
-                    if (cells[index]) {
-                        // Replace newlines and trim, then enclose in quotes
-                        const cellText = cells[index].innerText.replace(/\n/g, ' ').trim();
-                        rowData.push(`"${cellText}"`);
-                    } else {
-                        rowData.push('""');
-                    }
+            let csvContent = "data:text/csv;charset=utf-8," + wantedHeaders.join(",") + "\n";
+
+            // Step 4: Process each row
+            dataRowElements.forEach(rowEl => {
+                // Step 5: Select all cell containers in the row
+                const cellElements = Array.from(rowEl.querySelectorAll('._4lg0'));
+                const cellTexts = cellElements.map(cell => cell.innerText.replace(/\n/g, ' ').trim());
+
+                // Step 6: Pick the cells we want based on the indices
+                const rowData = wantedHeaderIndices.map(index => {
+                    const text = cellTexts[index] || "";
+                    return `"${text}"`;
                 });
+
                 csvContent += rowData.join(",") + "\n";
             });
 

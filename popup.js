@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // const settingsContent = document.getElementById('settingsContent'); // Removed
     // const settingsIcon = settingsToggle.querySelector('i'); // Removed
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
+    const triggerMetaReminderButton = document.getElementById('triggerMetaReminderButton');
     // const reminderDay = document.getElementById('reminderDay'); // Removed
     // const reminderTime = document.getElementById('reminderTime'); // Removed
     // const reminderSettings = document.getElementById('reminderSettings'); // Removed
@@ -30,6 +31,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error("Error sending message for timesheet notification:", chrome.runtime.lastError.message);
                 } else {
                     console.log("Timesheet reminder triggered:", response?.status || "No response");
+                }
+            });
+        });
+    }
+
+    if (triggerMetaReminderButton) {
+        triggerMetaReminderButton.addEventListener('click', function() {
+            console.log("Trigger Meta Reminder button clicked");
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (tabs.length > 0 && tabs[0].id) {
+                    chrome.tabs.sendMessage(tabs[0].id, { action: "showMetaReminder" }, function(response) {
+                        if (chrome.runtime.lastError) {
+                            console.error("Error sending message for meta reminder:", chrome.runtime.lastError.message);
+                            alert('Could not trigger the Meta reminder. Please make sure you are on a Prisma page.');
+                        } else {
+                            console.log("Meta reminder triggered:", response?.status || "No response");
+                        }
+                    });
+                } else {
+                     console.error("Could not find active tab to send message.");
                 }
             });
         });

@@ -61,22 +61,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const metaBillingCheckButton = document.getElementById('metaBillingCheckButton');
     if (metaBillingCheckButton) {
         metaBillingCheckButton.addEventListener('click', function() {
-            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                if (tabs.length > 0 && tabs[0] && tabs[0].url) {
-                    const currentUrl = tabs[0].url;
-                    if (currentUrl.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
-                        chrome.tabs.sendMessage(tabs[0].id, { action: "metaBillingCheck" }, function(response) {
-                            if (chrome.runtime.lastError) {
-                                console.error("Error sending message for Meta Billing Check:", chrome.runtime.lastError.message);
-                            } else {
-                                console.log("Meta Billing Check triggered:", response?.status || "No response");
-                            }
-                        });
-                    } else {
-                        alert('You need to be on Meta Ads Manager for this to work.');
-                    }
-                } else {
-                    alert('Could not determine the current URL.');
+            // Send a message to the background script to initiate the check.
+            // The background script will handle the URL check and script injection.
+            chrome.runtime.sendMessage({ action: "metaBillingCheck" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    // This could happen if the background script has an error.
+                    console.error("Error messaging background script:", chrome.runtime.lastError.message);
+                    alert("An error occurred. Check the extension's console for details.");
+                } else if (response && response.status === 'error') {
+                    // Handle specific errors reported by the background script, like wrong URL.
+                    alert(response.message);
                 }
             });
         });

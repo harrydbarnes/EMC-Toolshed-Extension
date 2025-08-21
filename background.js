@@ -145,3 +145,186 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
     chrome.notifications.clear(notificationId);
   }
 });
+
+
+// --- Meta Billing Check Logic ---
+
+// This listener handles the request from popup.js
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "metaBillingCheck") {
+        (async () => {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+            if (!tab) {
+                console.error("No active tab found.");
+                sendResponse({ status: 'error', message: 'Could not find active tab.' });
+                return;
+            }
+
+            if (tab.url && tab.url.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
+                try {
+                    // 1. Inject the XLSX library
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ['lib/xlsx.full.min.js'],
+                    });
+
+                    // 2. Inject and execute the scraping function
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        func: scrapeAndDownload,
+                    });
+
+                    sendResponse({ status: 'success', message: 'Scraping process initiated.' });
+
+                } catch (e) {
+                    console.error("Failed to inject scripts:", e);
+                    sendResponse({ status: 'error', message: `Failed to start scraper: ${e.message}` });
+                }
+            } else {
+                sendResponse({ status: 'error', message: 'You need to be on Meta Ads Manager for this to work.' });
+            }
+        })();
+        return true; // Required for async sendResponse
+    }
+});
+
+
+// This function contains the full scraping and UI logic.
+// It will be injected into the target page by chrome.scripting.executeScript.
+function scrapeAndDownload() {
+    (async () => {
+        // --- UI Setup ---
+        const overlay = document.createElement('div');
+        overlay.id = 'scraping-overlay';
+        Object.assign(overlay.style, {
+            position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: '10000', backdropFilter: 'blur(5px)'
+        });
+
+        const messageBox = document.createElement('div');
+        messageBox.id = 'scraping-in-progress-message';
+        Object.assign(messageBox.style, {
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)', color: 'white', padding: '25px',
+            borderRadius: '10px', zIndex: '10001', fontSize: '18px', textAlign: 'center',
+            boxShadow: '0 5px 15px rgba(0,0,0,0.3)'
+        });
+        messageBox.innerHTML = 'Scraping data... Please wait.<br><br>Scraped 0 rows.';
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(messageBox);
+
+        const cleanupUI = () => {
+            if (document.getElementById('scraping-overlay')) document.getElementById('scraping-overlay').remove();
+            if (document.getElementById('scraping-in-progress-message')) document.getElementById('scraping-in-progress-message').remove();
+        };
+
+        // --- Scraping Logic ---
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        try {
+            const wantedHeaders = ["Campaign", "Starts", "Ends", "Tags", "Impressions", "Budget", "Amount spent"];
+            const grid = document.querySelector('[role="table"]');
+            if (!grid) throw new Error("Could not find the main data table.");
+
+            let scrollContainer = grid.parentElement;
+            while(scrollContainer && scrollContainer.scrollHeight <= scrollContainer.clientHeight && scrollContainer.tagName !== 'BODY') {
+                scrollContainer = scrollContainer.parentElement;
+            }
+            if (!scrollContainer || scrollContainer.tagName === 'BODY') {
+                scrollContainer = document.querySelector('div._7mkk') || window;
+            }
+
+            const allHeaderElements = Array.from(grid.querySelectorAll('[role="columnheader"]'));
+            const allHeaderTexts = allHeaderElements.map(el => el.innerText.trim());
+            const wantedHeaderInfo = wantedHeaders.map(wantedHeader => {
+                const index = allHeaderTexts.findIndex(header => header.startsWith(wantedHeader));
+                if (index === -1) throw new Error(`Could not find column: "${wantedHeader}"`);
+                return { name: wantedHeader, index: index + 1 };
+            });
+
+            const allRowsData = [];
+            const processedRowKeys = new Set();
+            let consecutiveNoNewRows = 0;
+
+            while (consecutiveNoNewRows < 3) {
+                const currentScrollTop = scrollContainer.scrollTop || window.scrollY;
+                const dataRowElements = Array.from(grid.querySelectorAll('._1gda'));
+                if (dataRowElements.length === 0 && allRowsData.length === 0) throw new Error("Found table headers, but no data rows.");
+
+                let newRowsFoundInThisPass = false;
+                const getCellText = (cell, headerName) => {
+                    if (!cell) return "";
+                    let text = cell.innerText;
+                    if (headerName === "Amount spent" || headerName === "Budget") return text.replace(/[£,Â]/g, '').split('\n')[0].trim();
+                    if (headerName === "Ends") return text.split('\n')[0];
+                    return text.replace(/\n/g, ' ').trim();
+                };
+
+                for (const rowEl of dataRowElements) {
+                    const cellElements = Array.from(rowEl.querySelectorAll('._4lg0'));
+                    const campaignCell = cellElements[wantedHeaderInfo.find(h => h.name === 'Campaign').index];
+                    const startsCell = cellElements[wantedHeaderInfo.find(h => h.name === 'Starts').index];
+                    const rowKey = (campaignCell?.innerText || '') + '||' + (startsCell?.innerText || '');
+
+                    if (rowKey && !processedRowKeys.has(rowKey)) {
+                        processedRowKeys.add(rowKey);
+                        newRowsFoundInThisPass = true;
+                        const rowData = {};
+                        wantedHeaderInfo.forEach(info => {
+                            const cell = cellElements[info.index];
+                            rowData[info.name] = getCellText(cell, info.name);
+                        });
+                        allRowsData.push(rowData);
+                    }
+                }
+
+                messageBox.innerHTML = `Scraping data... Please wait.<br><br>Scraped ${allRowsData.length} rows.`;
+                if (newRowsFoundInThisPass) consecutiveNoNewRows = 0; else consecutiveNoNewRows++;
+
+                if (scrollContainer === window) window.scrollBy(0, window.innerHeight * 0.8);
+                else scrollContainer.scrollBy(0, scrollContainer.clientHeight * 0.8);
+
+                await delay(1000);
+                if ((scrollContainer.scrollTop || window.scrollY) === currentScrollTop && !newRowsFoundInThisPass) break;
+            }
+
+            // --- XLSX Generation ---
+            const worksheet = XLSX.utils.json_to_sheet(allRowsData, { header: wantedHeaders });
+            const redFill = { fgColor: { rgb: "c54841" } };
+            const tagsColIndex = wantedHeaders.indexOf("Tags");
+            if (tagsColIndex !== -1) {
+                const range = XLSX.utils.decode_range(worksheet['!ref']);
+                for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                    const cell_address = { c: tagsColIndex, r: R };
+                    const cell_ref = XLSX.utils.encode_cell(cell_address);
+                    const cell = worksheet[cell_ref];
+                    if (!cell || !cell.v || (typeof cell.v === 'string' && cell.v.trim() === '')) {
+                        if (!worksheet[cell_ref]) worksheet[cell_ref] = { t: 's', v: '' };
+                        worksheet[cell_ref].s = redFill;
+                    }
+                }
+            }
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Meta Billing Data");
+            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = 'meta_billing_check.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+        } catch (e) {
+            console.error("Error during Meta Billing Check:", e);
+            alert("An error occurred while scraping: " + e.message);
+        } finally {
+            cleanupUI();
+        }
+    })();
+}

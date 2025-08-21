@@ -9,7 +9,8 @@
     "alarms",
     "notifications",
     "tabs",
-    "offscreen"
+    "offscreen",
+    "scripting"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; object-src 'self'"
@@ -39,7 +40,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["lib/xlsx.full.min.js", "content.js"]
+      "js": ["content.js"]
     }
   ],
   "web_accessible_resources": [{

@@ -44,7 +44,11 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["icon.png"],
+    "resources": [
+      "icon.png",
+      "lib/xlsx.full.min.js",
+      "scrapers/meta-billing-scraper.js"
+    ],
     "matches": ["<all_urls>"]
   }]
 }

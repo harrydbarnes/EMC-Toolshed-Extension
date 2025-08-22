@@ -169,6 +169,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     await chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         files: ['lib/xlsx.full.min.js', 'scrapers/meta-billing-scraper.js'],
+                        world: 'MAIN',
                     });
                     sendResponse({ status: 'success', message: 'Scraping process initiated.' });
                 } catch (e) {

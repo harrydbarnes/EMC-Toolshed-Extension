@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // const settingsContent = document.getElementById('settingsContent'); // Removed
     // const settingsIcon = settingsToggle.querySelector('i'); // Removed
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
-    const triggerMetaReminder = document.getElementById('triggerMetaReminder');
+    const triggerMetaReminderButton = document.getElementById('triggerMetaReminderButton');
     // const reminderDay = document.getElementById('reminderDay'); // Removed
     // const reminderTime = document.getElementById('reminderTime'); // Removed
     // const reminderSettings = document.getElementById('reminderSettings'); // Removed
@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (triggerMetaReminder) {
-        triggerMetaReminder.addEventListener('click', function() {
+    if (triggerMetaReminderButton) {
+        triggerMetaReminderButton.addEventListener('click', function() {
             console.log("Trigger Meta Reminder button clicked");
             chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
                 if (tabs.length > 0 && tabs[0].id) {

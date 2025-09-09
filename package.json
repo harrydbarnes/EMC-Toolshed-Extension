@@ -1,0 +1,26 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Enhances Prisma functionality and provides quick access to various tools.",
+  "main": "background.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harrydbarnes/EMC-Toolshed-Extension.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/harrydbarnes/EMC-Toolshed-Extension/issues"
+  },
+  "homepage": "https://github.com/harrydbarnes/EMC-Toolshed-Extension#readme",
+  "devDependencies": {
+    "jest": "^27.5.1",
+    "jest-chrome": "^0.8.0",
+    "jest-environment-jsdom": "^30.1.2"
+  }
+}

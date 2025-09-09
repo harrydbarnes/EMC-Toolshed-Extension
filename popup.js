@@ -114,66 +114,67 @@ function handleGenerateUrl() {
     if (!campaignIdInput || !campaignDateInput) return;
 
     const campaignId = campaignIdInput.value;
-    let campaignDateStr = campaignDateInput.value.trim(); // Ensure to trim whitespace
+    const campaignDateStr = campaignDateInput.value.trim();
 
-    if (campaignId) {
-        let dateToUse = new Date(); // Default to current date
-        dateToUse.setDate(1); // Set to the first of the month to avoid month-end issues
+    const finalUrl = generateUrlFromData(campaignId, campaignDateStr);
 
-        // Try to parse the date string if provided
-        if (campaignDateStr) {
-            let parsedDate;
-            const currentYear = new Date().getFullYear();
-            const currentCentury = Math.floor(currentYear / 100) * 100; // e.g., 2000
+    if (finalUrl) {
+        chrome.tabs.create({ url: finalUrl });
+    } else if (!campaignId) {
+        alert('Please enter a Campaign ID.');
+    } else {
+        alert("Could not parse date: '" + campaignDateStr + "'. Please use formats like 'July 25', '07/25', 'July 2025', '07/2025', '2025-07', or leave blank for current month.");
+    }
+}
 
-            // Attempt "Month YY" (e.g., "July 25")
-            const monthShortYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{2})$/i);
-            if (monthShortYearMatch) {
-                parsedDate = new Date(monthShortYearMatch[1] + " 1, " + (currentCentury + parseInt(monthShortYearMatch[2], 10)));
+function generateUrlFromData(campaignId, campaignDateStr) {
+    if (!campaignId) {
+        return null;
+    }
+
+    let dateToUse = new Date();
+    dateToUse.setDate(1);
+
+    if (campaignDateStr) {
+        let parsedDate;
+        const currentYear = new Date().getFullYear();
+        const currentCentury = Math.floor(currentYear / 100) * 100;
+
+        const monthShortYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{2})$/i);
+        if (monthShortYearMatch) {
+            parsedDate = new Date(monthShortYearMatch[1] + " 1, " + (currentCentury + parseInt(monthShortYearMatch[2], 10)));
+        } else {
+            const slashMonthShortYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{2})$/);
+            if (slashMonthShortYearMatch) {
+                parsedDate = new Date(currentCentury + parseInt(slashMonthShortYearMatch[2], 10), parseInt(slashMonthShortYearMatch[1], 10) - 1, 1);
             } else {
-                // Else, attempt "MM/YY" (e.g., "07/25")
-                const slashMonthShortYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{2})$/);
-                if (slashMonthShortYearMatch) {
-                    parsedDate = new Date(currentCentury + parseInt(slashMonthShortYearMatch[2], 10), parseInt(slashMonthShortYearMatch[1], 10) - 1, 1);
+                const monthFullYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{4})$/i);
+                if (monthFullYearMatch) {
+                    parsedDate = new Date(monthFullYearMatch[1] + " 1, " + monthFullYearMatch[2]);
                 } else {
-                    // Else, attempt existing "Month YYYY" (e.g., "May 2024")
-                    const monthFullYearMatch = campaignDateStr.match(/^([a-zA-Z]+) (\d{4})$/i);
-                    if (monthFullYearMatch) {
-                        parsedDate = new Date(monthFullYearMatch[1] + " 1, " + monthFullYearMatch[2]);
+                    const slashMonthFullYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{4})$/);
+                    if (slashMonthFullYearMatch) {
+                        parsedDate = new Date(parseInt(slashMonthFullYearMatch[2], 10), parseInt(slashMonthFullYearMatch[1], 10) - 1, 1);
                     } else {
-                        // Else, attempt existing "MM/YYYY" (e.g., "05/2024")
-                        const slashMonthFullYearMatch = campaignDateStr.match(/^(\d{1,2})\/(\d{4})$/);
-                        if (slashMonthFullYearMatch) {
-                            parsedDate = new Date(parseInt(slashMonthFullYearMatch[2], 10), parseInt(slashMonthFullYearMatch[1], 10) - 1, 1);
-                        } else {
-                            // Else, attempt "YYYY-MM-DD" or "YYYY-MM" (ISO-like)
-                            const isoMatch = campaignDateStr.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
-                            if (isoMatch) {
-                                parsedDate = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, 1);
-                            }
+                        const isoMatch = campaignDateStr.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
+                        if (isoMatch) {
+                            parsedDate = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, 1);
                         }
                     }
                 }
             }
-
-            if (parsedDate && !isNaN(parsedDate)) {
-                dateToUse = parsedDate;
-            } else if (campaignDateStr) { // Only warn if there was input
-                console.warn("Could not parse campaign date string:", campaignDateStr, ". Using current month as fallback (after attempting all formats).");
-                alert("Could not parse date: '" + campaignDateStr + "'. Please use formats like 'July 25', '07/25', 'July 2025', '07/2025', '2025-07', or leave blank for current month.");
-                return; // Prevent URL generation with default date if specific input was invalid
-            }
         }
 
-        const formattedDate = `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}-01`;
-
-        const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
-        const finalUrl = `${baseUrl}${encodeURIComponent(campaignId)}&route=actualize&mos=${formattedDate}`;
-
-        chrome.tabs.create({ url: finalUrl });
-    } else {
-        alert('Please enter a Campaign ID.');
+        if (parsedDate && !isNaN(parsedDate)) {
+            dateToUse = parsedDate;
+        } else {
+            return null; // Invalid date format
+        }
     }
+
+    const formattedDate = `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}-01`;
+    const baseUrl = 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=prsm-cm-buy&campaign-id=';
+    return `${baseUrl}${encodeURIComponent(campaignId)}&route=actualize&mos=${formattedDate}`;
 }
 
 // Removed handleLogoToggle, handleMetaReminderToggle, handleTimesheetReminderToggle,
@@ -192,4 +193,8 @@ function addClickListener(id, url) {
             }
         });
     }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { handleGenerateUrl, generateUrlFromData };
 }

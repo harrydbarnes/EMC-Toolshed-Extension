@@ -299,7 +299,7 @@ function createCustomReminderPopup(reminder) {
 
     popup.innerHTML = `
         <h3>${escapeHTML(reminder.name)}</h3>
-        <p>${escapeHTML(reminder.popupMessage)}</p>
+        ${reminder.popupMessage}
         <button id="custom-reminder-display-close">Got it!</button>
     `;
     document.body.appendChild(popup);

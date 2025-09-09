@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // const settingsContent = document.getElementById('settingsContent'); // Removed
     // const settingsIcon = settingsToggle.querySelector('i'); // Removed
     const triggerTimesheetReminderButton = document.getElementById('triggerTimesheetReminder');
-    const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
+    const triggerMetaReminder = document.getElementById('triggerMetaReminder');
     // const reminderDay = document.getElementById('reminderDay'); // Removed
     // const reminderTime = document.getElementById('reminderTime'); // Removed
     // const reminderSettings = document.getElementById('reminderSettings'); // Removed
@@ -16,75 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("[Popup Load] DOMContentLoaded event fired.");
 
-    if (triggerMetaReminderButton) {
-        console.log("[Popup Load] 'triggerMetaReminderButton' element found. Initial outerHTML:", triggerMetaReminderButton.outerHTML);
-        // Button starts hidden via "hidden-initially" class in HTML.
-        // We will remove the class if on a Prisma page.
-        triggerMetaReminderButton.title = "This test feature only works on Prisma pages."; // Default title
-
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            console.log("[Popup Load] chrome.tabs.query callback. Tabs array:", tabs);
-            if (tabs && tabs.length > 0 && tabs[0]) {
-                const currentTab = tabs[0];
-                if (currentTab.url) {
-                    const currentUrl = currentTab.url;
-                    console.log("[Popup Load] Current URL determined:", currentUrl);
-                    if (currentUrl.startsWith("https://groupmuk-prisma.mediaocean.com/")) {
-                        console.log("[Popup Load] Current URL IS a Prisma page. Showing button.");
-                        triggerMetaReminderButton.classList.remove('hidden-initially');
-                        triggerMetaReminderButton.title = "Test the Meta Reconciliation Reminder on this page.";
-                    } else {
-                        console.log("[Popup Load] Current URL is NOT a Prisma page. Ensuring button remains hidden.");
-                        triggerMetaReminderButton.classList.add('hidden-initially'); // Ensure it's hidden
-                        triggerMetaReminderButton.title = "This test feature only works on Prisma pages.";
-                    }
-                } else {
-                    console.log("[Popup Load] Active tab URL is not accessible. Ensuring button remains hidden.");
-                    triggerMetaReminderButton.classList.add('hidden-initially');
-                    triggerMetaReminderButton.title = "Cannot determine current page URL for this test.";
-                }
-            } else {
-                console.log("[Popup Load] No active tab found. Ensuring button remains hidden.");
-                triggerMetaReminderButton.classList.add('hidden-initially');
-                triggerMetaReminderButton.title = "Could not identify an active tab for this test.";
-            }
-            console.log("[Popup Load] Final button outerHTML after visibility check:", triggerMetaReminderButton.outerHTML);
-        });
-    } else {
-        console.error("[Popup Load] CRITICAL: 'triggerMetaReminderButton' element NOT found in the DOM.");
-    }
-
     // Event Listeners
-    if (triggerMetaReminderButton) {
-        triggerMetaReminderButton.addEventListener('click', function() {
-            // This listener will only be triggered if the button is visible and clicked.
-            // By design, it's only visible on Prisma pages.
-            console.log("--------------------------------------------------");
-            console.log("[BUTTON CLICK] 'Test Meta Reminder' button clicked.");
-            console.log("[BUTTON CLICK] Button HTML at click time:", this.outerHTML);
-            // No need to check this.disabled anymore, as it's controlled by visibility.
-
-            console.log("[BUTTON CLICK] Proceeding to send message (button is visible).");
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if (tabs.length > 0 && tabs[0] && tabs[0].id) {
-                    console.log("[BUTTON CLICK] Sending 'showMetaReminder' message to tab ID:", tabs[0].id);
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        action: "showMetaReminder"
-                    }, function(response) {
-                        if (chrome.runtime.lastError) {
-                            console.error("[BUTTON CLICK] Error sending message to tab (Meta Reminder):", chrome.runtime.lastError.message);
-                        } else {
-                            console.log("[BUTTON CLICK] Meta reminder triggered via tab:", response?.status || "No response from tab");
-                        }
-                        console.log("--------------------------------------------------");
-                    });
-                } else {
-                    console.error("[BUTTON CLICK] No active tab found to send message for Meta Reminder.");
-                    console.log("--------------------------------------------------");
-                }
-            });
-        });
-    }
 
     // --- Settings UI related initializations and event listeners are removed ---
 
@@ -104,7 +36,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (triggerMetaReminder) {
+        triggerMetaReminder.addEventListener('click', function() {
+            console.log("Trigger Meta Reminder button clicked");
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (tabs.length > 0 && tabs[0].id) {
+                    chrome.tabs.sendMessage(tabs[0].id, { action: "showMetaReminder" }, function(response) {
+                        if (chrome.runtime.lastError) {
+                            console.error("Error sending message for meta reminder:", chrome.runtime.lastError.message);
+                            alert('Could not trigger the Meta reminder. Please make sure you are on a Prisma page.');
+                        } else {
+                            console.log("Meta reminder triggered:", response?.status || "No response");
+                        }
+                    });
+                } else {
+                     console.error("Could not find active tab to send message.");
+                }
+            });
+        });
+    }
+
     // Logic for saveReminderSettingsButton is removed.
+
+    const metaBillingCheckButton = document.getElementById('metaBillingCheckButton');
+    if (metaBillingCheckButton) {
+        metaBillingCheckButton.addEventListener('click', function() {
+            // Send a message to the background script to initiate the check.
+            // The background script will handle the URL check and script injection.
+            chrome.runtime.sendMessage({ action: "metaBillingCheck" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    // This could happen if the background script has an error.
+                    console.error("Error messaging background script:", chrome.runtime.lastError.message);
+                    alert("An error occurred. Check the extension's console for details.");
+                } else if (response && response.status === 'error') {
+                    // Handle specific errors reported by the background script, like wrong URL.
+                    alert(response.message);
+                }
+            });
+        });
+    }
 
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
     addClickListener('metaHandbookButton', 'https://insidemedia.sharepoint.com/sites/GRM-UK-GMS/Files%20Library/Forms/AllItems.aspx?id=%2Fsites%2FGRM%2DUK%2DGMS%2FFiles%20Library%2FChannel%5FSocial%2FPaid%20Social%20Prisma%20Integration%20Resources%2FLatest%20Handbook&p=true&ga=1');

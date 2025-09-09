@@ -9,7 +9,8 @@
     "alarms",
     "notifications",
     "tabs",
-    "offscreen"
+    "offscreen",
+    "scripting"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; object-src 'self'"
@@ -43,7 +44,9 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["icon.png"],
+    "resources": [
+      "icon.png"
+    ],
     "matches": ["<all_urls>"]
   }]
 }

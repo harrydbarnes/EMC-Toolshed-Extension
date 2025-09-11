@@ -65,8 +65,13 @@ function restoreOriginalLogo() {
 
 function checkAndReplaceLogo() {
     chrome.storage.sync.get('logoReplaceEnabled', function(data) {
-        // console.log("[ContentScript Prisma] logoReplaceEnabled from storage:", data.logoReplaceEnabled);
-        if (data.logoReplaceEnabled) {
+        if (chrome.runtime.lastError) {
+            console.error(`Error getting logoReplaceEnabled setting: ${chrome.runtime.lastError.message}`);
+            return;
+        }
+        // In settings.js, the default is true if the value is undefined.
+        // So we should replace the logo unless the setting is explicitly false.
+        if (data.logoReplaceEnabled !== false) {
             replaceLogo();
         } else {
             restoreOriginalLogo();

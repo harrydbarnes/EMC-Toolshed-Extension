@@ -392,6 +392,47 @@ function checkCustomReminders() {
     console.log("[ContentScript Prisma] Finished checkCustomReminders.");
 }
 
+function handleCampaignManagementFeatures() {
+    if (!window.location.href.includes('osModalId=prsm-cm-cmpadd')) {
+        return;
+    }
+
+    chrome.storage.sync.get(['hidingSectionsEnabled', 'automateFormFieldsEnabled'], (data) => {
+        if (data.hidingSectionsEnabled) {
+            // Hide sections
+            const objectiveSection = document.querySelector('fieldset.sectionObjective');
+            if (objectiveSection) {
+                objectiveSection.style.display = 'none';
+            }
+            const targetingSection = document.querySelector('fieldset.sectionTargeting');
+            if (targetingSection) {
+                targetingSection.style.display = 'none';
+            }
+        }
+
+        if (data.automateFormFieldsEnabled) {
+            // Automate form fields
+            const mediaMixLabel = Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Media mix');
+            if (mediaMixLabel) {
+                const mediaMixSelect = mediaMixLabel.nextElementSibling.querySelector('select');
+                if (mediaMixSelect && mediaMixSelect.value !== 'Online') {
+                    mediaMixSelect.value = 'Online';
+                    mediaMixSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            const budgetTypeLabel = Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Budget type');
+            if (budgetTypeLabel) {
+                const budgetTypeSelect = budgetTypeLabel.nextElementSibling.querySelector('select');
+                if (budgetTypeSelect && budgetTypeSelect.value !== 'Total Client Cost') {
+                    budgetTypeSelect.value = 'Total Client Cost';
+                    budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        }
+    });
+}
+
 // --- End Custom Reminder Functions ---
 
 function shouldReplaceLogoOnThisPage() {
@@ -415,6 +456,7 @@ function mainContentScriptInit() {
             checkForMetaConditions();
             checkForIASConditions();
             checkCustomReminders(); // Initial check for custom reminders
+            handleCampaignManagementFeatures();
         }, 2000);
     }
 
@@ -426,6 +468,7 @@ function mainContentScriptInit() {
                 checkForMetaConditions();
                 checkForIASConditions();
                 checkCustomReminders(); // Check for custom reminders on DOM changes
+                handleCampaignManagementFeatures();
             }, 300);
         }
     });

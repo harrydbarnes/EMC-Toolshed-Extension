@@ -292,6 +292,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;  // Indicates that the response is sent asynchronously
 });
 
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Check if the URL has changed and the feature is enabled
+    if (changeInfo.url) {
+        chrome.storage.sync.get('addCampaignShortcutEnabled', (data) => {
+            if (data.addCampaignShortcutEnabled) {
+                // Check if the URL contains the specific parameter to be removed
+                if (changeInfo.url.includes('osMOpts=lb')) {
+                    // Construct the new URL by removing the parameter
+                    const newUrl = changeInfo.url.replace(/&?osMOpts=lb/, '');
+                    // Update the tab with the new URL
+                    chrome.tabs.update(tabId, { url: newUrl });
+                }
+            }
+        });
+    }
+});
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { getNextAlarmDate, createTimesheetAlarm };
 }

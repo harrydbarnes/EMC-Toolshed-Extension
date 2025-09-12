@@ -296,7 +296,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // Check if the URL has changed and the feature is enabled
     if (changeInfo.url) {
         chrome.storage.sync.get('addCampaignShortcutEnabled', (data) => {
-            if (data.addCampaignShortcutEnabled) {
+            if (data.addCampaignShortcutEnabled !== false) {
                 // Check if the URL contains the specific parameter to be removed
                 if (changeInfo.url.includes('osMOpts=lb')) {
                     // Construct the new URL by removing the parameter

@@ -403,7 +403,7 @@ function handleCampaignManagementFeatures() {
     }
 
     chrome.storage.sync.get(['hidingSectionsEnabled', 'automateFormFieldsEnabled'], (data) => {
-        if (data.hidingSectionsEnabled) {
+        if (data.hidingSectionsEnabled !== false) {
             // Hide sections
             const objectiveSection = document.querySelector('fieldset.sectionObjective');
             if (objectiveSection) {
@@ -415,7 +415,7 @@ function handleCampaignManagementFeatures() {
             }
         }
 
-        if (data.automateFormFieldsEnabled) {
+        if (data.automateFormFieldsEnabled !== false) {
             // Automate form fields
             const mediaMixLabel = Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Media mix');
             if (mediaMixLabel) {

@@ -413,6 +413,18 @@ function handleCampaignManagementFeatures() {
             if (targetingSection) {
                 targetingSection.style.display = 'none';
             }
+
+            // Hide Flighting section
+            const flightingSelect = document.querySelector('#gwt-debug-distribution');
+            if (flightingSelect) {
+                const controlGroupDiv = flightingSelect.parentElement;
+                if (controlGroupDiv) {
+                    const outerDiv = controlGroupDiv.parentElement;
+                    if (outerDiv) {
+                        outerDiv.style.display = 'none';
+                    }
+                }
+            }
         }
 
         if (data.automateFormFieldsEnabled !== false) {

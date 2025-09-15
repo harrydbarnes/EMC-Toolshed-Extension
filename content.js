@@ -430,14 +430,14 @@ function handleCampaignManagementFeatures() {
         if (data.automateFormFieldsEnabled !== false) {
             // Automate form fields
             const mediaTypeSelect = document.getElementById('debug-mediaMix-mediaType');
-            if (mediaTypeSelect && mediaTypeSelect.value !== 'Online') {
-                mediaTypeSelect.value = 'Online';
+            if (mediaTypeSelect && mediaTypeSelect.value !== 'media_digital') {
+                mediaTypeSelect.value = 'media_digital';
                 mediaTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
             const budgetTypeSelect = document.getElementById('debug-mediaMix-mediaType0');
-            if (budgetTypeSelect && budgetTypeSelect.value !== 'Total Client Cost') {
-                budgetTypeSelect.value = 'Total Client Cost';
+            if (budgetTypeSelect && budgetTypeSelect.value !== '3') {
+                budgetTypeSelect.value = '3';
                 budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }

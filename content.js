@@ -433,23 +433,25 @@ function handleCampaignManagementFeatures() {
 
         if (data.automateFormFieldsEnabled !== false) {
             // Automate Media Mix field
-            const mediaTypeSelect = document.getElementById('debug-mediaMix-mediaType');
+            const mediaTypeSelect = document.getElementById('debug-mediaMix-mediaType0'); // Corrected ID
             if (mediaTypeSelect && !mediaMixAutomated) {
                 const onlineOption = mediaTypeSelect.querySelector('option[value="media_digital"]');
                 if (onlineOption) {
                     mediaTypeSelect.value = 'media_digital';
                     mediaTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    mediaTypeSelect.dispatchEvent(new Event('input', { bubbles: true })); // For Knockout.js
                     mediaMixAutomated = true;
                 }
             }
 
             // Automate Budget Type field
-            const budgetTypeSelect = document.getElementById('debug-mediaMix-mediaType0');
+            const budgetTypeSelect = document.getElementById('gwt-debug-budgetType'); // Corrected ID
             if (budgetTypeSelect && !budgetTypeAutomated) {
                 const totalCostOption = budgetTypeSelect.querySelector('option[value="3"]');
                 if (totalCostOption) {
                     budgetTypeSelect.value = '3';
                     budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    budgetTypeSelect.dispatchEvent(new Event('input', { bubbles: true })); // For Knockout.js
                     budgetTypeAutomated = true;
                 }
             }

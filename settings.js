@@ -142,6 +142,40 @@ document.addEventListener('DOMContentLoaded', function() {
         triggerMetaReminderButton.addEventListener('click', showTestMetaReminderOnSettingsPage);
     }
 
+    // Campaign Management Settings
+    const addCampaignShortcutToggle = document.getElementById('addCampaignShortcutToggle');
+    if (addCampaignShortcutToggle) {
+        chrome.storage.sync.get('addCampaignShortcutEnabled', function(data) {
+            addCampaignShortcutToggle.checked = data.addCampaignShortcutEnabled === undefined ? true : data.addCampaignShortcutEnabled;
+            if (data.addCampaignShortcutEnabled === undefined) chrome.storage.sync.set({addCampaignShortcutEnabled: true});
+        });
+        addCampaignShortcutToggle.addEventListener('change', function() {
+            chrome.storage.sync.set({addCampaignShortcutEnabled: this.checked}, () => console.log('Add Campaign shortcut setting saved:', this.checked));
+        });
+    }
+
+    const hidingSectionsToggle = document.getElementById('hidingSectionsToggle');
+    if (hidingSectionsToggle) {
+        chrome.storage.sync.get('hidingSectionsEnabled', function(data) {
+            hidingSectionsToggle.checked = data.hidingSectionsEnabled === undefined ? true : data.hidingSectionsEnabled;
+            if (data.hidingSectionsEnabled === undefined) chrome.storage.sync.set({hidingSectionsEnabled: true});
+        });
+        hidingSectionsToggle.addEventListener('change', function() {
+            chrome.storage.sync.set({hidingSectionsEnabled: this.checked}, () => console.log('Hiding Sections setting saved:', this.checked));
+        });
+    }
+
+    const automateFormFieldsToggle = document.getElementById('automateFormFieldsToggle');
+    if (automateFormFieldsToggle) {
+        chrome.storage.sync.get('automateFormFieldsEnabled', function(data) {
+            automateFormFieldsToggle.checked = data.automateFormFieldsEnabled === undefined ? true : data.automateFormFieldsEnabled;
+            if (data.automateFormFieldsEnabled === undefined) chrome.storage.sync.set({automateFormFieldsEnabled: true});
+        });
+        automateFormFieldsToggle.addEventListener('change', function() {
+            chrome.storage.sync.set({automateFormFieldsEnabled: this.checked}, () => console.log('Automate Form Fields setting saved:', this.checked));
+        });
+    }
+
     // Aura Reminders (Timesheet)
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');
     const timesheetReminderSettingsDiv = document.getElementById('timesheetReminderSettings');
@@ -593,3 +627,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        escapeHTML,
+    };
+}

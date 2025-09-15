@@ -3,6 +3,8 @@ console.log("[ContentScript Prisma] Script Injected on URL:", window.location.hr
 // Global variables for custom reminders
 let activeCustomReminders = [];
 let shownCustomReminderIds = new Set();
+let mediaMixAutomated = false;
+let budgetTypeAutomated = false;
 
 // Utility to escape HTML for display (used by custom reminder popup)
 function escapeHTML(str) {
@@ -65,8 +67,13 @@ function restoreOriginalLogo() {
 
 function checkAndReplaceLogo() {
     chrome.storage.sync.get('logoReplaceEnabled', function(data) {
-        // console.log("[ContentScript Prisma] logoReplaceEnabled from storage:", data.logoReplaceEnabled);
-        if (data.logoReplaceEnabled) {
+        if (chrome.runtime.lastError) {
+            console.error(`Error getting logoReplaceEnabled setting: ${chrome.runtime.lastError.message}`);
+            return;
+        }
+        // In settings.js, the default is true if the value is undefined.
+        // So we should replace the logo unless the setting is explicitly false.
+        if (data.logoReplaceEnabled !== false) {
             replaceLogo();
         } else {
             restoreOriginalLogo();
@@ -228,6 +235,8 @@ setInterval(() => {
         metaReminderDismissed = false;
         iasReminderDismissed = false;
         shownCustomReminderIds.clear(); // Reset shown custom reminders on URL change
+        mediaMixAutomated = false;
+        budgetTypeAutomated = false;
         currentUrlForDismissFlags = window.location.href;
         // Potentially re-fetch or re-check custom reminders if needed immediately on SPA navigation
         // For now, MutationObserver and initial load handle most cases.
@@ -299,7 +308,7 @@ function createCustomReminderPopup(reminder) {
 
     popup.innerHTML = `
         <h3>${escapeHTML(reminder.name)}</h3>
-        <p>${escapeHTML(reminder.popupMessage)}</p>
+        ${reminder.popupMessage}
         <button id="custom-reminder-display-close">Got it!</button>
     `;
     document.body.appendChild(popup);
@@ -392,6 +401,64 @@ function checkCustomReminders() {
     console.log("[ContentScript Prisma] Finished checkCustomReminders.");
 }
 
+function handleCampaignManagementFeatures() {
+    if (!window.location.href.includes('osModalId=prsm-cm-cmpadd')) {
+        return;
+    }
+
+    chrome.storage.sync.get(['hidingSectionsEnabled', 'automateFormFieldsEnabled'], (data) => {
+        if (data.hidingSectionsEnabled !== false) {
+            // Hide sections
+            const objectiveSection = document.querySelector('fieldset.sectionObjective');
+            if (objectiveSection) {
+                objectiveSection.style.display = 'none';
+            }
+            const targetingSection = document.querySelector('fieldset.sectionTargeting');
+            if (targetingSection) {
+                targetingSection.style.display = 'none';
+            }
+
+            // Hide Flighting section
+            const flightingSelect = document.querySelector('#gwt-debug-distribution');
+            if (flightingSelect) {
+                const controlGroupDiv = flightingSelect.parentElement;
+                if (controlGroupDiv) {
+                    const outerDiv = controlGroupDiv.parentElement;
+                    if (outerDiv) {
+                        outerDiv.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        if (data.automateFormFieldsEnabled !== false) {
+            // Automate Media Mix field
+            const mediaTypeSelect = document.getElementById('debug-mediaMix-mediaType0'); // Corrected ID
+            if (mediaTypeSelect && !mediaMixAutomated) {
+                const onlineOption = mediaTypeSelect.querySelector('option[value="media_digital"]');
+                if (onlineOption) {
+                    mediaTypeSelect.value = 'media_digital';
+                    mediaTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    mediaTypeSelect.dispatchEvent(new Event('input', { bubbles: true })); // For Knockout.js
+                    mediaMixAutomated = true;
+                }
+            }
+
+            // Automate Budget Type field
+            const budgetTypeSelect = document.getElementById('gwt-debug-budgetType'); // Corrected ID
+            if (budgetTypeSelect && !budgetTypeAutomated) {
+                const totalCostOption = budgetTypeSelect.querySelector('option[value="3"]');
+                if (totalCostOption) {
+                    budgetTypeSelect.value = '3';
+                    budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    budgetTypeSelect.dispatchEvent(new Event('input', { bubbles: true })); // For Knockout.js
+                    budgetTypeAutomated = true;
+                }
+            }
+        }
+    });
+}
+
 // --- End Custom Reminder Functions ---
 
 function shouldReplaceLogoOnThisPage() {
@@ -415,6 +482,7 @@ function mainContentScriptInit() {
             checkForMetaConditions();
             checkForIASConditions();
             checkCustomReminders(); // Initial check for custom reminders
+            handleCampaignManagementFeatures();
         }, 2000);
     }
 
@@ -426,6 +494,7 @@ function mainContentScriptInit() {
                 checkForMetaConditions();
                 checkForIASConditions();
                 checkCustomReminders(); // Check for custom reminders on DOM changes
+                handleCampaignManagementFeatures();
             }, 300);
         }
     });

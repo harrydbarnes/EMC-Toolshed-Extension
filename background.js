@@ -9,22 +9,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Received message:", request);
-    if (request.action === "showTimesheetNotification") {
-        console.log("Showing timesheet notification");
-        showTimesheetNotification();
-        sendResponse({status: "Notification shown"});
-    } else if (request.action === "createTimesheetAlarm") {
-        createTimesheetAlarm(request.day, request.time);
-        sendResponse({status: "Alarm created"});
-    } else if (request.action === "removeTimesheetAlarm") {
-        chrome.alarms.clear('timesheetReminder');
-        sendResponse({status: "Alarm removed"});
-    }
-    return true;  // Indicates that the response is sent asynchronously
-});
-
 function createTimesheetAlarm(day, time) {
   // Default to Friday at 14:30 if day or time is undefined
   day = day || 'Friday';
@@ -271,7 +255,18 @@ function scrapeAndDownloadCsv() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "metaBillingCheck") {
+    console.log("Received message:", request);
+    if (request.action === "showTimesheetNotification") {
+        console.log("Showing timesheet notification");
+        showTimesheetNotification();
+        sendResponse({status: "Notification shown"});
+    } else if (request.action === "createTimesheetAlarm") {
+        createTimesheetAlarm(request.day, request.time);
+        sendResponse({status: "Alarm created"});
+    } else if (request.action === "removeTimesheetAlarm") {
+        chrome.alarms.clear('timesheetReminder');
+        sendResponse({status: "Alarm removed"});
+    } else if (request.action === "metaBillingCheck") {
         (async () => {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (!tab) {
@@ -294,5 +289,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         })();
         return true; // Required for async sendResponse
     }
-    return true;
+    return true;  // Indicates that the response is sent asynchronously
 });
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Check if the URL has changed and the feature is enabled
+    if (changeInfo.url) {
+        chrome.storage.sync.get('addCampaignShortcutEnabled', (data) => {
+            if (data.addCampaignShortcutEnabled !== false) {
+                // Check if the URL contains the specific parameter to be removed
+                if (changeInfo.url.includes('osMOpts=lb')) {
+                    // Construct the new URL by removing the parameter
+                    const newUrl = changeInfo.url.replace(/&?osMOpts=lb/, '');
+                    // Update the tab with the new URL
+                    chrome.tabs.update(tabId, { url: newUrl });
+                }
+            }
+        });
+    }
+});
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { getNextAlarmDate, createTimesheetAlarm };
+}

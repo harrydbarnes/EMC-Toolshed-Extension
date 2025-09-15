@@ -3,6 +3,8 @@ console.log("[ContentScript Prisma] Script Injected on URL:", window.location.hr
 // Global variables for custom reminders
 let activeCustomReminders = [];
 let shownCustomReminderIds = new Set();
+let mediaMixAutomated = false;
+let budgetTypeAutomated = false;
 
 // Utility to escape HTML for display (used by custom reminder popup)
 function escapeHTML(str) {
@@ -233,6 +235,8 @@ setInterval(() => {
         metaReminderDismissed = false;
         iasReminderDismissed = false;
         shownCustomReminderIds.clear(); // Reset shown custom reminders on URL change
+        mediaMixAutomated = false;
+        budgetTypeAutomated = false;
         currentUrlForDismissFlags = window.location.href;
         // Potentially re-fetch or re-check custom reminders if needed immediately on SPA navigation
         // For now, MutationObserver and initial load handle most cases.
@@ -428,17 +432,26 @@ function handleCampaignManagementFeatures() {
         }
 
         if (data.automateFormFieldsEnabled !== false) {
-            // Automate form fields
+            // Automate Media Mix field
             const mediaTypeSelect = document.getElementById('debug-mediaMix-mediaType');
-            if (mediaTypeSelect && mediaTypeSelect.value !== 'media_digital') {
-                mediaTypeSelect.value = 'media_digital';
-                mediaTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            if (mediaTypeSelect && !mediaMixAutomated) {
+                const onlineOption = mediaTypeSelect.querySelector('option[value="media_digital"]');
+                if (onlineOption) {
+                    mediaTypeSelect.value = 'media_digital';
+                    mediaTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    mediaMixAutomated = true;
+                }
             }
 
+            // Automate Budget Type field
             const budgetTypeSelect = document.getElementById('debug-mediaMix-mediaType0');
-            if (budgetTypeSelect && budgetTypeSelect.value !== '3') {
-                budgetTypeSelect.value = '3';
-                budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            if (budgetTypeSelect && !budgetTypeAutomated) {
+                const totalCostOption = budgetTypeSelect.querySelector('option[value="3"]');
+                if (totalCostOption) {
+                    budgetTypeSelect.value = '3';
+                    budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    budgetTypeAutomated = true;
+                }
             }
         }
     });

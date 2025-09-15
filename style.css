@@ -194,6 +194,24 @@ body::-webkit-scrollbar-thumb:hover {
     box-sizing: border-box;
 }
 
+.campaign-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.action-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.error-message {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
 .primary-button {
     width: 100%;
     padding: 10px;

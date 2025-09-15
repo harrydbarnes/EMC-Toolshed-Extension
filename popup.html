@@ -32,15 +32,24 @@
         </div>
 
 
-        <div class="input-group">
-            <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+        <div class="campaign-actions">
+            <div class="action-section">
+                <div class="input-group">
+                    <input type="text" id="campaignId" placeholder="Enter Campaign ID">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
+                </div>
+                <button id="generateUrl" class="primary-button">Open Campaign</button>
+            </div>
+            <div class="action-section">
+                <div class="input-group">
+                    <input type="text" id="dNumber" placeholder="Enter D Number">
+                </div>
+                <button id="openCampaignDNumber" class="primary-button">Open Campaign</button>
+                <p id="dNumberError" class="error-message" style="display: none;"></p>
+            </div>
         </div>
-
-        <div class="input-group">
-            <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
-        </div>
-
-        <button id="generateUrl" class="primary-button">Open Campaign</button>
 
         <div class="section">
             <h3>Switch Location:</h3>

@@ -133,6 +133,55 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 
 // --- Meta Billing Check Logic ---
 
+function openCampaignWithDNumberScript(dNumber) {
+    const clickElement = (selector) => {
+        return new Promise((resolve, reject) => {
+            const interval = setInterval(() => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    clearInterval(interval);
+                    element.click();
+                    resolve();
+                }
+            }, 500);
+            setTimeout(() => {
+                clearInterval(interval);
+                reject(new Error(`Element not found: ${selector}`));
+            }, 10000);
+        });
+    };
+
+    const inputText = (selector, text) => {
+        return new Promise((resolve, reject) => {
+            const interval = setInterval(() => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    clearInterval(interval);
+                    element.value = text;
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    resolve();
+                }
+            }, 500);
+            setTimeout(() => {
+                clearInterval(interval);
+                reject(new Error(`Element not found: ${selector}`));
+            }, 10000);
+        });
+    };
+
+    (async () => {
+        try {
+            await clickElement('div.icon-inner > svg');
+            await clickElement('span.slider');
+            await inputText('input[type="text"][data-is-native-input]', dNumber);
+            await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
+        } catch (error) {
+            console.error('Error during D Number script execution:', error);
+            alert(error.message);
+        }
+    })();
+}
+
 function scrapeAndDownloadCsv() {
     (async () => {
         const scrapingMessage = document.createElement('div');
@@ -266,6 +315,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "removeTimesheetAlarm") {
         chrome.alarms.clear('timesheetReminder');
         sendResponse({status: "Alarm removed"});
+    } else if (request.action === "openCampaignWithDNumber") {
+        (async () => {
+            const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
+
+            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+                if (tabId === tab.id && changeInfo.status === 'complete') {
+                    chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        func: openCampaignWithDNumberScript,
+                        args: [request.dNumber]
+                    });
+                    chrome.tabs.onUpdated.removeListener(listener);
+                }
+            });
+        })();
+        sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {
         (async () => {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

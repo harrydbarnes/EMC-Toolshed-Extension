@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Settings UI related initializations and event listeners are removed ---
 
     if(generateUrlButton) generateUrlButton.addEventListener('click', handleGenerateUrl);
+
+    const openCampaignDNumberButton = document.getElementById('openCampaignDNumber');
+    if (openCampaignDNumberButton) {
+        openCampaignDNumberButton.addEventListener('click', handleOpenCampaignDNumber);
+    }
     // Event listeners for logoToggle, metaReminderToggle, timesheetReminderToggle, reminderDay, reminderTime, settingsToggle, saveReminderSettingsButton are removed.
 
     if (triggerTimesheetReminderButton) {
@@ -107,6 +112,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Removed setLogoToggleState, setMetaReminderToggleState, setTimesheetReminderToggleState functions
+
+function handleOpenCampaignDNumber() {
+    const dNumberInput = document.getElementById('dNumber');
+    const dNumberError = document.getElementById('dNumberError');
+    if (!dNumberInput || !dNumberError) return;
+
+    const dNumber = dNumberInput.value;
+    if (dNumber.length !== 9) {
+        dNumberError.textContent = 'Are you sure this is a D number?';
+        dNumberError.style.display = 'block';
+    } else {
+        dNumberError.style.display = 'none';
+        chrome.runtime.sendMessage({ action: 'openCampaignWithDNumber', dNumber: dNumber });
+    }
+}
 
 function handleGenerateUrl() {
     const campaignIdInput = document.getElementById('campaignId');

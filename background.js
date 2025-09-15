@@ -187,11 +187,16 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
     (async () => {
         try {
             await clickElement('.icon-inner');
+            await delay(1000);
             await clickElement('span.slider');
+            await delay(1000);
             await inputText('input[type="text"][data-is-native-input]', dNumber);
+            await delay(500);
             await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
         } catch (error) {
             console.error('Error during D Number script execution:', error);

@@ -32,24 +32,28 @@
         </div>
 
 
-        <div class="campaign-actions">
-            <div class="action-section">
-                <div class="input-group">
-                    <input type="text" id="campaignId" placeholder="Enter Campaign ID">
-                </div>
-                <div class="input-group">
-                    <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
-                </div>
-                <button id="generateUrl" class="primary-button">Open Campaign</button>
+        <div class="campaign-actions-grid">
+            <!-- Row 1: Campaign ID and a spacer -->
+            <div class="input-group">
+                <input type="text" id="campaignId" placeholder="Enter Campaign ID">
             </div>
-            <div class="action-section">
-                <div class="input-group-spacer"></div>
-                <div class="input-group">
-                    <input type="text" id="dNumber" placeholder="Enter D Number">
-                </div>
-                <button id="openCampaignDNumber" class="primary-button">Open Campaign</button>
-                <p id="dNumberError" class="error-message" style="display: none;"></p>
+            <div></div> <!-- Spacer -->
+
+            <!-- Row 2: Campaign Date and D Number -->
+            <div class="input-group">
+                <input type="text" id="campaignDate" placeholder="Enter Campaign month and year (optional)">
             </div>
+            <div class="input-group">
+                <input type="text" id="dNumber" placeholder="Enter D Number">
+            </div>
+
+            <!-- Row 3: Buttons -->
+            <button id="generateUrl" class="primary-button">Open Campaign</button>
+            <button id="openCampaignDNumber" class="primary-button">Open Campaign</button>
+
+            <!-- Row 4: Error Message -->
+            <div></div> <!-- Spacer -->
+            <p id="dNumberError" class="error-message hidden"></p>
         </div>
 
         <div class="section">

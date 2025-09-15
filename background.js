@@ -134,39 +134,55 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 function openCampaignWithDNumberScript(dNumber) {
-    const clickElement = (selector) => {
+    const findElement = (selector) => {
         return new Promise((resolve, reject) => {
+            const timeout = 10000; // 10 seconds
+            const intervalTime = 500;
+            let elapsedTime = 0;
+
+            const queryShadowDom = (root, selector) => {
+                const elements = root.querySelectorAll(selector);
+                if (elements.length > 0) {
+                    return elements[0];
+                }
+
+                const allElements = root.querySelectorAll('*');
+                for (const element of allElements) {
+                    if (element.shadowRoot) {
+                        const foundInShadow = queryShadowDom(element.shadowRoot, selector);
+                        if (foundInShadow) {
+                            return foundInShadow;
+                        }
+                    }
+                }
+                return null;
+            };
+
             const interval = setInterval(() => {
-                const element = document.querySelector(selector);
+                const element = queryShadowDom(document, selector);
                 if (element) {
                     clearInterval(interval);
-                    element.click();
-                    resolve();
+                    resolve(element);
+                } else {
+                    elapsedTime += intervalTime;
+                    if (elapsedTime >= timeout) {
+                        clearInterval(interval);
+                        reject(new Error(`Element not found: ${selector}`));
+                    }
                 }
-            }, 500);
-            setTimeout(() => {
-                clearInterval(interval);
-                reject(new Error(`Element not found: ${selector}`));
-            }, 10000);
+            }, intervalTime);
         });
     };
 
-    const inputText = (selector, text) => {
-        return new Promise((resolve, reject) => {
-            const interval = setInterval(() => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    clearInterval(interval);
-                    element.value = text;
-                    element.dispatchEvent(new Event('input', { bubbles: true }));
-                    resolve();
-                }
-            }, 500);
-            setTimeout(() => {
-                clearInterval(interval);
-                reject(new Error(`Element not found: ${selector}`));
-            }, 10000);
-        });
+    const clickElement = async (selector) => {
+        const element = await findElement(selector);
+        element.click();
+    };
+
+    const inputText = async (selector, text) => {
+        const element = await findElement(selector);
+        element.value = text;
+        element.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
     (async () => {

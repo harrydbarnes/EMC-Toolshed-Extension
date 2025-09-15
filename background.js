@@ -187,7 +187,7 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            await clickElement('div.icon-inner > svg');
+            await clickElement('.icon-inner');
             await clickElement('span.slider');
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');

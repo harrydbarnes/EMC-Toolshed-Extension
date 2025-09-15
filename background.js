@@ -142,8 +142,10 @@ function openCampaignWithDNumberScript(dNumber) {
 
             const queryShadowDom = (root, selector) => {
                 const elements = root.querySelectorAll(selector);
-                if (elements.length > 0) {
-                    return elements[0];
+                for (const element of elements) {
+                    if (element.offsetParent !== null) {
+                        return element;
+                    }
                 }
 
                 const allElements = root.querySelectorAll('*');

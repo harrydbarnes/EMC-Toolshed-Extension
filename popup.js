@@ -121,9 +121,8 @@ function handleOpenCampaignDNumber() {
     const dNumber = dNumberInput.value;
     if (dNumber.length !== 9) {
         dNumberError.textContent = 'Are you sure this is a D number?';
-        dNumberError.style.display = 'block';
     } else {
-        dNumberError.style.display = 'none';
+        dNumberError.textContent = '';
         chrome.runtime.sendMessage({ action: 'openCampaignWithDNumber', dNumber: dNumber });
     }
 }

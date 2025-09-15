@@ -429,22 +429,16 @@ function handleCampaignManagementFeatures() {
 
         if (data.automateFormFieldsEnabled !== false) {
             // Automate form fields
-            const mediaMixLabel = Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Media mix');
-            if (mediaMixLabel) {
-                const mediaMixSelect = mediaMixLabel.nextElementSibling.querySelector('select');
-                if (mediaMixSelect && mediaMixSelect.value !== 'Online') {
-                    mediaMixSelect.value = 'Online';
-                    mediaMixSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+            const mediaTypeSelect = document.getElementById('debug-mediaMix-mediaType');
+            if (mediaTypeSelect && mediaTypeSelect.value !== 'Online') {
+                mediaTypeSelect.value = 'Online';
+                mediaTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
-            const budgetTypeLabel = Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Budget type');
-            if (budgetTypeLabel) {
-                const budgetTypeSelect = budgetTypeLabel.nextElementSibling.querySelector('select');
-                if (budgetTypeSelect && budgetTypeSelect.value !== 'Total Client Cost') {
-                    budgetTypeSelect.value = 'Total Client Cost';
-                    budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+            const budgetTypeSelect = document.getElementById('debug-mediaMix-mediaType0');
+            if (budgetTypeSelect && budgetTypeSelect.value !== 'Total Client Cost') {
+                budgetTypeSelect.value = 'Total Client Cost';
+                budgetTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
     });

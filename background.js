@@ -192,7 +192,7 @@ function openCampaignWithDNumberScript(dNumber) {
     (async () => {
         try {
             await clickElement('.icon-inner');
-            await delay(200);
+            await delay(2000);
             await clickElement('span.slider');
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await delay(500);

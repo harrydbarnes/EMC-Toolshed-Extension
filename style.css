@@ -36,7 +36,24 @@ body::-webkit-scrollbar-thumb:hover {
 .header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 10px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.version {
+    font-size: 0.9em;
+    color: #666;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.version:hover {
+    text-decoration: underline;
 }
 
 .logo {
@@ -71,7 +88,7 @@ body::-webkit-scrollbar-thumb:hover {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-    margin-bottom: 15px; /* Default margin-bottom for button groups */
+    margin-bottom: 5px; /* Default margin-bottom for button groups */
 }
 
 /* Removed specific styles for .button-group.timesheet-group */
@@ -192,6 +209,29 @@ body::-webkit-scrollbar-thumb:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
+}
+
+.campaign-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.campaign-actions-grid > .input-group {
+    margin-bottom: 0;
+}
+
+.campaign-actions-grid > .primary-button {
+    margin-bottom: 0;
+}
+
+.error-message {
+    color: red;
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+    min-height: 1.2em; /* Reserve space for one line of text */
 }
 
 .primary-button {
@@ -363,7 +403,7 @@ select:focus {
     text-decoration: underline;
 }
 
-.hidden-initially {
+.hidden {
     display: none;
 }
 
@@ -371,7 +411,7 @@ select:focus {
 
 .settings-link-container {
     text-align: center;
-    margin-top: 5px;
+    margin-top: 0;
     margin-bottom: 10px;
 }
 

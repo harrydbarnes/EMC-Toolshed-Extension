@@ -133,6 +133,78 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 
 // --- Meta Billing Check Logic ---
 
+function openCampaignWithDNumberScript(dNumber) {
+    const findElement = (selector) => {
+        return new Promise((resolve, reject) => {
+            const timeout = 10000; // 10 seconds
+            const intervalTime = 500;
+            let elapsedTime = 0;
+
+            const queryShadowDom = (root, selector) => {
+                const elements = root.querySelectorAll(selector);
+                for (const element of elements) {
+                    if (element.offsetParent !== null) {
+                        return element;
+                    }
+                }
+
+                const allElements = root.querySelectorAll('*');
+                for (const element of allElements) {
+                    if (element.shadowRoot) {
+                        const foundInShadow = queryShadowDom(element.shadowRoot, selector);
+                        if (foundInShadow) {
+                            return foundInShadow;
+                        }
+                    }
+                }
+                return null;
+            };
+
+            const interval = setInterval(() => {
+                const element = queryShadowDom(document, selector);
+                if (element) {
+                    clearInterval(interval);
+                    resolve(element);
+                } else {
+                    elapsedTime += intervalTime;
+                    if (elapsedTime >= timeout) {
+                        clearInterval(interval);
+                        reject(new Error(`Element not found: ${selector}`));
+                    }
+                }
+            }, intervalTime);
+        });
+    };
+
+    const clickElement = async (selector) => {
+        const element = await findElement(selector);
+        element.click();
+    };
+
+    const inputText = async (selector, text) => {
+        const element = await findElement(selector);
+        element.value = text;
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    (async () => {
+        try {
+            await clickElement('.icon-inner');
+            await delay(1000);
+            await clickElement('span.slider');
+            await delay(1000);
+            await inputText('input[type="text"][data-is-native-input]', dNumber);
+            await delay(500);
+            await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
+        } catch (error) {
+            console.error('Error during D Number script execution:', error);
+            alert(error.message);
+        }
+    })();
+}
+
 function scrapeAndDownloadCsv() {
     (async () => {
         const scrapingMessage = document.createElement('div');
@@ -266,6 +338,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "removeTimesheetAlarm") {
         chrome.alarms.clear('timesheetReminder');
         sendResponse({status: "Alarm removed"});
+    } else if (request.action === "openCampaignWithDNumber") {
+        (async () => {
+            const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
+
+            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+                if (tabId === tab.id && changeInfo.status === 'complete') {
+                    chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        func: openCampaignWithDNumberScript,
+                        args: [request.dNumber]
+                    });
+                    chrome.tabs.onUpdated.removeListener(listener);
+                }
+            });
+        })();
+        sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {
         (async () => {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

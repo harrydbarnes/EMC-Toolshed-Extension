@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const versionLink = document.getElementById('version-link');
+    if (versionLink) {
+        const manifest = chrome.runtime.getManifest();
+        versionLink.textContent = `r${manifest.version}`;
+        versionLink.addEventListener('click', () => {
+            chrome.tabs.create({ url: chrome.runtime.getURL('updates.html') });
+        });
+    }
+
     const generateUrlButton = document.getElementById('generateUrl');
     // const logoToggle = document.getElementById('logoToggle'); // Removed
     // const metaReminderToggle = document.getElementById('metaReminderToggle'); // Removed
@@ -21,6 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Settings UI related initializations and event listeners are removed ---
 
     if(generateUrlButton) generateUrlButton.addEventListener('click', handleGenerateUrl);
+
+    const openCampaignDNumberButton = document.getElementById('openCampaignDNumber');
+    if (openCampaignDNumberButton) {
+        openCampaignDNumberButton.addEventListener('click', handleOpenCampaignDNumber);
+    }
     // Event listeners for logoToggle, metaReminderToggle, timesheetReminderToggle, reminderDay, reminderTime, settingsToggle, saveReminderSettingsButton are removed.
 
     if (triggerTimesheetReminderButton) {
@@ -77,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     addClickListener('prismaButton', 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns');
-    addClickListener('metaHandbookButton', 'https://insidemedia.sharepoint.com/sites/GRM-UK-GMS/Files%20Library/Forms/AllItems.aspx?id=%2Fsites%2FGRM%2DUK%2DGMS%2FFiles%20Library%2FChannel%5FSocial%2FPaid%20Social%20Prisma%20Integration%20Resources%2FLatest%20Handbook&p=true&ga=1');
+    addClickListener('metaHandbookButton', 'https://insidemedia.sharepoint.com/sites/GRM-UK-GMS/SitePages/Prisma-x-Meta-Integration-Support.aspx');
     addClickListener('timesheetsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheets/ToDo');
     addClickListener('approvalsButton', 'https://groupmuk-aura.mediaocean.com/viewport-home/#osAppId=rod-time&osPspId=rod-time&route=time/display/myTimesheetApprovals/AwaitingMe');
     addClickListener('officeHoursButton', 'https://myofficedays.netlify.app/');
@@ -107,6 +121,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Removed setLogoToggleState, setMetaReminderToggleState, setTimesheetReminderToggleState functions
+
+function handleOpenCampaignDNumber() {
+    const dNumberInput = document.getElementById('dNumber');
+    const dNumberError = document.getElementById('dNumberError');
+    if (!dNumberInput || !dNumberError) return;
+
+    const dNumber = dNumberInput.value;
+    if (dNumber.length !== 9) {
+        dNumberError.textContent = 'Are you sure this is a D number?';
+        dNumberError.classList.remove('hidden');
+    } else {
+        dNumberError.classList.add('hidden');
+        chrome.runtime.sendMessage({ action: 'openCampaignWithDNumber', dNumber: dNumber });
+    }
+}
 
 function handleGenerateUrl() {
     const campaignIdInput = document.getElementById('campaignId');

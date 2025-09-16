@@ -206,7 +206,7 @@ function checkForMetaConditions() {
 
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
         if (data.metaReminderEnabled !== false) {
-            const pageText = document.body.innerText;
+            const pageText = document.body.innerText || '';
             if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
                  if (!document.getElementById('meta-reminder-popup')) {
                     createMetaReminderPopup();
@@ -220,7 +220,7 @@ function checkForMetaConditions() {
 function checkForIASConditions() {
     if (iasReminderDismissed) return;
 
-    const pageText = document.body.innerText;
+    const pageText = document.body.innerText || '';
     if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
          if (!document.getElementById('ias-reminder-popup')) {
             createIASReminderPopup();

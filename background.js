@@ -192,9 +192,8 @@ function openCampaignWithDNumberScript(dNumber) {
     (async () => {
         try {
             await clickElement('.icon-inner');
-            await delay(1000);
+            await delay(200);
             await clickElement('span.slider');
-            await delay(1000);
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await delay(500);
             await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
@@ -342,16 +341,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
 
-            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
-                if (tabId === tab.id && changeInfo.status === 'complete') {
-                    chrome.scripting.executeScript({
-                        target: { tabId: tab.id },
-                        func: openCampaignWithDNumberScript,
-                        args: [request.dNumber]
-                    });
-                    chrome.tabs.onUpdated.removeListener(listener);
-                }
-            });
+            setTimeout(() => {
+                chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: openCampaignWithDNumberScript,
+                    args: [request.dNumber]
+                });
+            }, 5000);
         })();
         sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {

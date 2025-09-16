@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const versionLink = document.getElementById('version-link');
+    if (versionLink) {
+        const manifest = chrome.runtime.getManifest();
+        versionLink.textContent = `r${manifest.version}`;
+        versionLink.addEventListener('click', () => {
+            chrome.tabs.create({ url: chrome.runtime.getURL('updates.html') });
+        });
+    }
+
     const generateUrlButton = document.getElementById('generateUrl');
     // const logoToggle = document.getElementById('logoToggle'); // Removed
     // const metaReminderToggle = document.getElementById('metaReminderToggle'); // Removed

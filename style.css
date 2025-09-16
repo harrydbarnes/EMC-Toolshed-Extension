@@ -36,7 +36,24 @@ body::-webkit-scrollbar-thumb:hover {
 .header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 10px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.version {
+    font-size: 0.8em;
+    color: #666;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.version:hover {
+    text-decoration: underline;
 }
 
 .logo {
@@ -197,8 +214,16 @@ body::-webkit-scrollbar-thumb:hover {
 .campaign-actions-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px 5px;
+    gap: 8px;
     margin-bottom: 5px;
+}
+
+.campaign-actions-grid > .input-group {
+    margin-bottom: 0;
+}
+
+.campaign-actions-grid > .primary-button {
+    margin-bottom: 0;
 }
 
 .error-message {

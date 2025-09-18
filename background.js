@@ -191,11 +191,14 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            await clickElement('.icon-inner');
-            await delay(2000);
+            // New workflow based on user feedback
+            await clickElement('mo-icon[name="search"]');
+            await delay(1000);
+            await clickElement('mo-toggle-switch');
+            await delay(500);
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await delay(500);
-            await clickElement('mo-icon[name="search"]');
+            await clickElement('mo-button:has(mo-icon[name="folder-open"])');
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(error.message);

@@ -235,7 +235,9 @@ function createIASReminderPopup() {
 function checkForMetaConditions() {
     if (metaReminderDismissed && !window.forceShowMetaReminder) return;
 
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
+        if (chrome.runtime.lastError) return; // Error guard
         if (data.metaReminderEnabled !== false) {
             const pageText = document.body.innerText;
             if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
@@ -278,6 +280,7 @@ setInterval(() => {
 // --- Custom Reminder Functions ---
 
 function fetchCustomReminders() {
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get({customReminders: []}, function(data) {
         if (chrome.runtime.lastError) {
             console.error("[ContentScript Prisma] Error fetching custom reminders:", chrome.runtime.lastError);
@@ -437,7 +440,9 @@ function handleCampaignManagementFeatures() {
         return;
     }
 
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get(['hidingSectionsEnabled', 'automateFormFieldsEnabled'], (data) => {
+        if (chrome.runtime.lastError) return; // Error guard
         if (data.hidingSectionsEnabled !== false) {
             // Hide sections
             const objectiveSection = document.querySelector('fieldset.sectionObjective');

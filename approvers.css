@@ -1,0 +1,215 @@
+/* General body and container styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 15px;
+    width: 800px; /* Adjusted for a wider popup/page */
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #e83e8c; /* Pink color for the title */
+}
+
+.back-link {
+    text-decoration: none;
+    color: #555;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.back-link i {
+    margin-right: 8px;
+}
+
+/* Search Bar */
+.search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-container .fa-search {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: #aaa;
+}
+
+#search-input {
+    width: 100%;
+    padding: 12px 12px 12px 40px; /* Padding left for icon */
+    border: 1px solid #ddd;
+    border-radius: 25px; /* Pill shape */
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+/* Filter Sections */
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-section h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #e83e8c;
+    padding-bottom: 5px;
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+#favorites-only {
+    margin-right: 8px;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-button {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.filter-button.active {
+    background-color: #e83e8c;
+    color: #fff;
+    border-color: #e83e8c;
+}
+
+/* Approvers Grid */
+.approvers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.approver-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: box-shadow 0.3s, border-color 0.3s;
+    position: relative;
+}
+
+.approver-card.selected {
+    border-color: #e83e8c;
+    box-shadow: 0 0 10px rgba(232, 62, 140, 0.5);
+}
+
+.approver-card h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.approver-card p {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #777;
+}
+
+.approver-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tag {
+    background-color: #eee;
+    color: #333;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.tag.specialty {
+    background-color: #ffc107; /* A different color for specialty */
+    color: #fff;
+}
+
+.favorite-star {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 18px;
+}
+
+.favorite-star.favorited {
+    color: #f9a825; /* Gold for favorited */
+}
+
+/* Footer Actions */
+.footer-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+#selected-count {
+    font-size: 16px;
+    color: #555;
+}
+
+#copy-button, #copy-save-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: none;
+}
+
+#copy-button {
+    background-color: #e83e8c;
+    color: white;
+}
+
+#copy-save-button {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+}

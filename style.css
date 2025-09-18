@@ -95,6 +95,10 @@ body::-webkit-scrollbar-thumb:hover {
 /* The general .button-group styles will now apply to the single group */
 
 
+#prismaApproversButton {
+    flex-basis: 100%;
+}
+
 .nav-button, .location-button {
     flex: 1 0 calc(50% - 5px); /* Style to arrange buttons in pairs */
     padding: 8px;
@@ -434,4 +438,9 @@ a.settings-page-link:hover {
 a.settings-page-link:active {
     color: #004085;
     transform: translateY(1px); /* Slight press effect */
+}
+
+.pink-button {
+    background-color: #e83e8c !important;
+    color: white !important;
 }

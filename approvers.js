@@ -1,0 +1,168 @@
+import { approversData, businessUnits, clients } from './approvers-data.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+    const favoritesOnlyCheckbox = document.getElementById('favorites-only');
+    const businessUnitsContainer = document.getElementById('business-units-filters');
+    const clientsContainer = document.getElementById('clients-filters');
+    const approversList = document.getElementById('approvers-list');
+    const selectedCount = document.getElementById('selected-count');
+    const copyButton = document.getElementById('copy-button');
+    const copySaveButton = document.getElementById('copy-save-button');
+
+    let selectedApprovers = new Set();
+    let favoriteApprovers = new Set();
+
+    const renderApprovers = (approvers) => {
+        approversList.innerHTML = '';
+        if (approvers.length === 0) {
+            approversList.innerHTML = '<p>No approvers found.</p>';
+            return;
+        }
+        approvers.forEach(approver => {
+            const card = document.createElement('div');
+            card.className = `approver-card ${selectedApprovers.has(approver.id) ? 'selected' : ''}`;
+            card.dataset.approverId = approver.id;
+
+            const isFavorited = favoriteApprovers.has(approver.id);
+            card.innerHTML = `
+                <div class="approver-card-content">
+                    <h4>${approver.firstName} ${approver.lastName}</h4>
+                    <p>${approver.email}</p>
+                    <div class="approver-tags">
+                        <span class="tag">${approver.officeName}</span>
+                        ${approver.specialty ? `<span class="tag specialty">${approver.specialty}</span>` : ''}
+                    </div>
+                </div>
+                <i class="favorite-star ${isFavorited ? 'fas fa-star favorited' : 'far fa-star'}"></i>
+            `;
+            approversList.appendChild(card);
+        });
+    };
+
+    const updateSelectedCount = () => {
+        selectedCount.textContent = `${selectedApprovers.size} approver${selectedApprovers.size === 1 ? '' : 's'} selected`;
+    };
+
+    const filterApprovers = () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const favoritesOnly = favoritesOnlyCheckbox.checked;
+        const activeBusinessUnits = [...businessUnitsContainer.querySelectorAll('.active')].map(btn => btn.dataset.value);
+        const activeClients = [...clientsContainer.querySelectorAll('.active')].map(btn => btn.dataset.value);
+
+        let filtered = approversData;
+
+        if (searchTerm) {
+            filtered = filtered.filter(a =>
+                a.firstName.toLowerCase().includes(searchTerm) ||
+                a.lastName.toLowerCase().includes(searchTerm) ||
+                a.email.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        if (favoritesOnly) {
+            filtered = filtered.filter(a => favoriteApprovers.has(a.id));
+        }
+
+        if (activeBusinessUnits.length > 0) {
+            if(activeBusinessUnits.includes("All")) {
+                // do nothing
+            } else {
+                filtered = filtered.filter(a => activeBusinessUnits.includes(a.businessUnit));
+            }
+        }
+
+        if (activeClients.length > 0) {
+            filtered = filtered.filter(a => activeClients.includes(a.officeName));
+        }
+
+        renderApprovers(filtered);
+    };
+
+    const toggleFilterButton = (e) => {
+        if (e.target.classList.contains('filter-button')) {
+            e.target.classList.toggle('active');
+            filterApprovers();
+        }
+    };
+
+    const loadFavorites = () => {
+        chrome.storage.local.get(['favoriteApprovers'], (result) => {
+            if (result.favoriteApprovers) {
+                favoriteApprovers = new Set(result.favoriteApprovers);
+            }
+            filterApprovers();
+        });
+    };
+
+    const saveFavorites = () => {
+        chrome.storage.local.set({ favoriteApprovers: [...favoriteApprovers] });
+    };
+
+    // Event Listeners
+    searchInput.addEventListener('input', filterApprovers);
+    favoritesOnlyCheckbox.addEventListener('change', filterApprovers);
+    businessUnitsContainer.addEventListener('click', toggleFilterButton);
+    clientsContainer.addEventListener('click', toggleFilterButton);
+
+    approversList.addEventListener('click', (e) => {
+        const card = e.target.closest('.approver-card');
+        if (!card) return;
+
+        const approverId = card.dataset.approverId;
+
+        if (e.target.classList.contains('favorite-star')) {
+            if (favoriteApprovers.has(approverId)) {
+                favoriteApprovers.delete(approverId);
+            } else {
+                favoriteApprovers.add(approverId);
+            }
+            saveFavorites();
+            filterApprovers();
+        } else {
+            if (selectedApprovers.has(approverId)) {
+                selectedApprovers.delete(approverId);
+            } else {
+                selectedApprovers.add(approverId);
+            }
+            card.classList.toggle('selected');
+            updateSelectedCount();
+        }
+    });
+
+    copyButton.addEventListener('click', () => {
+        const emails = [...selectedApprovers].map(id => approversData.find(a => a.id === id).email);
+        navigator.clipboard.writeText(emails.join('; ')).then(() => {
+            alert('Approver emails copied to clipboard!');
+        });
+    });
+
+    copySaveButton.addEventListener('click', () => {
+        const emails = [...selectedApprovers].map(id => approversData.find(a => a.id === id).email);
+        navigator.clipboard.writeText(emails.join('; ')).then(() => {
+            alert('Approver emails copied to clipboard!');
+        });
+        selectedApprovers.forEach(id => favoriteApprovers.add(id));
+        saveFavorites();
+        filterApprovers();
+    });
+
+    // Initial Population
+    businessUnits.forEach(unit => {
+        const button = document.createElement('button');
+        button.className = 'filter-button';
+        button.dataset.value = unit;
+        button.textContent = unit;
+        businessUnitsContainer.appendChild(button);
+    });
+
+    clients.forEach(client => {
+        const button = document.createElement('button');
+        button.className = 'filter-button';
+        button.dataset.value = client;
+        button.textContent = client;
+        clientsContainer.appendChild(button);
+    });
+
+    loadFavorites();
+});

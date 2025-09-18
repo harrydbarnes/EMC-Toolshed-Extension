@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prisma Approver Search</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="approvers.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="popup.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+            <h1>Prisma Approver Search</h1>
+        </div>
+        <p>Find and manage your preferred approvers</p>
+
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search-input" placeholder="Search approvers by name or email...">
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-header">
+                <label for="favorites-only">
+                    <input type="checkbox" id="favorites-only">
+                    <i class="far fa-star"></i> Favorites Only
+                </label>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h3>Business Units</h3>
+            <div id="business-units-filters" class="filter-buttons">
+                <!-- Business unit buttons will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h3>Clients</h3>
+            <div id="clients-filters" class="filter-buttons">
+                <!-- Client buttons will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <div id="approvers-list" class="approvers-grid">
+            <!-- Approver cards will be dynamically inserted here -->
+        </div>
+
+        <div class="footer-actions">
+            <p id="selected-count">0 approvers selected</p>
+            <button id="copy-button" class="primary-button">Copy Approvers</button>
+            <button id="copy-save-button" class="primary-button">Copy and Save As Favourites</button>
+        </div>
+    </div>
+    <script type="module" src="approvers.js"></script>
+</body>
+</html>

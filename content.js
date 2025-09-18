@@ -66,6 +66,14 @@ function restoreOriginalLogo() {
 }
 
 function checkAndReplaceLogo() {
+    // Gracefully handle cases where the extension context is invalidated.
+    if (!chrome.runtime || !chrome.runtime.id) {
+        // The extension context has been invalidated, so we can't use chrome.storage.
+        // This can happen if the extension is reloaded or updated.
+        // console.log("Extension context invalidated. Skipping logo replacement check.");
+        return;
+    }
+
     chrome.storage.sync.get('logoReplaceEnabled', function(data) {
         if (chrome.runtime.lastError) {
             console.error(`Error getting logoReplaceEnabled setting: ${chrome.runtime.lastError.message}`);

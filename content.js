@@ -14,9 +14,32 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
+/**
+ * Recursively searches for an element matching the selector, piercing through shadow DOMs.
+ * @param {string} selector - The CSS selector to search for.
+ * @param {Element|ShadowRoot} [root=document] - The root element to start the search from.
+ * @returns {Element|null} The first matching element found, or null.
+ */
+function queryShadowDom(selector, root = document) {
+    const found = root.querySelector(selector);
+    if (found) return found;
+
+    const allElements = root.querySelectorAll('*');
+    for (const element of allElements) {
+        if (element.shadowRoot) {
+            const foundInShadow = queryShadowDom(selector, element.shadowRoot);
+            if (foundInShadow) return foundInShadow;
+        }
+    }
+    return null;
+}
+
 function replaceLogo() {
-    const specificSvg = document.querySelector('i.logo > svg[width="20"][height="28"]');
-    const logoContainer = specificSvg ? specificSvg.parentElement : null; // Should be the <i> tag
+    // Use a more robust selector by finding a unique path within the SVG,
+    // and use queryShadowDom to search inside shadow DOM trees.
+    const uniquePath = queryShadowDom('path[d="M9.23616 0C4.13364 0 0 3.78471 0 8.455C0 13.1253 4.13364 16.91 9.23616 16.91"]');
+    const specificSvg = uniquePath ? uniquePath.closest('svg') : null;
+    const logoContainer = specificSvg ? specificSvg.parentElement : null;
 
     if (logoContainer) {
         // Check if custom logo already exists by checking for our specific class within the container
@@ -66,6 +89,14 @@ function restoreOriginalLogo() {
 }
 
 function checkAndReplaceLogo() {
+    // Gracefully handle cases where the extension context is invalidated.
+    if (!chrome.runtime || !chrome.runtime.id) {
+        // The extension context has been invalidated, so we can't use chrome.storage.
+        // This can happen if the extension is reloaded or updated.
+        // console.log("Extension context invalidated. Skipping logo replacement check.");
+        return;
+    }
+
     chrome.storage.sync.get('logoReplaceEnabled', function(data) {
         if (chrome.runtime.lastError) {
             console.error(`Error getting logoReplaceEnabled setting: ${chrome.runtime.lastError.message}`);
@@ -204,7 +235,9 @@ function createIASReminderPopup() {
 function checkForMetaConditions() {
     if (metaReminderDismissed && !window.forceShowMetaReminder) return;
 
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
+        if (chrome.runtime.lastError) return; // Error guard
         if (data.metaReminderEnabled !== false) {
             const pageText = document.body.innerText;
             if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
@@ -247,6 +280,7 @@ setInterval(() => {
 // --- Custom Reminder Functions ---
 
 function fetchCustomReminders() {
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get({customReminders: []}, function(data) {
         if (chrome.runtime.lastError) {
             console.error("[ContentScript Prisma] Error fetching custom reminders:", chrome.runtime.lastError);
@@ -406,7 +440,9 @@ function handleCampaignManagementFeatures() {
         return;
     }
 
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get(['hidingSectionsEnabled', 'automateFormFieldsEnabled'], (data) => {
+        if (chrome.runtime.lastError) return; // Error guard
         if (data.hidingSectionsEnabled !== false) {
             // Hide sections
             const objectiveSection = document.querySelector('fieldset.sectionObjective');

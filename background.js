@@ -141,13 +141,13 @@ function openCampaignWithDNumberScript(dNumber) {
             let elapsedTime = 0;
 
             const queryShadowDom = (root, selector) => {
-                const elements = root.querySelectorAll(selector);
-                for (const element of elements) {
-                    if (element.offsetParent !== null) {
-                        return element;
-                    }
+                // Find the first element matching the selector in the current root
+                const found = root.querySelector(selector);
+                if (found) {
+                    return found;
                 }
 
+                // If not found, search in any shadow roots
                 const allElements = root.querySelectorAll('*');
                 for (const element of allElements) {
                     if (element.shadowRoot) {

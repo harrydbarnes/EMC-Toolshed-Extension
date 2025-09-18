@@ -193,10 +193,9 @@ function openCampaignWithDNumberScript(dNumber) {
         try {
             await clickElement('.icon-inner');
             await delay(2000);
-            await clickElement('span.slider');
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await delay(500);
-            await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
+            await clickElement('mo-icon[name="search"]');
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(error.message);

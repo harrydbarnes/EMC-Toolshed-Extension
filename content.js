@@ -14,10 +14,30 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
+/**
+ * Recursively searches for an element matching the selector, piercing through shadow DOMs.
+ * @param {string} selector - The CSS selector to search for.
+ * @param {Element|ShadowRoot} [root=document] - The root element to start the search from.
+ * @returns {Element|null} The first matching element found, or null.
+ */
+function queryShadowDom(selector, root = document) {
+    const found = root.querySelector(selector);
+    if (found) return found;
+
+    const allElements = root.querySelectorAll('*');
+    for (const element of allElements) {
+        if (element.shadowRoot) {
+            const foundInShadow = queryShadowDom(selector, element.shadowRoot);
+            if (foundInShadow) return foundInShadow;
+        }
+    }
+    return null;
+}
+
 function replaceLogo() {
-    // Use a more robust selector by finding a unique path within the SVG.
-    // This is less likely to break if the website's HTML structure or CSS classes change.
-    const uniquePath = document.querySelector('path[d="M9.23616 0C4.13364 0 0 3.78471 0 8.455C0 13.1253 4.13364 16.91 9.23616 16.91"]');
+    // Use a more robust selector by finding a unique path within the SVG,
+    // and use queryShadowDom to search inside shadow DOM trees.
+    const uniquePath = queryShadowDom('path[d="M9.23616 0C4.13364 0 0 3.78471 0 8.455C0 13.1253 4.13364 16.91 9.23616 16.91"]');
     const specificSvg = uniquePath ? uniquePath.closest('svg') : null;
     const logoContainer = specificSvg ? specificSvg.parentElement : null;
 

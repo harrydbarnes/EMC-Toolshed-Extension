@@ -197,8 +197,18 @@ function openCampaignWithDNumberScript(dNumber) {
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
     (async () => {
+        // Pre-flight check to see if we're in the correct frame.
+        // Try to find the first element in the sequence. If it doesn't exist here,
+        // this isn't the right frame, so we exit silently.
+        const anchorElement = await findElement('mo-icon[name="search"]').catch(() => null);
+        if (!anchorElement) {
+            return; // Exit silently if not in the right frame.
+        }
+
+        // If the anchor was found, proceed with the automation.
+        // Any errors from this point on are real errors and should be reported.
         try {
-            // New workflow based on user feedback
+            // The findElement above doesn't click, so we still need to click the anchor.
             await clickElement('mo-icon[name="search"]');
             await delay(1000);
             await clickElement('mo-toggle-switch');
@@ -352,7 +362,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             setTimeout(() => {
                 chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
+                    target: { tabId: tab.id, allFrames: true },
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });

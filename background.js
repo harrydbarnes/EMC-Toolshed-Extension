@@ -1,5 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
+  if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
   chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
+    if (chrome.runtime.lastError) return; // Error guard
     if (data.timesheetReminderEnabled !== false) {
       createTimesheetAlarm(data.reminderDay, data.reminderTime);
     }
@@ -66,7 +68,9 @@ async function createOffscreenDocument() {
 // Modify playAlarmSound to use the offscreen document
 async function playAlarmSound() {
   console.log("playAlarmSound function called");
+  if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
   chrome.storage.sync.get('timesheetReminderEnabled', async function(data) {
+    if (chrome.runtime.lastError) return; // Error guard
     console.log("Timesheet reminder enabled:", data.timesheetReminderEnabled);
     if (data.timesheetReminderEnabled !== false) {
       // Create offscreen document before playing sound
@@ -90,7 +94,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 async function showTimesheetNotification() {
     console.log("showTimesheetNotification function called");
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
     chrome.storage.sync.get('timesheetReminderEnabled', async function(data) {
+        if (chrome.runtime.lastError) return; // Error guard
         console.log("Timesheet reminder enabled:", data.timesheetReminderEnabled);
         if (data.timesheetReminderEnabled !== false) {
             // Trigger the sound playback via the offscreen document
@@ -141,13 +147,13 @@ function openCampaignWithDNumberScript(dNumber) {
             let elapsedTime = 0;
 
             const queryShadowDom = (root, selector) => {
-                // Find the first element matching the selector in the current root
-                const found = root.querySelector(selector);
-                if (found) {
-                    return found;
+                const elements = root.querySelectorAll(selector);
+                for (const element of elements) {
+                    if (element.offsetParent !== null) {
+                        return element;
+                    }
                 }
 
-                // If not found, search in any shadow roots
                 const allElements = root.querySelectorAll('*');
                 for (const element of allElements) {
                     if (element.shadowRoot) {
@@ -169,7 +175,8 @@ function openCampaignWithDNumberScript(dNumber) {
                     elapsedTime += intervalTime;
                     if (elapsedTime >= timeout) {
                         clearInterval(interval);
-                        reject(new Error(`Element not found: ${selector}`));
+                        const iframeCount = document.querySelectorAll('iframe').length;
+                        reject(new Error(`Element not found: ${selector}. Found ${iframeCount} iframes.`));
                     }
                 }
             }, intervalTime);
@@ -381,7 +388,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // Check if the URL has changed and the feature is enabled
     if (changeInfo.url) {
+        if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
         chrome.storage.sync.get('addCampaignShortcutEnabled', (data) => {
+            if (chrome.runtime.lastError) return; // Error guard
             if (data.addCampaignShortcutEnabled !== false) {
                 // Check if the URL contains the specific parameter to be removed
                 if (changeInfo.url.includes('osMOpts=lb')) {

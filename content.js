@@ -15,8 +15,11 @@ function escapeHTML(str) {
 }
 
 function replaceLogo() {
-    const specificSvg = document.querySelector('i.logo > svg[width="20"][height="28"]');
-    const logoContainer = specificSvg ? specificSvg.parentElement : null; // Should be the <i> tag
+    // Use a more robust selector by finding a unique path within the SVG.
+    // This is less likely to break if the website's HTML structure or CSS classes change.
+    const uniquePath = document.querySelector('path[d="M9.23616 0C4.13364 0 0 3.78471 0 8.455C0 13.1253 4.13364 16.91 9.23616 16.91"]');
+    const specificSvg = uniquePath ? uniquePath.closest('svg') : null;
+    const logoContainer = specificSvg ? specificSvg.parentElement : null;
 
     if (logoContainer) {
         // Check if custom logo already exists by checking for our specific class within the container

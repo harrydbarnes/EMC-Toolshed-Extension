@@ -41,7 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateSelectedCount = () => {
+        const footerActions = document.querySelector('.footer-actions');
         selectedCount.textContent = `${selectedApprovers.size} approver${selectedApprovers.size === 1 ? '' : 's'} selected`;
+        if (selectedApprovers.size > 0) {
+            footerActions.classList.remove('hidden');
+        } else {
+            footerActions.classList.add('hidden');
+        }
     };
 
     const filterApprovers = () => {

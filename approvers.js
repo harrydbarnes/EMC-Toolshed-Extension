@@ -2,10 +2,11 @@ import { approversData, businessUnits, clients } from './approvers-data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
-    const favoritesOnlyCheckbox = document.getElementById('favorites-only');
+    const favoritesOnlyButton = document.getElementById('favorites-only-button');
     const businessUnitsContainer = document.getElementById('business-units-filters');
     const clientsContainer = document.getElementById('clients-filters');
     const approversList = document.getElementById('approvers-list');
+    const approversCount = document.getElementById('approvers-count');
     const selectedCount = document.getElementById('selected-count');
     const copyButton = document.getElementById('copy-button');
     const copySaveButton = document.getElementById('copy-save-button');
@@ -15,10 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderApprovers = (approvers) => {
         approversList.innerHTML = '';
+        approversCount.textContent = `${approvers.length} approver${approvers.length !== 1 ? 's' : ''} found`;
+
         if (approvers.length === 0) {
-            approversList.innerHTML = '<p>No approvers found.</p>';
+            approversList.innerHTML = '<p>No approvers found matching your criteria.</p>';
             return;
         }
+
         approvers.forEach(approver => {
             const card = document.createElement('div');
             card.className = `approver-card ${selectedApprovers.has(approver.id) ? 'selected' : ''}`;
@@ -26,15 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isFavorited = favoriteApprovers.has(approver.id);
             card.innerHTML = `
-                <div class="approver-card-content">
+                <div class="approver-card-header">
                     <h4>${approver.firstName} ${approver.lastName}</h4>
-                    <p>${approver.email}</p>
-                    <div class="approver-tags">
-                        <span class="tag">${approver.officeName}</span>
-                        ${approver.specialty ? `<span class="tag specialty">${approver.specialty}</span>` : ''}
-                    </div>
+                    <i class="favorite-star ${isFavorited ? 'fas fa-star favorited' : 'far fa-star'}"></i>
                 </div>
-                <i class="favorite-star ${isFavorited ? 'fas fa-star favorited' : 'far fa-star'}"></i>
+                <p>${approver.email}</p>
+                <div class="approver-tags">
+                    <span class="tag">${approver.officeName}</span>
+                    ${approver.specialty ? `<span class="tag specialty">${approver.specialty}</span>` : ''}
+                </div>
             `;
             approversList.appendChild(card);
         });
@@ -52,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterApprovers = () => {
         const searchTerm = searchInput.value.toLowerCase();
-        const favoritesOnly = favoritesOnlyCheckbox.checked;
+        const favoritesOnly = favoritesOnlyButton.classList.contains('active');
         const activeBusinessUnits = [...businessUnitsContainer.querySelectorAll('.active')].map(btn => btn.dataset.value);
         const activeClients = [...clientsContainer.querySelectorAll('.active')].map(btn => btn.dataset.value);
 
@@ -93,12 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadFavorites = () => {
-        chrome.storage.local.get(['favoriteApprovers'], (result) => {
-            if (result.favoriteApprovers) {
-                favoriteApprovers = new Set(result.favoriteApprovers);
-            }
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get(['favoriteApprovers'], (result) => {
+                if (result.favoriteApprovers) {
+                    favoriteApprovers = new Set(result.favoriteApprovers);
+                }
+                filterApprovers();
+            });
+        } else {
+            // Not in an extension context, just filter
             filterApprovers();
-        });
+        }
     };
 
     const saveFavorites = () => {
@@ -107,7 +116,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     searchInput.addEventListener('input', filterApprovers);
-    favoritesOnlyCheckbox.addEventListener('change', filterApprovers);
+
+    favoritesOnlyButton.addEventListener('click', () => {
+        favoritesOnlyButton.classList.toggle('active');
+        const icon = favoritesOnlyButton.querySelector('i');
+        icon.classList.toggle('fas');
+        icon.classList.toggle('far');
+        filterApprovers();
+    });
+
     businessUnitsContainer.addEventListener('click', toggleFilterButton);
     clientsContainer.addEventListener('click', toggleFilterButton);
 

@@ -11,23 +11,19 @@
 <body>
     <div class="container">
         <div class="header">
-            <a href="popup.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
             <h1>Prisma Approver Search</h1>
+            <p>Find and manage your preferred approvers</p>
         </div>
-        <p>Find and manage your preferred approvers</p>
 
         <div class="search-container">
             <i class="fas fa-search"></i>
             <input type="text" id="search-input" placeholder="Search approvers by name or email...">
         </div>
 
-        <div class="filter-section">
-            <div class="filter-header">
-                <label for="favorites-only">
-                    <input type="checkbox" id="favorites-only">
-                    <i class="far fa-star"></i> Favorites Only
-                </label>
-            </div>
+        <div class="favorites-container">
+            <button id="favorites-only-button" class="filter-button">
+                <i class="far fa-star"></i> Favorites Only
+            </button>
         </div>
 
         <div class="filter-section">
@@ -44,6 +40,7 @@
             </div>
         </div>
 
+        <div id="approvers-count"></div>
         <div id="approvers-list" class="approvers-grid">
             <!-- Approver cards will be dynamically inserted here -->
         </div>

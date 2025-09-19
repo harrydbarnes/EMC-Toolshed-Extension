@@ -4,7 +4,9 @@ body {
     background-color: hsl(0, 0%, 98%);
     color: hsl(230, 15%, 15%);
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    width: auto;
+    max-height: none;
 }
 
 .container {
@@ -14,7 +16,7 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     width: 90%;
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 20px auto;
 }
 
 /* Header */

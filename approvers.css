@@ -41,12 +41,12 @@ body {
 .search-container {
     position: relative;
     margin: 0 auto 30px auto;
-    max-width: 360px;
+    max-width: 700px;
     transition: all 0.3s ease-in-out;
 }
 
 .search-container:focus-within {
-    box-shadow: 0 0 0 3px rgba(230, 0, 126, 0.4);
+    box-shadow: 0 0 0 3px #E6007E;
 }
 
 .search-container .fa-search {
@@ -61,7 +61,7 @@ body {
     width: 100%;
     padding: 15px 20px 15px 50px;
     border: 1px solid #ddd;
-    border-radius: 30px;
+    border-radius: 8px;
     font-size: 16px;
     box-sizing: border-box;
     background-color: #fff;
@@ -85,6 +85,7 @@ body {
     color: #666;
     margin-bottom: 15px;
     letter-spacing: 0.5px;
+    text-transform: capitalize;
 }
 
 .filter-buttons {
@@ -155,6 +156,10 @@ body {
     transition: box-shadow 0.3s, border-color 0.3s;
     display: flex;
     flex-direction: column;
+}
+
+.approver-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .approver-card.selected {

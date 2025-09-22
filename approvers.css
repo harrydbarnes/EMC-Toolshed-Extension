@@ -1,7 +1,7 @@
 /* General body and container styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    background-color: #F2F3F4;
     color: #333;
     margin: 0;
     padding: 0;
@@ -11,7 +11,7 @@ body {
 }
 
 .container {
-    background-color: #f8f9fa;
+    background-color: #F2F3F4;
     padding: 20px;
     width: 70%;
     max-width: 1400px;
@@ -41,7 +41,7 @@ body {
 .search-container {
     position: relative;
     margin: 0 auto 30px auto;
-    max-width: 600px;
+    max-width: 1200px;
 }
 
 .search-container .fa-search {
@@ -56,7 +56,7 @@ body {
     width: 100%;
     padding: 15px 20px 15px 50px;
     border: 1px solid #ddd;
-    border-radius: 30px;
+    border-radius: 12px;
     font-size: 16px;
     box-sizing: border-box;
     background-color: #fff;
@@ -155,6 +155,7 @@ body {
 .approver-card.selected {
     border-color: #E6007E;
     box-shadow: 0 4px 15px rgba(230, 0, 126, 0.2);
+    border-width: 2px;
 }
 
 .approver-card-header {
@@ -267,7 +268,7 @@ body {
 }
 
 #copy-button {
-    background-color: #111827;
+    background-color: #E6007E;
     color: #ffffff;
 }
 

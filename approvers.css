@@ -28,7 +28,7 @@ body {
 .header h1 {
     margin: 0 0 10px 0;
     font-size: 28px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .header p {
@@ -41,7 +41,12 @@ body {
 .search-container {
     position: relative;
     margin: 0 auto 30px auto;
-    max-width: 1200px;
+    width: 100%;
+    transition: all 0.3s ease-in-out;
+}
+
+.search-container:focus-within {
+    box-shadow: 0 0 0 3px rgba(230, 0, 126, 0.4);
 }
 
 .search-container .fa-search {
@@ -61,6 +66,7 @@ body {
     box-sizing: border-box;
     background-color: #fff;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease-in-out;
 }
 
 /* Filter Sections */
@@ -91,7 +97,7 @@ body {
 }
 
 .filter-button {
-    background-color: transparent;
+    background-color: #E9ECEF;
     border: 1px solid #ddd;
     padding: 8px 18px;
     border-radius: 20px;
@@ -232,7 +238,7 @@ body {
     background-color: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(8px);
     border: 1px solid #e5e7eb;
-    border-radius: 1.5rem;
+    border-radius: 0.75rem;
     padding: 1rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -301,4 +307,41 @@ body {
     .container {
         width: 95%;
     }
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: #333;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-icon {
+    margin-right: 15px;
+}
+
+.toast-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #28a745; /* a nice green color */
+}
+
+.toast-message {
+    font-size: 16px;
 }

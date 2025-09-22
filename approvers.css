@@ -95,7 +95,7 @@ body {
 }
 
 .filter-button {
-    background-color: transparent;
+    background-color: #f4f4f5;
     border: 1px solid #ddd;
     padding: 8px 18px;
     border-radius: 20px;
@@ -106,7 +106,8 @@ body {
 }
 
 .filter-button:hover {
-    background-color: #D8DCE0;
+    background-color: #fde8f2;
+    border-color: #f284bb;
 }
 
 .filter-button.active {

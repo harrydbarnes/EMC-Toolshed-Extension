@@ -1,7 +1,7 @@
 /* General body and container styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #F2F3F4;
+    background-color: #fafafa;
     color: #333;
     margin: 0;
     padding: 0;
@@ -11,7 +11,7 @@ body {
 }
 
 .container {
-    background-color: #F2F3F4;
+    background-color: #fafafa;
     padding: 20px;
     width: 70%;
     max-width: 1400px;
@@ -28,7 +28,7 @@ body {
 .header h1 {
     margin: 0 0 10px 0;
     font-size: 28px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .header p {
@@ -41,7 +41,7 @@ body {
 .search-container {
     position: relative;
     margin: 0 auto 30px auto;
-    width: 100%;
+    max-width: 360px;
     transition: all 0.3s ease-in-out;
 }
 
@@ -61,12 +61,11 @@ body {
     width: 100%;
     padding: 15px 20px 15px 50px;
     border: 1px solid #ddd;
-    border-radius: 12px;
+    border-radius: 30px;
     font-size: 16px;
     box-sizing: border-box;
     background-color: #fff;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: all 0.3s ease-in-out;
 }
 
 /* Filter Sections */
@@ -85,7 +84,6 @@ body {
     font-weight: 600;
     color: #666;
     margin-bottom: 15px;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
@@ -97,7 +95,7 @@ body {
 }
 
 .filter-button {
-    background-color: #E9ECEF;
+    background-color: transparent;
     border: 1px solid #ddd;
     padding: 8px 18px;
     border-radius: 20px;
@@ -108,7 +106,7 @@ body {
 }
 
 .filter-button:hover {
-    background-color: #e9ecef;
+    background-color: #D8DCE0;
 }
 
 .filter-button.active {
@@ -161,7 +159,6 @@ body {
 .approver-card.selected {
     border-color: #E6007E;
     box-shadow: 0 4px 15px rgba(230, 0, 126, 0.2);
-    border-width: 2px;
 }
 
 .approver-card-header {
@@ -238,7 +235,7 @@ body {
     background-color: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(8px);
     border: 1px solid #e5e7eb;
-    border-radius: 0.75rem;
+    border-radius: 1.5rem;
     padding: 1rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -274,7 +271,7 @@ body {
 }
 
 #copy-button {
-    background-color: #E6007E;
+    background-color: #111827;
     color: #ffffff;
 }
 
@@ -313,33 +310,46 @@ body {
 .toast {
     position: fixed;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
+    right: 20px;
     background-color: #333;
     color: #fff;
     padding: 15px 25px;
     border-radius: 8px;
-    display: flex;
-    align-items: center;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     z-index: 1000;
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    visibility: hidden;
     opacity: 0;
 }
 
 .toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
+    visibility: visible;
+    animation: slide-in-up 0.5s forwards;
 }
 
-.toast-icon {
-    margin-right: 15px;
+.toast.hide {
+    animation: slide-out-right 0.5s forwards;
 }
 
-.toast-icon svg {
-    width: 24px;
-    height: 24px;
-    stroke: #28a745; /* a nice green color */
+@keyframes slide-in-up {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100px);
+        opacity: 0;
+    }
 }
 
 .toast-message {

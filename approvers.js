@@ -155,10 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const showToast = () => {
-        console.log("Showing toast");
         toastNotification.classList.add('show');
         setTimeout(() => {
             toastNotification.classList.remove('show');
+            toastNotification.classList.add('hide');
+            // Clean up classes after animation
+            setTimeout(() => {
+                toastNotification.classList.remove('hide');
+            }, 500); // 0.5s animation
         }, 3000);
     };
 

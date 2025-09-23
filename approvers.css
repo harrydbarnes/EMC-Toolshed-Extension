@@ -30,7 +30,7 @@ body {
 .header h1 {
     margin: 0 0 10px 0;
     font-size: 28px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .header p {
@@ -48,8 +48,8 @@ body {
 }
 
 #search-input:focus {
-    outline: 2px solid #E6007E;
-    outline-offset: 4px;
+    outline: none;
+    box-shadow: 0 0 0 2px #E6007E;
 }
 
 .search-container .fa-search {
@@ -100,8 +100,8 @@ body {
 
 .filter-button {
     background-color: #f4f4f5;
-    border: 1px solid #ddd;
-    padding: 8px 18px;
+    border: 2px solid transparent;
+    padding: 7px 17px;
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s;
@@ -168,6 +168,7 @@ body {
 .approver-card.selected {
     border-color: #E6007E;
     box-shadow: 0 4px 15px rgba(230, 0, 126, 0.2);
+    border-width: 2px;
 }
 
 .approver-card-header {

@@ -544,9 +544,14 @@ function handleApproverPasting() {
                         break;
                     }
 
-                    input.value = email;
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    // Simulate a native paste event
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.setData('text/plain', email);
+                    input.dispatchEvent(new ClipboardEvent('paste', {
+                        clipboardData: dataTransfer,
+                        bubbles: true,
+                        cancelable: true
+                    }));
 
                     // Wait a moment for the input value to be processed
                     await new Promise(resolve => setTimeout(resolve, 500));

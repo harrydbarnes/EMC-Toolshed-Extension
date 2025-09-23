@@ -541,17 +541,21 @@ function handleApproverPasting() {
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
 
-                    // Wait for search results
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    // Wait a moment for the input value to be processed
+                    await new Promise(resolve => setTimeout(resolve, 500));
 
-                    const firstResult = document.querySelector('.select2-result-selectable');
-                    if (firstResult) {
-                        firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                    } else {
-                        console.warn(`No result found for "${email}"`);
-                    }
+                    // Simulate pressing the "Enter" key to select the item
+                    const enterEvent = new KeyboardEvent('keydown', {
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        which: 13,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    input.dispatchEvent(enterEvent);
 
-                    // Wait for the tag to be added
+                    // Wait for the tag to be added before proceeding
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
             } else {

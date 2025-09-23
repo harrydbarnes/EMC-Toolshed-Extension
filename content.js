@@ -498,20 +498,17 @@ function handleCampaignManagementFeatures() {
 // --- Approver Pasting Feature ---
 
 function handleApproverPasting() {
-    // Find the visible workflow panel
-    const workflowPanel = document.querySelector('.workflow-panel[aria-hidden="false"]');
-    if (!workflowPanel) {
-        return; // Panel not open
+    // Find the "To" label on the page
+    const toLabel = Array.from(document.querySelectorAll('label')).find(label => label.textContent.trim() === 'To');
+
+    if (!toLabel) {
+        return; // 'To:' label not found, so do nothing.
     }
 
-    // Find the approvers input container within the panel
-    const approverInputContainer = workflowPanel.querySelector('.select2-container-multi');
-    if (!approverInputContainer) {
-        return; // Approver input not found
-    }
+    const buttonContainer = toLabel.parentNode;
 
     // Check if the button is already added
-    if (workflowPanel.querySelector('.paste-approvers-btn')) {
+    if (buttonContainer.querySelector('.paste-approvers-btn')) {
         return;
     }
 
@@ -533,7 +530,8 @@ function handleApproverPasting() {
                 const emails = response.text.split(/[\n,;]+/).map(e => e.trim()).filter(e => e);
 
                 for (const email of emails) {
-                    const input = workflowPanel.querySelector('.select2-input');
+                    // Find the active select2 input on the page
+                    const input = document.querySelector('.select2-input');
                     if (!input) {
                         console.error('Could not find select2 input.');
                         break;
@@ -567,7 +565,8 @@ function handleApproverPasting() {
         }
     });
 
-    approverInputContainer.parentNode.insertBefore(pasteButton, approverInputContainer.nextSibling);
+    // Insert the button after the "To:" label
+    toLabel.parentNode.insertBefore(pasteButton, toLabel.nextSibling);
 }
 
 // --- End Custom Reminder Functions ---

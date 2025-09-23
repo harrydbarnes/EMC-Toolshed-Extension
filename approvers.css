@@ -111,7 +111,7 @@ body {
 
 .filter-button:hover {
     background-color: #fde8f2;
-    border-color: #f284bb;
+    border-color: #e84399;
 }
 
 .filter-button.active {
@@ -159,6 +159,7 @@ body {
     transition: box-shadow 0.3s, border-color 0.3s;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
 }
 
 .approver-card:hover {

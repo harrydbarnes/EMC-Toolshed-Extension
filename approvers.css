@@ -282,12 +282,12 @@ body {
 }
 
 #copy-button {
-    background-color: #111827;
+    background-color: #e2007e;
     color: #ffffff;
 }
 
 #copy-button:hover {
-    background-color: #374151;
+    background-color: #c4006e;
 }
 
 #copy-save-button {

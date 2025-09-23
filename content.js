@@ -520,31 +520,39 @@ function handleApproverPasting() {
     pasteButton.style.verticalAlign = 'middle';
 
     pasteButton.addEventListener('click', async () => {
+        console.log('[Paste Approvers] Button clicked.');
         pasteButton.disabled = true;
         pasteButton.textContent = 'Pasting...';
 
         try {
+            console.log('[Paste Approvers] Requesting clipboard text from background script.');
             const response = await chrome.runtime.sendMessage({ action: 'getClipboardText' });
+            console.log('[Paste Approvers] Received response:', response);
 
             if (response.status === 'success' && response.text) {
                 const emails = response.text.split(/[\n,;]+/).map(e => e.trim()).filter(e => e);
+                console.log(`[Paste Approvers] Parsed ${emails.length} emails:`, emails);
 
                 for (const email of emails) {
-                    // Click the container to make sure the input field is active and ready
+                    console.log(`[Paste Approvers] Processing email: ${email}`);
+
                     const selectContainer = document.querySelector('.select2-choices');
                     if (selectContainer) {
+                        console.log('[Paste Approvers] Found .select2-choices container, clicking it.');
                         selectContainer.click();
+                    } else {
+                        console.warn('[Paste Approvers] Could not find .select2-choices container.');
                     }
-                    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for click to process
+                    await new Promise(resolve => setTimeout(resolve, 100));
 
-                    // Find the active select2 input on the page
                     const input = document.querySelector('.select2-input');
                     if (!input) {
-                        console.error('Could not find select2 input.');
+                        console.error('[Paste Approvers] CRITICAL: Could not find .select2-input. Aborting loop.');
                         break;
                     }
+                    console.log('[Paste Approvers] Found .select2-input element.');
 
-                    // Simulate a native paste event
+                    console.log(`[Paste Approvers] Simulating paste event for "${email}".`);
                     const dataTransfer = new DataTransfer();
                     dataTransfer.setData('text/plain', email);
                     input.dispatchEvent(new ClipboardEvent('paste', {
@@ -552,11 +560,11 @@ function handleApproverPasting() {
                         bubbles: true,
                         cancelable: true
                     }));
+                    console.log('[Paste Approvers] Paste event dispatched.');
 
-                    // Wait a moment for the input value to be processed
                     await new Promise(resolve => setTimeout(resolve, 500));
 
-                    // Simulate pressing the "Enter" key to select the item
+                    console.log('[Paste Approvers] Simulating "Enter" key press.');
                     const enterEvent = new KeyboardEvent('keydown', {
                         key: 'Enter',
                         code: 'Enter',
@@ -566,16 +574,19 @@ function handleApproverPasting() {
                         cancelable: true
                     });
                     input.dispatchEvent(enterEvent);
+                    console.log('[Paste Approvers] "Enter" key event dispatched.');
 
-                    // Wait for the tag to be added before proceeding
                     await new Promise(resolve => setTimeout(resolve, 500));
+                    console.log(`[Paste Approvers] Finished processing "${email}".`);
                 }
+                console.log('[Paste Approvers] Loop finished.');
             } else {
-                console.error('Failed to get clipboard text:', response.message);
+                console.error('[Paste Approvers] Failed to get clipboard text:', response.message);
             }
         } catch (error) {
-            console.error('Error pasting approvers:', error);
+            console.error('[Paste Approvers] An error occurred:', error);
         } finally {
+            console.log('[Paste Approvers] Resetting button state.');
             pasteButton.disabled = false;
             pasteButton.textContent = 'Paste approvers';
         }

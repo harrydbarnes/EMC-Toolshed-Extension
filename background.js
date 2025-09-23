@@ -54,15 +54,25 @@ async function hasOffscreenDocument(path) {
 }
 
 // Create the offscreen document if it doesn't exist
+let creating; // A global promise to avoid racing createDocument
 async function createOffscreenDocument() {
+  // Check if we have an existing document.
   if (await hasOffscreenDocument('offscreen.html')) {
     return;
   }
-  await chrome.offscreen.createDocument({
-    url: 'offscreen.html',
-    reasons: ['AUDIO_PLAYBACK'], // Corrected reason to uppercase
-    justification: 'Plays alarm sound for timesheet reminders',
-  });
+
+  // createDocument may throw if another document is already opening.
+  if (creating) {
+    await creating;
+  } else {
+    creating = chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: ['CLIPBOARD', 'AUDIO_PLAYBACK'],
+      justification: 'Plays alarm sound and reads clipboard content',
+    });
+    await creating;
+    creating = null; // Reset the promise once resolving.
+  }
 }
 
 // Modify playAlarmSound to use the offscreen document
@@ -375,6 +385,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             } else {
                 sendResponse({ status: 'error', message: 'You need to be on the Meta Ads Manager campaigns page for this to work.' });
+            }
+        })();
+        return true; // Required for async sendResponse
+    } else if (request.action === 'getClipboardText') {
+        (async () => {
+            try {
+                await createOffscreenDocument();
+                const response = await chrome.runtime.sendMessage({
+                    action: 'readClipboard'
+                });
+                sendResponse({ status: 'success', text: response.text });
+            } catch (e) {
+                console.error("Error getting clipboard text:", e);
+                sendResponse({ status: 'error', message: e.message });
             }
         })();
         return true; // Required for async sendResponse

@@ -495,6 +495,81 @@ function handleCampaignManagementFeatures() {
     });
 }
 
+// --- Approver Pasting Feature ---
+
+function handleApproverPasting() {
+    // Find the visible workflow panel
+    const workflowPanel = document.querySelector('.workflow-panel[aria-hidden="false"]');
+    if (!workflowPanel) {
+        return; // Panel not open
+    }
+
+    // Find the approvers input container within the panel
+    const approverInputContainer = workflowPanel.querySelector('.select2-container-multi');
+    if (!approverInputContainer) {
+        return; // Approver input not found
+    }
+
+    // Check if the button is already added
+    if (workflowPanel.querySelector('.paste-approvers-btn')) {
+        return;
+    }
+
+    // Create and add the "Paste approvers" button
+    const pasteButton = document.createElement('button');
+    pasteButton.textContent = 'Paste approvers';
+    pasteButton.className = 'btn paste-approvers-btn';
+    pasteButton.style.marginLeft = '10px';
+    pasteButton.style.verticalAlign = 'middle';
+
+    pasteButton.addEventListener('click', async () => {
+        pasteButton.disabled = true;
+        pasteButton.textContent = 'Pasting...';
+
+        try {
+            const response = await chrome.runtime.sendMessage({ action: 'getClipboardText' });
+
+            if (response.status === 'success' && response.text) {
+                const emails = response.text.split(/[\n,;]+/).map(e => e.trim()).filter(e => e);
+
+                for (const email of emails) {
+                    const input = workflowPanel.querySelector('.select2-input');
+                    if (!input) {
+                        console.error('Could not find select2 input.');
+                        break;
+                    }
+
+                    input.value = email;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    // Wait for search results
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    const firstResult = document.querySelector('.select2-result-selectable');
+                    if (firstResult) {
+                        firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                    } else {
+                        console.warn(`No result found for "${email}"`);
+                    }
+
+                    // Wait for the tag to be added
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            } else {
+                console.error('Failed to get clipboard text:', response.message);
+            }
+        } catch (error) {
+            console.error('Error pasting approvers:', error);
+        } finally {
+            pasteButton.disabled = false;
+            pasteButton.textContent = 'Paste approvers';
+        }
+    });
+
+    approverInputContainer.parentNode.insertBefore(pasteButton, approverInputContainer.nextSibling);
+}
+
 // --- End Custom Reminder Functions ---
 
 function shouldReplaceLogoOnThisPage() {
@@ -531,6 +606,7 @@ function mainContentScriptInit() {
                 checkForIASConditions();
                 checkCustomReminders(); // Check for custom reminders on DOM changes
                 handleCampaignManagementFeatures();
+                handleApproverPasting();
             }, 300);
         }
     });

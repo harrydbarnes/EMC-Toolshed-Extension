@@ -48,8 +48,8 @@ body {
 }
 
 #search-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #E6007E;
+    outline: 2px solid #E6007E;
+    outline-offset: 2px;
 }
 
 .search-container .fa-search {
@@ -115,9 +115,9 @@ body {
 }
 
 .filter-button.active {
-    background-color: #333;
+    background-color: #e84399;
     color: #fff;
-    border-color: #333;
+    border-color: #e84399;
 }
 
 #favorites-only-button {
@@ -168,6 +168,7 @@ body {
 .approver-card.selected {
     border-color: #E6007E;
     box-shadow: 0 4px 15px rgba(230, 0, 126, 0.2);
+    background-color: #faf6f8;
     border-width: 2px;
 }
 

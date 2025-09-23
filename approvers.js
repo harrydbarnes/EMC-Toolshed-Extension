@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedCount = document.getElementById('selected-count');
     const copyButton = document.getElementById('copy-button');
     const copySaveButton = document.getElementById('copy-save-button');
+    const toastNotification = document.getElementById('toast-notification');
 
     let selectedApprovers = new Set();
     let favoriteApprovers = new Set();
@@ -153,17 +154,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const showToast = () => {
+        toastNotification.classList.add('show');
+        setTimeout(() => {
+            toastNotification.classList.remove('show');
+            toastNotification.classList.add('hide');
+            // Clean up classes after animation
+            setTimeout(() => {
+                toastNotification.classList.remove('hide');
+            }, 500); // 0.5s animation
+        }, 3000);
+    };
+
     copyButton.addEventListener('click', () => {
         const emails = [...selectedApprovers].map(id => approversData.find(a => a.id === id).email);
         navigator.clipboard.writeText(emails.join('; ')).then(() => {
-            alert('Approver emails copied to clipboard!');
+            showToast();
         });
     });
 
     copySaveButton.addEventListener('click', () => {
         const emails = [...selectedApprovers].map(id => approversData.find(a => a.id === id).email);
         navigator.clipboard.writeText(emails.join('; ')).then(() => {
-            alert('Approver emails copied to clipboard!');
+            showToast();
         });
         selectedApprovers.forEach(id => favoriteApprovers.add(id));
         saveFavorites();

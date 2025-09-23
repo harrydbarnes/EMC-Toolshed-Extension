@@ -10,7 +10,8 @@
     "notifications",
     "tabs",
     "offscreen",
-    "scripting"
+    "scripting",
+    "clipboardRead"
   ],
   "host_permissions": [
     "https://groupmuk-prisma.mediaocean.com/*"

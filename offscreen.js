@@ -10,15 +10,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })();
         // No response needed for this action
     } else if (message.action === 'readClipboard') {
-        (async () => {
-            try {
-                const text = await navigator.clipboard.readText();
+        // Use the 'execCommand' method for robust clipboard access in offscreen documents.
+        const textarea = document.createElement('textarea');
+        document.body.appendChild(textarea);
+        textarea.focus();
+
+        try {
+            const success = document.execCommand('paste');
+            if (success) {
+                const text = textarea.value;
                 sendResponse({ status: 'success', text: text });
-            } catch (error) {
-                console.error('Error reading clipboard in offscreen document:', error);
-                sendResponse({ status: 'error', message: error.message });
+            } else {
+                sendResponse({ status: 'error', message: 'Unable to paste from clipboard.' });
             }
-        })();
-        return true; // Required for async sendResponse
+        } catch (error) {
+            console.error('Error reading clipboard in offscreen document:', error);
+            sendResponse({ status: 'error', message: error.message });
+        } finally {
+            document.body.removeChild(textarea);
+        }
+
+        // This is a synchronous action in this case, but we keep `return true`
+        // in case we ever need async operations within the try/catch.
+        return true;
     }
 });

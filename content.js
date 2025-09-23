@@ -530,6 +530,13 @@ function handleApproverPasting() {
                 const emails = response.text.split(/[\n,;]+/).map(e => e.trim()).filter(e => e);
 
                 for (const email of emails) {
+                    // Click the container to make sure the input field is active and ready
+                    const selectContainer = document.querySelector('.select2-choices');
+                    if (selectContainer) {
+                        selectContainer.click();
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for click to process
+
                     // Find the active select2 input on the page
                     const input = document.querySelector('.select2-input');
                     if (!input) {

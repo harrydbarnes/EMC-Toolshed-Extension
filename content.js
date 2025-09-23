@@ -551,15 +551,13 @@ function handleApproverPasting() {
                         break;
                     }
 
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.setData('text/plain', email);
-                    input.dispatchEvent(new ClipboardEvent('paste', {
-                        clipboardData: dataTransfer,
-                        bubbles: true,
-                        cancelable: true
-                    }));
-
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Type the email character by character
+                    for (const char of email) {
+                        input.value += char;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        await new Promise(resolve => setTimeout(resolve, 20)); // Small delay between chars
+                    }
 
                     const enterEvent = new KeyboardEvent('keydown', {
                         key: 'Enter',

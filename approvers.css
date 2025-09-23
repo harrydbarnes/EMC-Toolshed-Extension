@@ -152,7 +152,7 @@ body {
 
 .approver-card {
     background: #fff;
-    border: 1px solid #ddd;
+    border: 2px solid transparent;
     border-radius: 12px;
     padding: 20px;
     cursor: pointer;
@@ -160,17 +160,17 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    box-shadow: inset 0 0 0 1px #ddd;
 }
 
 .approver-card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), inset 0 0 0 1px #ddd;
 }
 
 .approver-card.selected {
     border-color: #E6007E;
     box-shadow: 0 4px 15px rgba(230, 0, 126, 0.2);
     background-color: #faf6f8;
-    border-width: 2px;
 }
 
 .approver-card-header {

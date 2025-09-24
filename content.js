@@ -152,6 +152,7 @@ function checkAndReplaceLogo() {
 let metaReminderDismissed = false;
 let iasReminderDismissed = false;
 // Removed metaPopupTimeoutId as it's no longer used
+let metaCheckInProgress = false;
 
 function createMetaReminderPopup() {
     if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
@@ -267,21 +268,49 @@ function createIASReminderPopup() {
 }
 
 function checkForMetaConditions() {
-    if (metaReminderDismissed && !window.forceShowMetaReminder) return;
+    // Force show bypasses all checks.
+    if (window.forceShowMetaReminder) {
+        createMetaReminderPopup();
+        window.forceShowMetaReminder = false;
+        return;
+    }
+
+    // Standard checks.
+    if (metaReminderDismissed || metaCheckInProgress) return;
+
+    const currentUrl = window.location.href;
+    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
+        return; // URL doesn't match criteria.
+    }
 
     if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
+
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
-        if (chrome.runtime.lastError) return; // Error guard
-        if (data.metaReminderEnabled !== false) {
-            const pageText = document.body.innerText;
-            if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
-                 if (!document.getElementById('meta-reminder-popup')) {
-                    createMetaReminderPopup();
-                 }
-            }
+        if (chrome.runtime.lastError || data.metaReminderEnabled === false) {
+            return; // Extension setting disabled or error.
         }
+
+        metaCheckInProgress = true;
+        let attempts = 0;
+        const maxAttempts = 15; // 15 attempts * 2s = 30s
+
+        const intervalId = setInterval(() => {
+            const pageText = document.body.innerText;
+            const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
+
+            if (conditionsMet || attempts >= maxAttempts || document.getElementById('meta-reminder-popup')) {
+                clearInterval(intervalId);
+                metaCheckInProgress = false;
+                if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
+                    createMetaReminderPopup();
+                } else if (attempts >= maxAttempts) {
+                    console.log("[ContentScript Prisma] Meta reminder polling timed out after 30 seconds.");
+                }
+                return;
+            }
+            attempts++;
+        }, 2000);
     });
-    window.forceShowMetaReminder = false;
 }
 
 function checkForIASConditions() {

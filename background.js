@@ -402,6 +402,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         })();
         return true; // Required for async sendResponse
+    } else if (request.action === 'copyToClipboard') {
+        (async () => {
+            try {
+                await createOffscreenDocument();
+                const response = await chrome.runtime.sendMessage({
+                    action: 'copyToClipboard',
+                    text: request.text
+                });
+                sendResponse(response);
+            } catch (e) {
+                console.error("Error copying to clipboard:", e);
+                sendResponse({ status: 'error', message: e.message });
+            }
+        })();
+        return true;
     }
     return true;  // Indicates that the response is sent asynchronously
 });

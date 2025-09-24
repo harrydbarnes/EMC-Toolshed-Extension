@@ -520,65 +520,78 @@ function handleApproverPasting() {
     pasteButton.style.verticalAlign = 'middle';
 
     pasteButton.addEventListener('click', async () => {
+        console.log('[Paste Logic] Start');
         pasteButton.disabled = true;
         pasteButton.textContent = 'Pasting...';
+        let originalClipboard = '';
 
         try {
-            const response = await chrome.runtime.sendMessage({ action: 'getClipboardText' });
+            // 1. Read the full list of emails from the clipboard.
+            const initialResponse = await chrome.runtime.sendMessage({ action: 'getClipboardText' });
+            console.log('[Paste Logic] Read initial clipboard:', initialResponse);
 
-            if (response.status === 'success' && response.text) {
-                // Add email validation to the parsing logic
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                const emails = response.text.split(/[\n,;]+/)
-                    .map(e => e.trim())
-                    .filter(e => emailRegex.test(e));
-
-                if (emails.length === 0) {
-                    console.warn("No valid email addresses found in clipboard.");
-                    // Optionally, provide user feedback here, e.g., a toast notification.
-                }
-
-                for (const email of emails) {
-                    const selectContainer = document.querySelector('.select2-choices');
-                    if (selectContainer) {
-                        selectContainer.click();
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 100));
-
-                    const input = document.querySelector('.select2-input');
-                    if (!input) {
-                        console.error('Could not find the approver input field.');
-                        break;
-                    }
-
-                    // Type the email character by character
-                    for (const char of email) {
-                        input.value += char;
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
-                        await new Promise(resolve => setTimeout(resolve, 20)); // Small delay between chars
-                    }
-
-                    const enterEvent = new KeyboardEvent('keydown', {
-                        key: 'Enter',
-                        code: 'Enter',
-                        keyCode: 13,
-                        which: 13,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    input.dispatchEvent(enterEvent);
-
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-            } else {
-                console.error('Failed to get clipboard text:', response.message);
+            if (initialResponse.status !== 'success' || !initialResponse.text) {
+                console.error('Could not read clipboard.');
+                return;
             }
+            originalClipboard = initialResponse.text;
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const emails = originalClipboard.split(/[\n,;]+/).map(e => e.trim()).filter(e => emailRegex.test(e));
+            console.log(`[Paste Logic] Found ${emails.length} valid emails.`);
+
+            if (emails.length === 0) return;
+
+            // 2. Loop through each email.
+            for (const email of emails) {
+                console.log(`[Paste Logic] Processing: ${email}`);
+
+                // 3a. Set clipboard to the single email.
+                console.log(`[Paste Logic] Setting clipboard to: "${email}"`);
+                await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: email });
+
+                // 3b. Focus the input container.
+                const selectContainer = document.querySelector('.select2-choices');
+                if (selectContainer) {
+                    selectContainer.click();
+                } else {
+                    console.error('[Paste Logic] Cannot find .select2-choices container.');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 3c. Execute native paste.
+                console.log('[Paste Logic] Executing paste command.');
+                const success = document.execCommand('paste');
+                console.log(`[Paste Logic] Paste command success: ${success}`);
+                if (!success) {
+                    console.error('[Paste Logic] paste command failed.');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 3d. Simulate 'Enter'.
+                const input = document.querySelector('.select2-input');
+                if (!input) {
+                    console.error('[Paste Logic] Cannot find .select2-input after paste.');
+                    break;
+                }
+                console.log('[Paste Logic] Simulating Enter key.');
+                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
         } catch (error) {
-            console.error('Error during paste operation:', error);
+            console.error('[Paste Logic] Error during paste operation:', error);
         } finally {
+            // 4. Restore original clipboard.
+            if (originalClipboard) {
+                console.log('[Paste Logic] Restoring original clipboard.');
+                await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: originalClipboard });
+            }
             pasteButton.disabled = false;
             pasteButton.textContent = 'Paste approvers';
+            console.log('[Paste Logic] End');
         }
     });
 

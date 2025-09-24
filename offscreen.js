@@ -33,5 +33,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // This is a synchronous action in this case, but we keep `return true`
         // in case we ever need async operations within the try/catch.
         return true;
+    } else if (message.action === 'copyToClipboard') {
+        const textarea = document.createElement('textarea');
+        textarea.value = message.text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            const success = document.execCommand('copy');
+            sendResponse({ status: success ? 'success' : 'error' });
+        } catch (error) {
+            sendResponse({ status: 'error', message: error.message });
+        } finally {
+            document.body.removeChild(textarea);
+        }
+        return true;
     }
 });

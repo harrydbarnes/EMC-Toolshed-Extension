@@ -559,7 +559,7 @@ function handleApproverPasting() {
     pasteButton.style.marginLeft = '10px';
 
     const pasteFavouritesButton = document.createElement('button');
-    pasteFavouritesButton.textContent = 'Paste Favourites';
+    pasteFavouritesButton.textContent = 'Favourites';
     pasteFavouritesButton.className = 'filter-button prisma-paste-button';
     pasteFavouritesButton.style.marginLeft = '10px';
 
@@ -615,7 +615,7 @@ function handleApproverPasting() {
             console.error('Error pasting favourite approvers:', error);
         } finally {
             pasteFavouritesButton.disabled = false;
-            pasteFavouritesButton.textContent = 'Paste Favourites';
+            pasteFavouritesButton.textContent = 'Favourites';
         }
     });
 

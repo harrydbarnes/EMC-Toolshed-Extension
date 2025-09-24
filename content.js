@@ -498,8 +498,15 @@ function handleCampaignManagementFeatures() {
 // --- Approver Pasting Feature ---
 
 function handleApproverPasting() {
+    const selectors = {
+        toLabel: 'label',
+        pasteButton: '.paste-approvers-btn',
+        selectContainer: '.select2-choices',
+        firstResult: '.select2-result-selectable'
+    };
+
     // Find the "To" label on the page
-    const toLabel = Array.from(document.querySelectorAll('label')).find(label => label.textContent.trim() === 'To');
+    const toLabel = Array.from(document.querySelectorAll(selectors.toLabel)).find(label => label.textContent.trim() === 'To');
 
     if (!toLabel) {
         return; // 'To:' label not found, so do nothing.
@@ -508,7 +515,7 @@ function handleApproverPasting() {
     const buttonContainer = toLabel.parentNode;
 
     // Check if the button is already added
-    if (buttonContainer.querySelector('.paste-approvers-btn')) {
+    if (buttonContainer.querySelector(selectors.pasteButton)) {
         return;
     }
 
@@ -551,7 +558,7 @@ function handleApproverPasting() {
                 await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: email });
 
                 // 3b. Focus the input container.
-                const selectContainer = document.querySelector('.select2-choices');
+                const selectContainer = document.querySelector(selectors.selectContainer);
                 if (selectContainer) {
                     selectContainer.click();
                 } else {
@@ -568,17 +575,17 @@ function handleApproverPasting() {
                     console.error('[Paste Logic] paste command failed.');
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for search results
+                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for search results
 
                 // 3d. Find and click the first result.
-                const firstResult = document.querySelector('.select2-result-selectable');
+                const firstResult = document.querySelector(selectors.firstResult);
                 if (firstResult) {
                     console.log('[Paste Logic] Found search result, clicking it.');
                     firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
                 } else {
                     console.warn('[Paste Logic] No search result found to click.');
                 }
-                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for selection to process
+                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for selection to process
             }
 
         } catch (error) {

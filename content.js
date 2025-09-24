@@ -602,45 +602,6 @@ function handleApproverPasting() {
         }
     });
 
-    let tooltipTimeout;
-    let tooltipElement;
-
-    pasteFavouritesButton.addEventListener('mouseenter', () => {
-        tooltipTimeout = setTimeout(async () => {
-            if (tooltipElement) return;
-
-            const response = await chrome.runtime.sendMessage({ action: 'getFavouriteApprovers' });
-            if (response.status === 'success') {
-                tooltipElement = document.createElement('div');
-                tooltipElement.className = 'prisma-tooltip';
-
-                const emailsHtml = response.emails.join('<br>');
-                tooltipElement.innerHTML = `
-                    <div class="prisma-tooltip-content">
-                        ${emailsHtml}
-                    </div>
-                    <button class="prisma-tooltip-button">Manage Here</button>
-                `;
-
-                document.body.appendChild(tooltipElement);
-                const rect = pasteFavouritesButton.getBoundingClientRect();
-                tooltipElement.style.left = `${rect.left}px`;
-                tooltipElement.style.top = `${rect.bottom + 5}px`;
-
-                tooltipElement.querySelector('.prisma-tooltip-button').addEventListener('click', () => {
-                    chrome.runtime.sendMessage({ action: 'openApproversPage' });
-                });
-            }
-        }, 1000);
-    });
-
-    pasteFavouritesButton.addEventListener('mouseleave', () => {
-        clearTimeout(tooltipTimeout);
-        if (tooltipElement) {
-            tooltipElement.remove();
-            tooltipElement = null;
-        }
-    });
 
     pasteFavouritesButton.addEventListener('click', async () => {
         pasteFavouritesButton.disabled = true;
@@ -705,7 +666,6 @@ function handleManageFavouritesButton() {
     const manageFavouritesButton = document.createElement('button');
     manageFavouritesButton.textContent = 'Manage Favourites';
     manageFavouritesButton.className = 'btn-link mo-btn-link manage-favourites-button';
-    manageFavouritesButton.style.marginLeft = '5px';
 
     manageFavouritesButton.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'openApproversPage' });

@@ -575,7 +575,7 @@ function handleApproverPasting() {
                     console.error('[Paste Logic] paste command failed.');
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for search results
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for search results
 
                 // 3d. Find and click the first result.
                 const firstResult = document.querySelector(selectors.firstResult);

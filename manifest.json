@@ -47,7 +47,7 @@
     {
       "matches": ["*://*.mediaocean.com/*"],
       "js": ["content.js"],
-      "css": ["approvers.css"],
+      "css": ["style.css"],
       "all_frames": true
     }
   ],

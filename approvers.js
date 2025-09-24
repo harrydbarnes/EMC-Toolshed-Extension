@@ -219,21 +219,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loadFavorites();
-
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.action === 'getFavouriteApproversEmails') {
-            chrome.storage.local.get(['favoriteApprovers'], (result) => {
-                const favoriteIds = new Set(result.favoriteApprovers || []);
-                if (favoriteIds.size === 0) {
-                    sendResponse({ status: 'success', emails: [] });
-                    return;
-                }
-                const favoriteEmails = approversData
-                    .filter(approver => favoriteIds.has(approver.id))
-                    .map(approver => approver.email);
-                sendResponse({ status: 'success', emails: favoriteEmails });
-            });
-            return true; // Required for async sendResponse
-        }
-    });
 });

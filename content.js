@@ -561,7 +561,7 @@ function handleApproverPasting() {
     const pasteFavouritesButton = document.createElement('button');
     pasteFavouritesButton.textContent = 'Favourites';
     pasteFavouritesButton.className = 'filter-button prisma-paste-button';
-    pasteFavouritesButton.style.marginLeft = '10px';
+    pasteFavouritesButton.style.marginLeft = '5px';
 
     pasteButton.addEventListener('click', async () => {
         console.log('[Paste Logic] Start');

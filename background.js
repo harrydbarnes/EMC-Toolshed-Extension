@@ -1,3 +1,5 @@
+import { approversData } from './approvers-data.js';
+
 chrome.runtime.onInstalled.addListener(() => {
   if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
   chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
@@ -407,6 +409,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         })();
         return true; // Required for async sendResponse
+    } else if (request.action === "getFavoriteEmails") {
+        const favoriteIds = request.favoriteIds || [];
+        const favoriteEmails = favoriteIds
+            .map(id => approversData.find(a => a.id === id))
+            .filter(Boolean) // Ensure no nulls if an ID isn't found
+            .map(a => a.email);
+        sendResponse({ status: 'success', emails: favoriteEmails });
+        return true; // Keep channel open for async response
     } else if (request.action === 'getClipboardText' || request.action === 'copyToClipboard') {
         handleOffscreenClipboard(request, sendResponse);
         return true; // Required for async sendResponse

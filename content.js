@@ -568,17 +568,17 @@ function handleApproverPasting() {
                     console.error('[Paste Logic] paste command failed.');
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for search results
 
-                // 3d. Simulate 'Enter'.
-                const input = document.querySelector('.select2-input');
-                if (!input) {
-                    console.error('[Paste Logic] Cannot find .select2-input after paste.');
-                    break;
+                // 3d. Find and click the first result.
+                const firstResult = document.querySelector('.select2-result-selectable');
+                if (firstResult) {
+                    console.log('[Paste Logic] Found search result, clicking it.');
+                    firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                } else {
+                    console.warn('[Paste Logic] No search result found to click.');
                 }
-                console.log('[Paste Logic] Simulating Enter key.');
-                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for selection to process
             }
 
         } catch (error) {

@@ -120,6 +120,17 @@ body {
     border-color: #e84399;
 }
 
+.filter-button:hover {
+    background-color: #fde8f2;
+    border-color: #e84399;
+}
+
+.filter-button.active {
+    background-color: #e84399;
+    color: #fff;
+    border-color: #e84399;
+}
+
 #favorites-only-button {
     border: none;
     color: #666;

@@ -410,6 +410,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === 'getClipboardText' || request.action === 'copyToClipboard') {
         handleOffscreenClipboard(request, sendResponse);
         return true; // Required for async sendResponse
+    } else if (request.action === 'getFavouriteApprovers') {
+        (async () => {
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab) {
+                    const response = await chrome.tabs.sendMessage(tab.id, { action: 'getFavouriteApproversEmails' });
+                    sendResponse(response);
+                } else {
+                    sendResponse({ status: 'error', message: 'No active tab found' });
+                }
+            } catch (error) {
+                console.error('Error getting favourite approvers:', error);
+                sendResponse({ status: 'error', message: error.message });
+            }
+        })();
+        return true; // Required for async sendResponse
     }
     return true;  // Indicates that the response is sent asynchronously
 });

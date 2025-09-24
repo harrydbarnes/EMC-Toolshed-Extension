@@ -555,10 +555,14 @@ function handleApproverPasting() {
 
     // Create and add the "Paste approvers" button
     const pasteButton = document.createElement('button');
-    pasteButton.textContent = 'Paste approvers';
-    pasteButton.className = 'btn paste-approvers-btn';
+    pasteButton.textContent = 'Paste Approvers';
+    pasteButton.className = 'filter-button';
     pasteButton.style.marginLeft = '10px';
-    pasteButton.style.verticalAlign = 'middle';
+
+    const pasteFavouritesButton = document.createElement('button');
+    pasteFavouritesButton.textContent = 'Paste Favourites';
+    pasteFavouritesButton.className = 'filter-button';
+    pasteFavouritesButton.style.marginLeft = '10px';
 
     pasteButton.addEventListener('click', async () => {
         console.log('[Paste Logic] Start');
@@ -581,54 +585,8 @@ function handleApproverPasting() {
             const emails = originalClipboard.split(/[\n,;]+/).map(e => e.trim()).filter(e => emailRegex.test(e));
             console.log(`[Paste Logic] Found ${emails.length} valid emails.`);
 
-            if (emails.length === 0) return;
-
-            // 2. Loop through each email.
-            for (const email of emails) {
-                console.log(`[Paste Logic] Processing: ${email}`);
-
-                // 3a. Set clipboard to the single email.
-                console.log(`[Paste Logic] Setting clipboard to: "${email}"`);
-                await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: email });
-
-                // 3b. Focus the input container.
-                const selectContainer = document.querySelector(selectors.selectContainer);
-                if (selectContainer) {
-                    selectContainer.click();
-                } else {
-                    console.error('[Paste Logic] Cannot find .select2-choices container.');
-                    break;
-                }
-
-                try {
-                    // Wait for the search input to appear after clicking the container
-                    await waitForElement('.select2-search-field input', 500);
-                } catch (error) {
-                    console.warn('[Paste Logic] Did not find select2 search input after click.', error);
-                    // Continue anyway, paste might still work.
-                }
-
-                // 3c. Execute native paste.
-                console.log('[Paste Logic] Executing paste command.');
-                const success = document.execCommand('paste');
-                console.log(`[Paste Logic] Paste command success: ${success}`);
-                if (!success) {
-                    console.error('[Paste Logic] paste command failed.');
-                    break;
-                }
-
-                // 3d. Find and click the first result.
-                try {
-                    const firstResult = await waitForElement(selectors.firstResult);
-                    console.log('[Paste Logic] Found search result, clicking it.');
-                    firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-
-                    // Wait for the result to disappear, indicating it has been selected.
-                    await waitForElementToDisappear(selectors.firstResult);
-
-                } catch (error) {
-                    console.warn('[Paste Logic] No search result found to click or it did not disappear.', error);
-                }
+            if (emails.length > 0) {
+                await pasteEmails(emails);
             }
 
         } catch (error) {
@@ -640,13 +598,58 @@ function handleApproverPasting() {
                 await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: originalClipboard });
             }
             pasteButton.disabled = false;
-            pasteButton.textContent = 'Paste approvers';
+            pasteButton.textContent = 'Paste Approvers';
             console.log('[Paste Logic] End');
         }
     });
 
+    pasteFavouritesButton.addEventListener('click', async () => {
+        pasteFavouritesButton.disabled = true;
+        pasteFavouritesButton.textContent = 'Pasting...';
+
+        try {
+            const response = await chrome.runtime.sendMessage({ action: 'getFavouriteApprovers' });
+            if (response.status === 'success') {
+                await pasteEmails(response.emails);
+            }
+        } catch (error) {
+            console.error('Error pasting favourite approvers:', error);
+        } finally {
+            pasteFavouritesButton.disabled = false;
+            pasteFavouritesButton.textContent = 'Paste Favourites';
+        }
+    });
+
+    async function pasteEmails(emails) {
+        for (const email of emails) {
+            console.log(`[Paste Logic] Processing: ${email}`);
+            await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: email });
+            const selectContainer = document.querySelector(selectors.selectContainer);
+            if (selectContainer) {
+                selectContainer.click();
+            } else {
+                console.error('[Paste Logic] Cannot find .select2-choices container.');
+                break;
+            }
+            try {
+                await waitForElement('.select2-search-field input', 500);
+            } catch (error) {
+                console.warn('[Paste Logic] Did not find select2 search input after click.', error);
+            }
+            document.execCommand('paste');
+            try {
+                const firstResult = await waitForElement(selectors.firstResult);
+                firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                await waitForElementToDisappear(selectors.firstResult);
+            } catch (error) {
+                console.warn('[Paste Logic] No search result found to click or it did not disappear.', error);
+            }
+        }
+    }
+
     // Insert the button after the "To:" label
     toLabel.parentNode.insertBefore(pasteButton, toLabel.nextSibling);
+    toLabel.parentNode.insertBefore(pasteFavouritesButton, pasteButton.nextSibling);
 }
 
 // --- End Custom Reminder Functions ---

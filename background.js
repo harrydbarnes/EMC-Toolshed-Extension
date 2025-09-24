@@ -440,6 +440,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         })();
         return true; // Required for async sendResponse
+    } else if (request.action === 'openApproversPage') {
+        chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
+        sendResponse({ status: 'success' });
     }
     return true;  // Indicates that the response is sent asynchronously
 });

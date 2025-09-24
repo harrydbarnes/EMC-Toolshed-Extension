@@ -534,7 +534,6 @@ function handleCampaignManagementFeatures() {
 function handleApproverPasting() {
     const selectors = {
         toLabel: 'label',
-        pasteButton: '.paste-approvers-btn',
         selectContainer: '.select2-choices',
         firstResult: '.select2-result-selectable'
     };
@@ -548,8 +547,8 @@ function handleApproverPasting() {
 
     const buttonContainer = toLabel.parentNode;
 
-    // Check if the button is already added
-    if (buttonContainer.querySelector(selectors.pasteButton)) {
+    // Check if the buttons are already added
+    if (buttonContainer.querySelector('.filter-button')) {
         return;
     }
 

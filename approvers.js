@@ -134,16 +134,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!card) return;
 
         const approverId = card.dataset.approverId;
+        const starIcon = e.target;
 
-        if (e.target.classList.contains('favorite-star')) {
+        if (starIcon.classList.contains('favorite-star')) {
+            // Toggle favorite state in the Set
             if (favoriteApprovers.has(approverId)) {
                 favoriteApprovers.delete(approverId);
+                starIcon.classList.remove('favorited', 'fas');
+                starIcon.classList.add('far');
             } else {
                 favoriteApprovers.add(approverId);
+                starIcon.classList.add('favorited', 'fas');
+                starIcon.classList.remove('far');
             }
             saveFavorites();
-            filterApprovers();
+
+            // Trigger pop animation
+            starIcon.classList.add('popping');
+            starIcon.addEventListener('animationend', () => {
+                starIcon.classList.remove('popping');
+            }, { once: true });
+
+            // If "Favorites Only" is active, we must re-filter to remove the item
+            if (favoritesOnlyButton.classList.contains('active')) {
+                // Add a small delay to allow the pop animation to be seen
+                setTimeout(filterApprovers, 300);
+            }
         } else {
+            // Handle card selection
             if (selectedApprovers.has(approverId)) {
                 selectedApprovers.delete(approverId);
             } else {

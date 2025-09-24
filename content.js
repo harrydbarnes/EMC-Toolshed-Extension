@@ -495,6 +495,110 @@ function handleCampaignManagementFeatures() {
     });
 }
 
+// --- Approver Pasting Feature ---
+
+function handleApproverPasting() {
+    // Find the "To" label on the page
+    const toLabel = Array.from(document.querySelectorAll('label')).find(label => label.textContent.trim() === 'To');
+
+    if (!toLabel) {
+        return; // 'To:' label not found, so do nothing.
+    }
+
+    const buttonContainer = toLabel.parentNode;
+
+    // Check if the button is already added
+    if (buttonContainer.querySelector('.paste-approvers-btn')) {
+        return;
+    }
+
+    // Create and add the "Paste approvers" button
+    const pasteButton = document.createElement('button');
+    pasteButton.textContent = 'Paste approvers';
+    pasteButton.className = 'btn paste-approvers-btn';
+    pasteButton.style.marginLeft = '10px';
+    pasteButton.style.verticalAlign = 'middle';
+
+    pasteButton.addEventListener('click', async () => {
+        console.log('[Paste Logic] Start');
+        pasteButton.disabled = true;
+        pasteButton.textContent = 'Pasting...';
+        let originalClipboard = '';
+
+        try {
+            // 1. Read the full list of emails from the clipboard.
+            const initialResponse = await chrome.runtime.sendMessage({ action: 'getClipboardText' });
+            console.log('[Paste Logic] Read initial clipboard:', initialResponse);
+
+            if (initialResponse.status !== 'success' || !initialResponse.text) {
+                console.error('Could not read clipboard.');
+                return;
+            }
+            originalClipboard = initialResponse.text;
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const emails = originalClipboard.split(/[\n,;]+/).map(e => e.trim()).filter(e => emailRegex.test(e));
+            console.log(`[Paste Logic] Found ${emails.length} valid emails.`);
+
+            if (emails.length === 0) return;
+
+            // 2. Loop through each email.
+            for (const email of emails) {
+                console.log(`[Paste Logic] Processing: ${email}`);
+
+                // 3a. Set clipboard to the single email.
+                console.log(`[Paste Logic] Setting clipboard to: "${email}"`);
+                await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: email });
+
+                // 3b. Focus the input container.
+                const selectContainer = document.querySelector('.select2-choices');
+                if (selectContainer) {
+                    selectContainer.click();
+                } else {
+                    console.error('[Paste Logic] Cannot find .select2-choices container.');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 3c. Execute native paste.
+                console.log('[Paste Logic] Executing paste command.');
+                const success = document.execCommand('paste');
+                console.log(`[Paste Logic] Paste command success: ${success}`);
+                if (!success) {
+                    console.error('[Paste Logic] paste command failed.');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for search results
+
+                // 3d. Find and click the first result.
+                const firstResult = document.querySelector('.select2-result-selectable');
+                if (firstResult) {
+                    console.log('[Paste Logic] Found search result, clicking it.');
+                    firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                } else {
+                    console.warn('[Paste Logic] No search result found to click.');
+                }
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for selection to process
+            }
+
+        } catch (error) {
+            console.error('[Paste Logic] Error during paste operation:', error);
+        } finally {
+            // 4. Restore original clipboard.
+            if (originalClipboard) {
+                console.log('[Paste Logic] Restoring original clipboard.');
+                await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: originalClipboard });
+            }
+            pasteButton.disabled = false;
+            pasteButton.textContent = 'Paste approvers';
+            console.log('[Paste Logic] End');
+        }
+    });
+
+    // Insert the button after the "To:" label
+    toLabel.parentNode.insertBefore(pasteButton, toLabel.nextSibling);
+}
+
 // --- End Custom Reminder Functions ---
 
 function shouldReplaceLogoOnThisPage() {
@@ -531,6 +635,7 @@ function mainContentScriptInit() {
                 checkForIASConditions();
                 checkCustomReminders(); // Check for custom reminders on DOM changes
                 handleCampaignManagementFeatures();
+                handleApproverPasting();
             }, 300);
         }
     });

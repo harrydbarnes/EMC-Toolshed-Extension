@@ -555,12 +555,12 @@ function handleApproverPasting() {
     // Create and add the "Paste approvers" button
     const pasteButton = document.createElement('button');
     pasteButton.textContent = 'Paste Approvers';
-    pasteButton.className = 'filter-button';
+    pasteButton.className = 'filter-button prisma-paste-button';
     pasteButton.style.marginLeft = '10px';
 
     const pasteFavouritesButton = document.createElement('button');
     pasteFavouritesButton.textContent = 'Paste Favourites';
-    pasteFavouritesButton.className = 'filter-button';
+    pasteFavouritesButton.className = 'filter-button prisma-paste-button';
     pasteFavouritesButton.style.marginLeft = '10px';
 
     pasteButton.addEventListener('click', async () => {

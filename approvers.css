@@ -398,3 +398,7 @@ body {
 .popping {
     animation: pop-animation 0.3s ease-in-out;
 }
+
+.prisma-paste-button {
+    font-size: 12px;
+}

@@ -602,6 +602,46 @@ function handleApproverPasting() {
         }
     });
 
+    let tooltipTimeout;
+    let tooltipElement;
+
+    pasteFavouritesButton.addEventListener('mouseenter', () => {
+        tooltipTimeout = setTimeout(async () => {
+            if (tooltipElement) return;
+
+            const response = await chrome.runtime.sendMessage({ action: 'getFavouriteApprovers' });
+            if (response.status === 'success') {
+                tooltipElement = document.createElement('div');
+                tooltipElement.className = 'prisma-tooltip';
+
+                const emailsHtml = response.emails.join('<br>');
+                tooltipElement.innerHTML = `
+                    <div class="prisma-tooltip-content">
+                        ${emailsHtml}
+                    </div>
+                    <button class="prisma-tooltip-button">Manage Here</button>
+                `;
+
+                document.body.appendChild(tooltipElement);
+                const rect = pasteFavouritesButton.getBoundingClientRect();
+                tooltipElement.style.left = `${rect.left}px`;
+                tooltipElement.style.top = `${rect.bottom + 5}px`;
+
+                tooltipElement.querySelector('.prisma-tooltip-button').addEventListener('click', () => {
+                    chrome.runtime.sendMessage({ action: 'openApproversPage' });
+                });
+            }
+        }, 1000);
+    });
+
+    pasteFavouritesButton.addEventListener('mouseleave', () => {
+        clearTimeout(tooltipTimeout);
+        if (tooltipElement) {
+            tooltipElement.remove();
+            tooltipElement = null;
+        }
+    });
+
     pasteFavouritesButton.addEventListener('click', async () => {
         pasteFavouritesButton.disabled = true;
         pasteFavouritesButton.textContent = 'Pasting...';
@@ -651,6 +691,29 @@ function handleApproverPasting() {
     toLabel.parentNode.insertBefore(pasteFavouritesButton, pasteButton.nextSibling);
 }
 
+function handleManageFavouritesButton() {
+    const clearButton = Array.from(document.querySelectorAll('button.btn-link.mo-btn-link')).find(btn => btn.textContent.trim() === 'Clear');
+    if (!clearButton) {
+        return;
+    }
+
+    const buttonContainer = clearButton.parentNode;
+    if (buttonContainer.querySelector('.manage-favourites-button')) {
+        return;
+    }
+
+    const manageFavouritesButton = document.createElement('button');
+    manageFavouritesButton.textContent = 'Manage Favourites';
+    manageFavouritesButton.className = 'btn-link mo-btn-link manage-favourites-button';
+    manageFavouritesButton.style.marginLeft = '5px';
+
+    manageFavouritesButton.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: 'openApproversPage' });
+    });
+
+    clearButton.parentNode.insertBefore(manageFavouritesButton, clearButton.nextSibling);
+}
+
 // --- End Custom Reminder Functions ---
 
 function shouldReplaceLogoOnThisPage() {
@@ -688,6 +751,7 @@ function mainContentScriptInit() {
                 checkCustomReminders(); // Check for custom reminders on DOM changes
                 handleCampaignManagementFeatures();
                 handleApproverPasting();
+                handleManageFavouritesButton();
             }, 300);
         }
     });

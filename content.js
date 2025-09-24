@@ -575,7 +575,7 @@ function handleApproverPasting() {
                     console.error('[Paste Logic] paste command failed.');
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 250)); // Wait for search results
+                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for search results
 
                 // 3d. Find and click the first result.
                 const firstResult = document.querySelector(selectors.firstResult);
@@ -585,7 +585,7 @@ function handleApproverPasting() {
                 } else {
                     console.warn('[Paste Logic] No search result found to click.');
                 }
-                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for selection to process
+                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for selection to process
             }
 
         } catch (error) {

@@ -1,3 +1,5 @@
+import { approversData } from './approvers-data.js';
+
 chrome.runtime.onInstalled.addListener(() => {
   if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
   chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
@@ -409,6 +411,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Required for async sendResponse
     } else if (request.action === 'getClipboardText' || request.action === 'copyToClipboard') {
         handleOffscreenClipboard(request, sendResponse);
+        return true; // Required for async sendResponse
+    } else if (request.action === 'getFavouriteApprovers') {
+        (async () => {
+            try {
+                const data = await new Promise((resolve, reject) => {
+                    chrome.storage.local.get(['favoriteApprovers'], (result) => {
+                        if (chrome.runtime.lastError) {
+                            return reject(chrome.runtime.lastError);
+                        }
+                        resolve(result);
+                    });
+                });
+
+                const favoriteIds = new Set(data.favoriteApprovers || []);
+                if (favoriteIds.size === 0) {
+                    return sendResponse({ status: 'success', emails: [] });
+                }
+
+                const favoriteEmails = approversData
+                    .filter(approver => favoriteIds.has(approver.id))
+                    .map(approver => approver.email);
+
+                sendResponse({ status: 'success', emails: favoriteEmails });
+            } catch (error) {
+                console.error('Error getting favourite approvers:', error);
+                sendResponse({ status: 'error', message: error.message });
+            }
+        })();
         return true; // Required for async sendResponse
     }
     return true;  // Indicates that the response is sent asynchronously

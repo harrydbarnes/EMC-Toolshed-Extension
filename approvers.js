@@ -97,18 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const loadFavorites = () => {
+    const loadFavorites = async () => {
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.get(['favoriteApprovers'], (result) => {
-                if (result.favoriteApprovers) {
-                    favoriteApprovers = new Set(result.favoriteApprovers);
-                }
-                filterApprovers();
-            });
-        } else {
-            // Not in an extension context, just filter
-            filterApprovers();
+            const { favoriteApprovers: favs } = await chrome.storage.local.get(['favoriteApprovers']);
+            if (favs) {
+                favoriteApprovers = new Set(favs);
+            }
         }
+        filterApprovers();
     };
 
     const saveFavorites = () => {

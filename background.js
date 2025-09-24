@@ -77,15 +77,19 @@ async function createOffscreenDocument() {
 
 // Helper function to handle clipboard actions with the offscreen document.
 async function handleOffscreenClipboard(request, sendResponse) {
+    const { action, text } = request;
+    // Map the action from the content script to the action for the offscreen document.
+    const offscreenAction = action === 'getClipboardText' ? 'readClipboard' : action;
+
     try {
         await createOffscreenDocument();
         const response = await chrome.runtime.sendMessage({
-            action: request.action,
-            text: request.text // This will be undefined for 'readClipboard' and that's OK
+            action: offscreenAction,
+            text: text // This will be undefined for 'readClipboard' and that's OK
         });
         sendResponse(response);
     } catch (e) {
-        console.error(`Error handling action ${request.action}:`, e);
+        console.error(`Error handling action ${action}:`, e);
         sendResponse({ status: 'error', message: e.message });
     }
 }

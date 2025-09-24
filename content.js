@@ -34,6 +34,40 @@ function queryShadowDom(selector, root = document) {
     return null;
 }
 
+function waitForElement(selector, timeout = 2000) {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      const element = document.querySelector(selector);
+      if (element) {
+        clearInterval(interval);
+        clearTimeout(timer);
+        resolve(element);
+      }
+    }, 100);
+    const timer = setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error(`Element '${selector}' not found within ${timeout}ms`));
+    }, timeout);
+  });
+}
+
+function waitForElementToDisappear(selector, timeout = 2000) {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        clearInterval(interval);
+        clearTimeout(timer);
+        resolve();
+      }
+    }, 100);
+    const timer = setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error(`Element '${selector}' did not disappear within ${timeout}ms`));
+    }, timeout);
+  });
+}
+
 function replaceLogo() {
     // Use a more robust selector by finding a unique path within the SVG,
     // and use queryShadowDom to search inside shadow DOM trees.
@@ -565,7 +599,14 @@ function handleApproverPasting() {
                     console.error('[Paste Logic] Cannot find .select2-choices container.');
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 100));
+
+                try {
+                    // Wait for the search input to appear after clicking the container
+                    await waitForElement('.select2-search-field input', 500);
+                } catch (error) {
+                    console.warn('[Paste Logic] Did not find select2 search input after click.', error);
+                    // Continue anyway, paste might still work.
+                }
 
                 // 3c. Execute native paste.
                 console.log('[Paste Logic] Executing paste command.');
@@ -575,17 +616,19 @@ function handleApproverPasting() {
                     console.error('[Paste Logic] paste command failed.');
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for search results
 
                 // 3d. Find and click the first result.
-                const firstResult = document.querySelector(selectors.firstResult);
-                if (firstResult) {
+                try {
+                    const firstResult = await waitForElement(selectors.firstResult);
                     console.log('[Paste Logic] Found search result, clicking it.');
                     firstResult.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                } else {
-                    console.warn('[Paste Logic] No search result found to click.');
+
+                    // Wait for the result to disappear, indicating it has been selected.
+                    await waitForElementToDisappear(selectors.firstResult);
+
+                } catch (error) {
+                    console.warn('[Paste Logic] No search result found to click or it did not disappear.', error);
                 }
-                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for selection to process
             }
 
         } catch (error) {

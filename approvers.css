@@ -152,23 +152,21 @@ body {
 
 .approver-card {
     background: #fff;
-    border: 1.5px solid #e8e8ea;
     border-radius: 12px;
     padding: 20px;
     cursor: pointer;
-    transition: box-shadow 0.3s, border-color 0.3s ease-in-out, background-color 0.3s ease-in-out, border-width 0.3s ease-in-out;
+    transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 0 1.5px #e8e8ea;
 }
 
 .approver-card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 0 1.5px #e8e8ea, 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .approver-card.selected {
-    border-color: #E6007E;
-    border-width: 2.5px;
-    box-shadow: 0 4px 15px rgba(230, 0, 126, 0.2);
+    box-shadow: 0 0 0 2.5px #E6007E, 0 4px 15px rgba(230, 0, 126, 0.2);
     background-color: #faf6f8;
 }
 

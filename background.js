@@ -75,6 +75,21 @@ async function createOffscreenDocument() {
   }
 }
 
+// Helper function to handle clipboard actions with the offscreen document.
+async function handleOffscreenClipboard(request, sendResponse) {
+    try {
+        await createOffscreenDocument();
+        const response = await chrome.runtime.sendMessage({
+            action: request.action,
+            text: request.text // This will be undefined for 'readClipboard' and that's OK
+        });
+        sendResponse(response);
+    } catch (e) {
+        console.error(`Error handling action ${request.action}:`, e);
+        sendResponse({ status: 'error', message: e.message });
+    }
+}
+
 // Modify playAlarmSound to use the offscreen document
 async function playAlarmSound() {
   console.log("playAlarmSound function called");
@@ -388,35 +403,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         })();
         return true; // Required for async sendResponse
-    } else if (request.action === 'getClipboardText') {
-        (async () => {
-            try {
-                await createOffscreenDocument();
-                const response = await chrome.runtime.sendMessage({
-                    action: 'readClipboard'
-                });
-                sendResponse({ status: 'success', text: response.text });
-            } catch (e) {
-                console.error("Error getting clipboard text:", e);
-                sendResponse({ status: 'error', message: e.message });
-            }
-        })();
+    } else if (request.action === 'getClipboardText' || request.action === 'copyToClipboard') {
+        handleOffscreenClipboard(request, sendResponse);
         return true; // Required for async sendResponse
-    } else if (request.action === 'copyToClipboard') {
-        (async () => {
-            try {
-                await createOffscreenDocument();
-                const response = await chrome.runtime.sendMessage({
-                    action: 'copyToClipboard',
-                    text: request.text
-                });
-                sendResponse(response);
-            } catch (e) {
-                console.error("Error copying to clipboard:", e);
-                sendResponse({ status: 'error', message: e.message });
-            }
-        })();
-        return true;
     }
     return true;  // Indicates that the response is sent asynchronously
 });

@@ -9,6 +9,36 @@ function escapeHTML(str) {
 }
 
 
+function showTestCustomReminderOnSettingsPage(reminder) {
+    const existingGenericPopup = document.getElementById('custom-reminder-display-popup');
+    if (existingGenericPopup) existingGenericPopup.remove();
+    const existingTestOverlays = document.querySelectorAll('[id^="settings-custom-reminder-overlay-"]');
+    existingTestOverlays.forEach(ov => ov.remove());
+
+    const overlayId = `settings-custom-reminder-overlay-${reminder.id}`;
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay'; // Ensure this class exists and provides basic overlay styling
+    overlay.id = overlayId;
+    document.body.appendChild(overlay);
+
+    const popup = document.createElement('div');
+    popup.id = 'custom-reminder-display-popup'; // Ensure this ID is styled in settings.css or style.css
+
+    popup.innerHTML = `
+        ${reminder.popupMessage}
+        <button id="custom-reminder-display-close" class="settings-button">Got it!</button>
+    `;
+    document.body.appendChild(popup);
+
+    const closeButton = document.getElementById('custom-reminder-display-close');
+    closeButton.addEventListener('click', () => {
+        popup.remove();
+        overlay.remove();
+        console.log(`[Settings] Test custom reminder popup for ${reminder.name} closed.`);
+    });
+    console.log(`[Settings] Test custom reminder popup created for: ${reminder.name}`);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
 

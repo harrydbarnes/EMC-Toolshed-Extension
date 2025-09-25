@@ -187,53 +187,18 @@ function createMetaReminderPopup() {
     console.log("[ContentScript Prisma] Meta reminder popup CREATED.");
 
     const closeButton = document.getElementById('meta-reminder-close');
-    let countdownInterval; // For the 5-second timer
 
     const cleanupPopup = () => {
-        // Find the elements by their ID and remove them from their actual parent
         const popupElement = document.getElementById('meta-reminder-popup');
-        if (popupElement && popupElement.parentNode) {
-            popupElement.parentNode.removeChild(popupElement);
-        }
+        if (popupElement) popupElement.remove();
         const overlayElement = document.getElementById('meta-reminder-overlay');
-        if (overlayElement && overlayElement.parentNode) {
-            overlayElement.parentNode.removeChild(overlayElement);
-        }
-        metaReminderDismissed = true; // Set dismissed flag
-        clearInterval(countdownInterval); // Clear countdown interval if active
+        if (overlayElement) overlayElement.remove();
+        metaReminderDismissed = true;
         console.log("[ContentScript Prisma] Meta reminder popup and overlay removed.");
     };
 
     if (closeButton) {
-        const today = new Date().toDateString();
-        const lastShownDate = localStorage.getItem('metaReminderLastShown');
-
-        if (lastShownDate !== today) {
-            // First time shown today, implement delay
-            closeButton.disabled = true;
-            let secondsLeft = 5;
-            closeButton.textContent = `Got it! (${secondsLeft}s)`;
-
-            countdownInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
-                } else {
-                    clearInterval(countdownInterval);
-                    closeButton.textContent = 'Got it!';
-                    closeButton.disabled = false;
-                    localStorage.setItem('metaReminderLastShown', today); // Store today's date
-                }
-            }, 1000);
-        } else {
-            // Already shown today, button is active immediately
-            closeButton.disabled = false;
-        }
-
-        closeButton.addEventListener('click', function() {
-            cleanupPopup();
-            console.log("[ContentScript Prisma] Meta reminder popup closed by user.");
-        });
+        closeButton.addEventListener('click', cleanupPopup);
     }
     // Auto-close timeout has been removed. Popup stays until user clicks "Got it!".
 }
@@ -262,8 +227,10 @@ function createIASReminderPopup() {
     const closeButton = document.getElementById('ias-reminder-close');
 
     const cleanupIASPopup = () => {
-        if (popup.parentNode) popup.parentNode.removeChild(popup);
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        const popupElement = document.getElementById('ias-reminder-popup');
+        if (popupElement) popupElement.remove();
+        const overlayElement = document.getElementById('ias-reminder-overlay');
+        if (overlayElement) overlayElement.remove();
         iasReminderDismissed = true;
     };
 
@@ -275,7 +242,6 @@ function createIASReminderPopup() {
 function checkForMetaConditions() {
     const currentUrl = window.location.href;
 
-    // If the URL doesn't match, ensure any existing interval is cleared.
     if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
         if (metaCheckIntervalId) {
             clearInterval(metaCheckIntervalId);
@@ -284,7 +250,6 @@ function checkForMetaConditions() {
         }
         return; // URL doesn't match criteria.
     }
-
     // Force show bypasses other checks.
     if (window.forceShowMetaReminder) {
         createMetaReminderPopup();
@@ -330,10 +295,14 @@ function checkForMetaConditions() {
 function checkForIASConditions() {
     const currentUrl = window.location.href;
 
-    // No specific URL check for IAS, but we can clear if a check is in progress and URL changes.
-    // The main URL change observer will handle resetting flags, but this is an extra safeguard.
-    // A better approach is to ensure the check isn't URL-dependent or to define its URLs.
-    // For now, we will rely on the main MutationObserver and URL change interval.
+    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/')) {
+        if (iasCheckIntervalId) {
+            clearInterval(iasCheckIntervalId);
+            iasCheckIntervalId = null;
+            iasCheckInProgress = false;
+        }
+        return; // URL doesn't match criteria.
+    }
 
     if (window.forceShowIasReminder) {
         createIASReminderPopup();

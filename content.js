@@ -165,7 +165,10 @@ function createMetaReminderPopup() {
     const overlay = document.createElement('div');
     overlay.className = 'reminder-overlay';
     overlay.id = 'meta-reminder-overlay';
-    document.body.appendChild(overlay);
+
+    // Find the correct container to inject the popup into, falling back to body
+    const container = document.getElementById('mo-body-container') || document.body;
+    container.appendChild(overlay);
 
     const popup = document.createElement('div');
     popup.id = 'meta-reminder-popup';
@@ -175,7 +178,7 @@ function createMetaReminderPopup() {
         <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
         <button id="meta-reminder-close">Got it!</button>
     `;
-    document.body.appendChild(popup);
+    container.appendChild(popup); // Append to the correct container
     console.log("[ContentScript Prisma] Meta reminder popup CREATED.");
 
     const closeButton = document.getElementById('meta-reminder-close');

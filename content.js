@@ -295,7 +295,7 @@ function checkForMetaConditions() {
         const maxAttempts = 15; // 15 attempts * 2s = 30s
 
         const intervalId = setInterval(() => {
-            const pageText = document.body.innerText;
+            const pageText = document.body.textContent || "";
             const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
 
             if (conditionsMet || attempts >= maxAttempts || document.getElementById('meta-reminder-popup')) {

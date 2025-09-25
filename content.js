@@ -165,6 +165,8 @@ function createMetaReminderPopup() {
     const overlay = document.createElement('div');
     overlay.className = 'reminder-overlay';
     overlay.id = 'meta-reminder-overlay';
+    // Force the background color via inline style to win any CSS specificity wars
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
 
     // Find the correct container to inject the popup into, falling back to body
     const container = document.getElementById('mo-body-container') || document.body;
@@ -185,11 +187,14 @@ function createMetaReminderPopup() {
     let countdownInterval; // For the 5-second timer
 
     const cleanupPopup = () => {
-        if (popup.parentNode === document.body) {
-            document.body.removeChild(popup);
+        // Find the elements by their ID and remove them from their actual parent
+        const popupElement = document.getElementById('meta-reminder-popup');
+        if (popupElement && popupElement.parentNode) {
+            popupElement.parentNode.removeChild(popupElement);
         }
-        if (overlay.parentNode === document.body) {
-            document.body.removeChild(overlay);
+        const overlayElement = document.getElementById('meta-reminder-overlay');
+        if (overlayElement && overlayElement.parentNode) {
+            overlayElement.parentNode.removeChild(overlayElement);
         }
         metaReminderDismissed = true; // Set dismissed flag
         clearInterval(countdownInterval); // Clear countdown interval if active

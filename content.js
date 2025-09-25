@@ -277,7 +277,19 @@ function createIASReminderPopup() {
 }
 
 function checkForMetaConditions() {
-    // Force show bypasses all checks.
+    const currentUrl = window.location.href;
+
+    // If the URL doesn't match, ensure any existing interval is cleared.
+    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
+        if (metaCheckIntervalId) {
+            clearInterval(metaCheckIntervalId);
+            metaCheckIntervalId = null;
+            metaCheckInProgress = false;
+        }
+        return; // URL doesn't match criteria.
+    }
+
+    // Force show bypasses other checks.
     if (window.forceShowMetaReminder) {
         createMetaReminderPopup();
         window.forceShowMetaReminder = false;
@@ -286,11 +298,6 @@ function checkForMetaConditions() {
 
     // Standard checks.
     if (metaReminderDismissed || metaCheckInProgress) return;
-
-    const currentUrl = window.location.href;
-    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
-        return; // URL doesn't match criteria.
-    }
 
     if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
 
@@ -303,12 +310,14 @@ function checkForMetaConditions() {
         let attempts = 0;
         const maxAttempts = 15; // 15 attempts * 2s = 30s
 
-        const intervalId = setInterval(() => {
+        // Assign to the global interval ID so it can be cleared elsewhere
+        metaCheckIntervalId = setInterval(() => {
             const pageText = document.body.textContent || "";
             const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
 
             if (conditionsMet || attempts >= maxAttempts || document.getElementById('meta-reminder-popup')) {
-                clearInterval(intervalId);
+                clearInterval(metaCheckIntervalId); // Clear this specific interval
+                metaCheckIntervalId = null; // Nullify the ID
                 metaCheckInProgress = false;
                 if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
                     createMetaReminderPopup();

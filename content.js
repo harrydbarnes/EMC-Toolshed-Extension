@@ -295,7 +295,7 @@ function checkForMetaConditions() {
 function checkForIASConditions() {
     const currentUrl = window.location.href;
 
-    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/')) {
+    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/campaign-management')) {
         if (iasCheckIntervalId) {
             clearInterval(iasCheckIntervalId);
             iasCheckIntervalId = null;
@@ -325,8 +325,8 @@ function checkForIASConditions() {
 
         // Assign to the global interval ID so it can be cleared elsewhere if necessary
         iasCheckIntervalId = setInterval(() => {
-            const pageText = document.body.textContent || "";
-            const conditionsMet = pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type');
+            const pageText = document.body.textContent.toLowerCase() || "";
+            const conditionsMet = pageText.includes('001148') && pageText.includes('flat') && pageText.includes('unit type') && pageText.includes('dates and pricing');
 
             if (conditionsMet || attempts >= maxAttempts || document.getElementById('ias-reminder-popup')) {
                 clearInterval(iasCheckIntervalId);

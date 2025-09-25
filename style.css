@@ -125,7 +125,7 @@ body::-webkit-scrollbar-thumb:hover {
 #meta-reminder-popup, #ias-reminder-popup, #custom-reminder-display-popup { /* Apply styles to all three popups */
     font-family: 'Montserrat', sans-serif;
     position: fixed;
-    z-index: 10000;
+    z-index: 2147483647;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);

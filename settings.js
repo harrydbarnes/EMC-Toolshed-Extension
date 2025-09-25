@@ -8,100 +8,6 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
-// Function to show a test custom reminder on the settings page
-function showTestCustomReminderOnSettingsPage(reminder) {
-    const existingGenericPopup = document.getElementById('custom-reminder-display-popup');
-    if (existingGenericPopup) existingGenericPopup.remove();
-    const existingTestOverlays = document.querySelectorAll('[id^="settings-custom-reminder-overlay-"]');
-    existingTestOverlays.forEach(ov => ov.remove());
-
-    const overlayId = `settings-custom-reminder-overlay-${reminder.id}`;
-    const overlay = document.createElement('div');
-    overlay.className = 'reminder-overlay'; // Ensure this class exists and provides basic overlay styling
-    overlay.id = overlayId;
-    document.body.appendChild(overlay);
-
-    const popup = document.createElement('div');
-    popup.id = 'custom-reminder-display-popup'; // Ensure this ID is styled in settings.css or style.css
-
-    popup.innerHTML = `
-        ${reminder.popupMessage}
-        <button id="custom-reminder-display-close" class="settings-button">Got it!</button>
-    `;
-    document.body.appendChild(popup);
-
-    const closeButton = document.getElementById('custom-reminder-display-close');
-    closeButton.addEventListener('click', () => {
-        popup.remove();
-        overlay.remove();
-        console.log(`[Settings] Test custom reminder popup for ${reminder.name} closed.`);
-    });
-    console.log(`[Settings] Test custom reminder popup created for: ${reminder.name}`);
-}
-
-
-// Function to show a test Meta Reminder on the settings page
-function showTestMetaReminderOnSettingsPage() {
-    // Remove existing test popups to prevent duplicates
-    const existingPopup = document.getElementById('meta-reminder-popup');
-    if (existingPopup) existingPopup.remove();
-    const existingOverlay = document.getElementById('meta-reminder-overlay');
-    if (existingOverlay) existingOverlay.remove();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'reminder-overlay';
-    overlay.id = 'meta-reminder-overlay';
-    document.body.appendChild(overlay);
-
-    const popup = document.createElement('div');
-    popup.id = 'meta-reminder-popup';
-    popup.innerHTML = `
-        <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
-        <p>When reconciling Meta, please:</p>
-        <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
-        <button id="meta-reminder-close">Got it!</button>
-    `;
-    document.body.appendChild(popup);
-    console.log("[Settings] Test Meta reminder popup CREATED.");
-
-    const closeButton = document.getElementById('meta-reminder-close');
-    let countdownInterval;
-
-    const cleanupPopup = () => {
-        popup.remove();
-        overlay.remove();
-        clearInterval(countdownInterval);
-        console.log("[Settings] Test Meta reminder popup and overlay removed.");
-    };
-
-    if (closeButton) {
-        const today = new Date().toDateString();
-        const lastShownDateKey = 'settingsMetaReminderLastShown';
-        const lastShownDate = localStorage.getItem(lastShownDateKey);
-
-        if (lastShownDate !== today) {
-            closeButton.disabled = true;
-            let secondsLeft = 5;
-            closeButton.textContent = `Got it! (${secondsLeft}s)`;
-            countdownInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
-                } else {
-                    clearInterval(countdownInterval);
-                    closeButton.textContent = 'Got it!';
-                    closeButton.disabled = false;
-                    localStorage.setItem(lastShownDateKey, today);
-                }
-            }, 1000);
-        } else {
-            closeButton.disabled = false;
-        }
-        closeButton.addEventListener('click', cleanupPopup);
-    }
-}
-
-
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
@@ -140,7 +46,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     if (triggerMetaReminderButton) {
-        triggerMetaReminderButton.addEventListener('click', showTestMetaReminderOnSettingsPage);
+        triggerMetaReminderButton.addEventListener('click', () => {
+            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                if (tabs.length > 0 && tabs[0].id) {
+                    chrome.tabs.sendMessage(tabs[0].id, {action: "showMetaReminder"})
+                        .catch(e => alert("Could not connect to the content script. Please make sure a Prisma page is open and active."));
+                } else {
+                    alert("No active tab found. Please open a Prisma page and make it the active tab to test the reminder.");
+                }
+            });
+        });
     }
 
     const iasReminderToggle = document.getElementById('iasReminderToggle');
@@ -159,9 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                 if (tabs.length > 0 && tabs[0].id) {
                     chrome.tabs.sendMessage(tabs[0].id, {action: "showIasReminder"})
-                        .catch(e => console.warn("Could not send 'showIasReminder' message to content script. Is a Prisma page open?", e.message));
+                        .catch(e => alert("Could not connect to the content script. Please make sure a Prisma page is open and active."));
                 } else {
-                    console.warn("No active tab found to send 'showIasReminder' message.");
+                    alert("No active tab found. Please open a Prisma page and make it the active tab to test the reminder.");
                 }
             });
         });

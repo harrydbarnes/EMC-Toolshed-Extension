@@ -171,7 +171,7 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .primary-button:hover {
-    animation: vibrate 0.25s ease-in-out; /* This vibrate is for primary buttons */
+    animation: vibrate 0.3s ease-in-out;
 }
 
 .primary-button:active {
@@ -362,6 +362,10 @@ a.settings-page-link:active {
 .pink-button {
     background-color: #e83e8c !important;
     color: white !important;
+}
+
+.pink-button:hover {
+    animation: vibrate 0.3s ease-in-out;
 }
 
 @keyframes vibrate {

@@ -153,6 +153,7 @@ let metaReminderDismissed = false;
 let iasReminderDismissed = false;
 // Removed metaPopupTimeoutId as it's no longer used
 let metaCheckInProgress = false;
+let metaCheckIntervalId = null;
 
 function createMetaReminderPopup() {
     if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {

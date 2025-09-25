@@ -153,7 +153,9 @@ let metaReminderDismissed = false;
 let iasReminderDismissed = false;
 // Removed metaPopupTimeoutId as it's no longer used
 let metaCheckInProgress = false;
+let iasCheckInProgress = false;
 let metaCheckIntervalId = null;
+let iasCheckIntervalId = null;
 
 function createMetaReminderPopup() {
     if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
@@ -241,7 +243,11 @@ function createIASReminderPopup() {
     if (document.getElementById('ias-reminder-popup') || iasReminderDismissed) {
         return;
     }
-    // addReminderStyles(); // Ensure styles are present // Removed call
+
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay';
+    overlay.id = 'ias-reminder-overlay';
+    document.body.appendChild(overlay);
 
     const popup = document.createElement('div');
     popup.id = 'ias-reminder-popup';
@@ -256,24 +262,14 @@ function createIASReminderPopup() {
     const closeButton = document.getElementById('ias-reminder-close');
 
     const cleanupIASPopup = () => {
-        if (popup.parentNode === document.body) {
-            document.body.removeChild(popup);
-        }
+        if (popup.parentNode) popup.parentNode.removeChild(popup);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
         iasReminderDismissed = true;
     };
 
     if (closeButton) {
-        closeButton.addEventListener('click', function() {
-            cleanupIASPopup();
-        });
+        closeButton.addEventListener('click', cleanupIASPopup);
     }
-
-    // Auto-close IAS reminder (kept as per original, modify if IAS should also persist)
-    setTimeout(() => {
-        if (document.getElementById('ias-reminder-popup')) {
-            cleanupIASPopup();
-        }
-    }, 15000);
 }
 
 function checkForMetaConditions() {
@@ -332,14 +328,49 @@ function checkForMetaConditions() {
 }
 
 function checkForIASConditions() {
-    if (iasReminderDismissed) return;
+    const currentUrl = window.location.href;
 
-    const pageText = document.body.innerText;
-    if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
-         if (!document.getElementById('ias-reminder-popup')) {
-            createIASReminderPopup();
-         }
+    // No specific URL check for IAS, but we can clear if a check is in progress and URL changes.
+    // The main URL change observer will handle resetting flags, but this is an extra safeguard.
+    // A better approach is to ensure the check isn't URL-dependent or to define its URLs.
+    // For now, we will rely on the main MutationObserver and URL change interval.
+
+    if (window.forceShowIasReminder) {
+        createIASReminderPopup();
+        window.forceShowIasReminder = false;
+        return;
     }
+
+    if (iasReminderDismissed || iasCheckInProgress || metaCheckInProgress) return;
+
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
+
+    chrome.storage.sync.get('iasReminderEnabled', function(data) {
+        if (chrome.runtime.lastError || data.iasReminderEnabled === false) {
+            return; // Extension setting disabled or error.
+        }
+
+        iasCheckInProgress = true;
+        let attempts = 0;
+        const maxAttempts = 15; // 15 attempts * 2s = 30s
+
+        // Assign to the global interval ID so it can be cleared elsewhere if necessary
+        iasCheckIntervalId = setInterval(() => {
+            const pageText = document.body.textContent || "";
+            const conditionsMet = pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type');
+
+            if (conditionsMet || attempts >= maxAttempts || document.getElementById('ias-reminder-popup')) {
+                clearInterval(iasCheckIntervalId);
+                iasCheckIntervalId = null; // Nullify the ID
+                iasCheckInProgress = false;
+                if (conditionsMet && !document.getElementById('ias-reminder-popup')) {
+                    createIASReminderPopup();
+                }
+                return;
+            }
+            attempts++;
+        }, 2000);
+    });
 }
 
 let currentUrlForDismissFlags = window.location.href;
@@ -352,9 +383,18 @@ setInterval(() => {
         mediaMixAutomated = false;
         budgetTypeAutomated = false;
         currentUrlForDismissFlags = window.location.href;
-        // Potentially re-fetch or re-check custom reminders if needed immediately on SPA navigation
-        // For now, MutationObserver and initial load handle most cases.
-        // checkCustomReminders(); // Optional: check immediately on navigation
+
+        // Also clear any running checks
+        if (metaCheckIntervalId) {
+            clearInterval(metaCheckIntervalId);
+            metaCheckIntervalId = null;
+            metaCheckInProgress = false;
+        }
+        if (iasCheckIntervalId) {
+            clearInterval(iasCheckIntervalId);
+            iasCheckIntervalId = null;
+            iasCheckInProgress = false;
+        }
     }
 }, 500);
 
@@ -781,6 +821,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         checkForMetaConditions();
         sendResponse({status: "Meta reminder shown by content script"});
         console.log("[ContentScript Prisma] Response sent for 'showMetaReminder'.");
+    } else if (request.action === "showIasReminder") {
+        console.log("[ContentScript Prisma] 'showIasReminder' action received. Attempting to create popup.");
+        iasReminderDismissed = false;
+        window.forceShowIasReminder = true;
+        checkForIASConditions();
+        sendResponse({status: "IAS reminder shown by content script"});
     } else if (request.action === "customRemindersUpdated") {
         console.log("[ContentScript Prisma] Received 'customRemindersUpdated' message. Re-fetching reminders.");
         fetchCustomReminders();

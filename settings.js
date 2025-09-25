@@ -102,6 +102,7 @@ function showTestMetaReminderOnSettingsPage() {
 }
 
 
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
 
@@ -140,6 +141,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (triggerMetaReminderButton) {
         triggerMetaReminderButton.addEventListener('click', showTestMetaReminderOnSettingsPage);
+    }
+
+    const iasReminderToggle = document.getElementById('iasReminderToggle');
+    if (iasReminderToggle) {
+        chrome.storage.sync.get('iasReminderEnabled', function(data) {
+            iasReminderToggle.checked = data.iasReminderEnabled === undefined ? true : data.iasReminderEnabled;
+        });
+        iasReminderToggle.addEventListener('change', function() {
+            chrome.storage.sync.set({iasReminderEnabled: this.checked});
+        });
+    }
+
+    const triggerIasReminderButton = document.getElementById('triggerIasReminder');
+    if (triggerIasReminderButton) {
+        triggerIasReminderButton.addEventListener('click', () => {
+            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                if (tabs.length > 0 && tabs[0].id) {
+                    chrome.tabs.sendMessage(tabs[0].id, {action: "showIasReminder"})
+                        .catch(e => console.warn("Could not send 'showIasReminder' message to content script. Is a Prisma page open?", e.message));
+                } else {
+                    console.warn("No active tab found to send 'showIasReminder' message.");
+                }
+            });
+        });
     }
 
     // Campaign Management Settings

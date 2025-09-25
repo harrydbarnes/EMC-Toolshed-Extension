@@ -102,6 +102,7 @@ button, .settings-button { /* Added .settings-button for consistency */
 
 button:hover, .settings-button:hover {
     background-color: #4a2fdc; /* Darker shade for hover */
+    animation: vibrate 0.3s ease-in-out;
 }
 
 .settings-button-secondary {
@@ -351,4 +352,13 @@ input:checked + .slider:before {
     justify-content: flex-end; /* Align buttons to the right */
     gap: 10px;
     background-color: #f7f7f7;
+}
+
+/* Keyframes for button hover animation */
+@keyframes vibrate {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    60% { transform: translateX(-1px); }
+    80% { transform: translateX(1px); }
 }

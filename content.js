@@ -242,7 +242,7 @@ function createIASReminderPopup() {
 function checkForMetaConditions() {
     const currentUrl = window.location.href;
 
-    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
+    if (!(currentUrl.includes('groupmuk-prisma.mediaocean.com/') && currentUrl.includes('actualize'))) {
         if (metaCheckIntervalId) {
             clearInterval(metaCheckIntervalId);
             metaCheckIntervalId = null;
@@ -352,18 +352,6 @@ setInterval(() => {
         mediaMixAutomated = false;
         budgetTypeAutomated = false;
         currentUrlForDismissFlags = window.location.href;
-
-        // Also clear any running checks
-        if (metaCheckIntervalId) {
-            clearInterval(metaCheckIntervalId);
-            metaCheckIntervalId = null;
-            metaCheckInProgress = false;
-        }
-        if (iasCheckIntervalId) {
-            clearInterval(iasCheckIntervalId);
-            iasCheckIntervalId = null;
-            iasCheckInProgress = false;
-        }
     }
 }, 500);
 

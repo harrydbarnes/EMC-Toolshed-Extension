@@ -8,6 +8,37 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
+// Function to show a test custom reminder on the settings page
+function showTestCustomReminderOnSettingsPage(reminder) {
+    const existingGenericPopup = document.getElementById('custom-reminder-display-popup');
+    if (existingGenericPopup) existingGenericPopup.remove();
+    const existingTestOverlays = document.querySelectorAll('[id^="settings-custom-reminder-overlay-"]');
+    existingTestOverlays.forEach(ov => ov.remove());
+
+    const overlayId = `settings-custom-reminder-overlay-${reminder.id}`;
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay'; // Ensure this class exists and provides basic overlay styling
+    overlay.id = overlayId;
+    document.body.appendChild(overlay);
+
+    const popup = document.createElement('div');
+    popup.id = 'custom-reminder-display-popup'; // Ensure this ID is styled in settings.css or style.css
+
+    popup.innerHTML = `
+        ${reminder.popupMessage}
+        <button id="custom-reminder-display-close" class="settings-button">Got it!</button>
+    `;
+    document.body.appendChild(popup);
+
+    const closeButton = document.getElementById('custom-reminder-display-close');
+    closeButton.addEventListener('click', () => {
+        popup.remove();
+        overlay.remove();
+        console.log(`[Settings] Test custom reminder popup for ${reminder.name} closed.`);
+    });
+    console.log(`[Settings] Test custom reminder popup created for: ${reminder.name}`);
+}
+
 
 // Function to show a test Meta Reminder on the settings page
 function showTestMetaReminderOnSettingsPage() {
@@ -70,68 +101,6 @@ function showTestMetaReminderOnSettingsPage() {
     }
 }
 
-// Function to show a test IAS Reminder on the settings page
-function showTestIasReminderOnSettingsPage() {
-    const existingPopup = document.getElementById('ias-reminder-popup');
-    if (existingPopup) existingPopup.remove();
-    const existingOverlay = document.getElementById('ias-reminder-overlay');
-    if (existingOverlay) existingOverlay.remove();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'reminder-overlay';
-    overlay.id = 'ias-reminder-overlay';
-    document.body.appendChild(overlay);
-
-    const popup = document.createElement('div');
-    popup.id = 'ias-reminder-popup';
-    popup.innerHTML = `
-        <h3>⚠️ IAS Booking Reminder ⚠️</h3>
-        <p>Please ensure you book as CPM</p>
-        <ul><li>With correct rate for media type</li><li>Check the plan</li><li>Ensure what is planned is what goes live</li></ul>
-        <button id="ias-reminder-close">Got it!</button>
-    `;
-    document.body.appendChild(popup);
-    console.log("[Settings] Test IAS reminder popup CREATED.");
-
-    const closeButton = document.getElementById('ias-reminder-close');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            popup.remove();
-            overlay.remove();
-            console.log("[Settings] Test IAS reminder popup removed.");
-        });
-    }
-}
-
-function showTestCustomReminderOnSettingsPage(reminder) {
-    const existingGenericPopup = document.getElementById('custom-reminder-display-popup');
-    if (existingGenericPopup) existingGenericPopup.remove();
-    const existingTestOverlays = document.querySelectorAll('[id^="settings-custom-reminder-overlay-"]');
-    existingTestOverlays.forEach(ov => ov.remove());
-
-    const overlayId = `settings-custom-reminder-overlay-${reminder.id}`;
-    const overlay = document.createElement('div');
-    overlay.className = 'reminder-overlay'; // Ensure this class exists and provides basic overlay styling
-    overlay.id = overlayId;
-    document.body.appendChild(overlay);
-
-    const popup = document.createElement('div');
-    popup.id = 'custom-reminder-display-popup'; // Ensure this ID is styled in settings.css or style.css
-
-    popup.innerHTML = `
-        ${reminder.popupMessage}
-        <button id="custom-reminder-display-close" class="settings-button">Got it!</button>
-    `;
-    document.body.appendChild(popup);
-
-    const closeButton = document.getElementById('custom-reminder-display-close');
-    closeButton.addEventListener('click', () => {
-        popup.remove();
-        overlay.remove();
-        console.log(`[Settings] Test custom reminder popup for ${reminder.name} closed.`);
-    });
-    console.log(`[Settings] Test custom reminder popup created for: ${reminder.name}`);
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
@@ -171,21 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (triggerMetaReminderButton) {
         triggerMetaReminderButton.addEventListener('click', showTestMetaReminderOnSettingsPage);
-    }
-
-    const iasReminderToggle = document.getElementById('iasReminderToggle');
-    if (iasReminderToggle) {
-        chrome.storage.sync.get('iasReminderEnabled', function(data) {
-            iasReminderToggle.checked = data.iasReminderEnabled === undefined ? true : data.iasReminderEnabled;
-        });
-        iasReminderToggle.addEventListener('change', function() {
-            chrome.storage.sync.set({iasReminderEnabled: this.checked});
-        });
-    }
-
-    const triggerIasReminderButton = document.getElementById('triggerIasReminder');
-    if (triggerIasReminderButton) {
-        triggerIasReminderButton.addEventListener('click', showTestIasReminderOnSettingsPage);
     }
 
     // Campaign Management Settings

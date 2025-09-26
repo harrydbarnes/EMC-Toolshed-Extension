@@ -162,6 +162,24 @@ function setupToggle(toggleId, storageKey, logMessage) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
 
+    // Toast Notification
+    function showToast(message) {
+        const toastNotification = document.getElementById('toast-notification');
+        const toastMessage = toastNotification.querySelector('.toast-message');
+        if (!toastNotification || !toastMessage) return;
+
+        toastMessage.textContent = message;
+        toastNotification.classList.add('show');
+
+        setTimeout(() => {
+            toastNotification.classList.remove('show');
+            toastNotification.classList.add('hide');
+            setTimeout(() => {
+                toastNotification.classList.remove('hide');
+            }, 500); // Cleanup hide class after animation
+        }, 3000); // Show for 3 seconds
+    }
+
     // General Settings
     const logoToggle = document.getElementById('logoToggle');
     if (logoToggle) {
@@ -228,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.storage.sync.set(defaultSettings, () => {
                 if (chrome.runtime.lastError) {
                     console.error('Error resetting reminder settings:', chrome.runtime.lastError);
-                    alert('An error occurred while resetting reminder settings.');
+                    showToast('An error occurred while resetting reminder settings.');
                 } else {
                     console.log('Reminder settings reset to default in sync storage.');
 
@@ -236,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (prismaReminderFrequency) prismaReminderFrequency.value = 'daily';
                     if (prismaCountdownDuration) prismaCountdownDuration.value = '5';
 
-                    alert('Prisma reminders have been reset. They will now show daily with a 5-second countdown.');
+                    showToast('Prisma reminders have been reset.');
                 }
             });
         });

@@ -427,6 +427,34 @@ function createCustomReminderPopup(reminder) {
 }
 
 
+function handleGmiChatButton() {
+    const workflowWidget = document.querySelector('.workflow-widget-wrapper');
+    if (!workflowWidget || workflowWidget.querySelector('.gmi-chat-button')) {
+        return; // Exit if the widget doesn't exist or the button is already there
+    }
+
+    const gmiChatButton = document.createElement('button');
+    gmiChatButton.textContent = 'GMI Chat';
+    gmiChatButton.className = 'btn btn-default gmi-chat-button'; // Using existing button styles
+    gmiChatButton.style.marginLeft = '5px';
+
+    gmiChatButton.addEventListener('click', () => {
+        const clientNameElement = document.querySelector('#gwt-debug-0-idesk-csl-product-label');
+        const campaignNameElement = document.querySelector('#gwt-debug-campaign-name');
+
+        const clientName = clientNameElement ? clientNameElement.textContent.trim() : 'CLIENT_NAME_HERE';
+        const campaignName = campaignNameElement ? campaignNameElement.getAttribute('title').trim() : 'CAMPAIGN_NAME_HERE';
+        const currentUrl = window.location.href;
+
+        const message = `${clientName} - ${campaignName}`;
+        const teamsUrl = `https://teams.microsoft.com/l/chat/0/0?users=edwin.balagopalan@wppmedia.com,ellie.vigors@wppmedia.com,harry.barnes@wppmedia.com,isobel.shaw@wppmedia.com,jett.hudson@wppmedia.com,lauren.pringle@wppmedia.com,matt.akerman@wppmedia.com,mihaela.lupu@wppmedia.com,rita.bressi@wppmedia.com,santiago.feberero@wppmedia.com,scott.moore@wppmedia.com,shreya.gurung@wppmedia.com,trish.costa@wppmedia.com&message=${encodeURIComponent(message)}%20${encodeURIComponent(currentUrl)}`;
+
+        window.open(teamsUrl, '_blank');
+    });
+
+    workflowWidget.appendChild(gmiChatButton);
+}
+
 function checkCustomReminders() {
     console.log("[ContentScript Prisma] Running checkCustomReminders...");
     if (activeCustomReminders.length === 0) {
@@ -747,6 +775,7 @@ function mainContentScriptInit() {
                 handleCampaignManagementFeatures();
                 handleApproverPasting();
                 handleManageFavouritesButton();
+                handleGmiChatButton();
             }, 300);
         }
     });

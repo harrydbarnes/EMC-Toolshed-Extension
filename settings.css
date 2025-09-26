@@ -68,6 +68,35 @@ section h2 {
     margin-bottom: 15px;
 }
 
+.prisma-reminder-options {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.setting-row:last-child {
+    margin-bottom: 0;
+}
+
+.setting-row label {
+    font-size: 1em;
+    color: #333;
+}
+
+.setting-row .select-container {
+    width: 150px; /* Adjust width as needed */
+    margin-bottom: 0;
+}
+
 /* General styling for input elements, buttons, etc. within settings */
 input[type="text"],
 input[type="url"],
@@ -92,7 +121,7 @@ button, .settings-button { /* Added .settings-button for consistency */
     padding: 10px 15px;
     font-size: 1em;
     cursor: pointer;
-    background-color: #5B3EFD; /* New primary button color */
+    background-color: #07009a; /* New primary button color */
     color: white;
     border: none;
     border-radius: 4px;
@@ -101,7 +130,15 @@ button, .settings-button { /* Added .settings-button for consistency */
 }
 
 button:hover, .settings-button:hover {
-    background-color: #4a2fdc; /* Darker shade for hover */
+    background-color: #05006a; /* Darker shade for hover */
+}
+
+#triggerMetaReminder, #triggerIasReminder, .settings-button-test {
+    background-color: #76abaf;
+}
+
+#triggerMetaReminder:hover, #triggerIasReminder:hover, .settings-button-test:hover {
+    background-color: #639599;
 }
 
 .settings-button-secondary {
@@ -112,11 +149,11 @@ button:hover, .settings-button:hover {
 }
 
 .settings-button-edit {
-    background-color: #ffc107; /* Amber */
-    /* color: black; /* Or white, depending on contrast */
+    background-color: #b2f66d; /* New edit color */
+    color: #333; /* Dark text for light green background */
 }
 .settings-button-edit:hover {
-    background-color: #e0a800; /* Darker amber */
+    background-color: #99d45b; /* Darker shade for hover */
 }
 
 .toggle-container {

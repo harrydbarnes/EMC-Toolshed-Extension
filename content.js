@@ -151,192 +151,181 @@ function checkAndReplaceLogo() {
 
 let metaReminderDismissed = false;
 let iasReminderDismissed = false;
-// Removed metaPopupTimeoutId as it's no longer used
 let metaCheckInProgress = false;
-let metaCheckIntervalId = null;
 
-function createMetaReminderPopup() {
-    if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
-        console.log("[ContentScript Prisma] Meta reminder popup skipped (already exists or dismissed).");
-        return;
-    }
-    // addReminderStyles(); // Removed call
+// --- New Reminder Logic ---
 
-    // Create and add the overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'reminder-overlay';
-    overlay.id = 'meta-reminder-overlay';
-    // Force the background color via inline style to win any CSS specificity wars
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
-
-    // Find the correct container to inject the popup into, falling back to body
-    const container = document.getElementById('mo-body-container') || document.body;
-    container.appendChild(overlay);
-
-    const popup = document.createElement('div');
-    popup.id = 'meta-reminder-popup';
-    popup.innerHTML = `
-        <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
-        <p>When reconciling Meta, please:</p>
-        <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
-        <button id="meta-reminder-close">Got it!</button>
-    `;
-    container.appendChild(popup); // Append to the correct container
-    console.log("[ContentScript Prisma] Meta reminder popup CREATED.");
-
-    const closeButton = document.getElementById('meta-reminder-close');
-    let countdownInterval; // For the 5-second timer
-
-    const cleanupPopup = () => {
-        // Find the elements by their ID and remove them from their actual parent
-        const popupElement = document.getElementById('meta-reminder-popup');
-        if (popupElement && popupElement.parentNode) {
-            popupElement.parentNode.removeChild(popupElement);
-        }
-        const overlayElement = document.getElementById('meta-reminder-overlay');
-        if (overlayElement && overlayElement.parentNode) {
-            overlayElement.parentNode.removeChild(overlayElement);
-        }
-        metaReminderDismissed = true; // Set dismissed flag
-        clearInterval(countdownInterval); // Clear countdown interval if active
-        console.log("[ContentScript Prisma] Meta reminder popup and overlay removed.");
-    };
-
-    if (closeButton) {
-        const today = new Date().toDateString();
-        const lastShownDate = localStorage.getItem('metaReminderLastShown');
-
-        if (lastShownDate !== today) {
-            // First time shown today, implement delay
-            closeButton.disabled = true;
-            let secondsLeft = 5;
-            closeButton.textContent = `Got it! (${secondsLeft}s)`;
-
-            countdownInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
-                } else {
-                    clearInterval(countdownInterval);
-                    closeButton.textContent = 'Got it!';
-                    closeButton.disabled = false;
-                    localStorage.setItem('metaReminderLastShown', today); // Store today's date
-                }
-            }, 1000);
-        } else {
-            // Already shown today, button is active immediately
-            closeButton.disabled = false;
+function shouldShowReminder(storageKey, frequency, callback) {
+    chrome.storage.local.get([storageKey], (data) => {
+        const lastShownTimestamp = data[storageKey];
+        if (!lastShownTimestamp) {
+            callback(true); // Never shown, so show it.
+            return;
         }
 
-        closeButton.addEventListener('click', function() {
-            cleanupPopup();
-            console.log("[ContentScript Prisma] Meta reminder popup closed by user.");
-        });
-    }
-    // Auto-close timeout has been removed. Popup stays until user clicks "Got it!".
+        const now = new Date();
+        const lastShown = new Date(lastShownTimestamp);
+        let show = false;
+
+        switch (frequency) {
+            case 'daily':
+                if (now.toDateString() !== lastShown.toDateString()) show = true;
+                break;
+            case 'weekly':
+                const oneWeek = 7 * 24 * 60 * 60 * 1000;
+                if (now.getTime() - lastShown.getTime() > oneWeek) show = true;
+                break;
+            case 'monthly':
+                if (now.getMonth() !== lastShown.getMonth() || now.getFullYear() !== lastShown.getFullYear()) show = true;
+                break;
+            case 'once':
+                // Handled by the initial check for `lastShownTimestamp`. If we get here, it's already been shown.
+                show = false;
+                break;
+            default: // Default to daily
+                if (now.toDateString() !== lastShown.toDateString()) show = true;
+                break;
+        }
+        callback(show);
+    });
 }
 
+function setReminderShown(storageKey) {
+    chrome.storage.local.set({ [storageKey]: Date.now() });
+}
 
-function createIASReminderPopup() {
-    if (document.getElementById('ias-reminder-popup') || iasReminderDismissed) {
-        return;
-    }
-    // addReminderStyles(); // Ensure styles are present // Removed call
+function createPrismaReminderPopup({ popupId, content, countdownSeconds, storageKey }) {
+    if (document.getElementById(popupId)) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay';
+    overlay.id = `${popupId}-overlay`;
+    document.body.appendChild(overlay);
 
     const popup = document.createElement('div');
-    popup.id = 'ias-reminder-popup';
-    popup.innerHTML = `
-        <h3>⚠️ IAS Booking Reminder ⚠️</h3>
-        <p>Please ensure you book as CPM</p>
-        <ul><li>With correct rate for media type</li><li>Check the plan</li><li>Ensure what is planned is what goes live</li></ul>
-        <button id="ias-reminder-close">Got it!</button>
-    `;
+    popup.id = popupId;
+
+    const h3 = document.createElement('h3');
+    h3.textContent = content.title;
+    popup.appendChild(h3);
+
+    const p = document.createElement('p');
+    p.textContent = content.message;
+    popup.appendChild(p);
+
+    const ul = document.createElement('ul');
+    content.list.forEach(itemText => {
+        const li = document.createElement('li');
+        li.textContent = itemText;
+        ul.appendChild(li);
+    });
+    popup.appendChild(ul);
+
+    const closeButton = document.createElement('button');
+    closeButton.id = `${popupId}-close`;
+    closeButton.textContent = 'Got it!';
+    popup.appendChild(closeButton);
+
     document.body.appendChild(popup);
+    console.log(`[ContentScript Prisma] ${content.title} popup CREATED.`);
 
-    const closeButton = document.getElementById('ias-reminder-close');
-
-    const cleanupIASPopup = () => {
-        if (popup.parentNode === document.body) {
-            document.body.removeChild(popup);
-        }
-        iasReminderDismissed = true;
+    let countdownInterval;
+    const cleanupPopup = () => {
+        popup.remove();
+        overlay.remove();
+        clearInterval(countdownInterval);
+        setReminderShown(storageKey);
+        if (popupId === 'meta-reminder-popup') metaReminderDismissed = true;
+        if (popupId === 'ias-reminder-popup') iasReminderDismissed = true;
     };
 
-    if (closeButton) {
-        closeButton.addEventListener('click', function() {
-            cleanupIASPopup();
-        });
+    if (countdownSeconds > 0) {
+        closeButton.disabled = true;
+        let secondsLeft = countdownSeconds;
+        closeButton.textContent = `Got it! (${secondsLeft}s)`;
+        countdownInterval = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft > 0) {
+                closeButton.textContent = `Got it! (${secondsLeft}s)`;
+            } else {
+                clearInterval(countdownInterval);
+                closeButton.textContent = 'Got it!';
+                closeButton.disabled = false;
+            }
+        }, 1000);
     }
 
-    // Auto-close IAS reminder (kept as per original, modify if IAS should also persist)
-    setTimeout(() => {
-        if (document.getElementById('ias-reminder-popup')) {
-            cleanupIASPopup();
-        }
-    }, 15000);
+    closeButton.addEventListener('click', cleanupPopup);
 }
 
 function checkForMetaConditions() {
-    // Force show bypasses all checks.
-    if (window.forceShowMetaReminder) {
-        createMetaReminderPopup();
-        window.forceShowMetaReminder = false;
-        return;
-    }
-
-    // Standard checks.
     if (metaReminderDismissed || metaCheckInProgress) return;
-
     const currentUrl = window.location.href;
-    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
-        return; // URL doesn't match criteria.
-    }
+    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) return;
 
-    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
+    if (!chrome.runtime || !chrome.runtime.id) return;
 
-    chrome.storage.sync.get('metaReminderEnabled', function(data) {
-        if (chrome.runtime.lastError || data.metaReminderEnabled === false) {
-            return; // Extension setting disabled or error.
-        }
+    chrome.storage.sync.get(['metaReminderEnabled', 'prismaReminderFrequency', 'prismaCountdownDuration'], (settings) => {
+        if (chrome.runtime.lastError || settings.metaReminderEnabled === false) return;
 
-        metaCheckInProgress = true;
-        let attempts = 0;
-        const maxAttempts = 15; // 15 attempts * 2s = 30s
+        const frequency = settings.prismaReminderFrequency || 'daily';
+        shouldShowReminder('metaReminderLastShown', frequency, (show) => {
+            if (!show) return;
 
-        const intervalId = setInterval(() => {
-            const pageText = document.body.textContent || "";
-            const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
+            metaCheckInProgress = true;
+            let attempts = 0;
+            const maxAttempts = 15;
 
-            if (conditionsMet || attempts >= maxAttempts || document.getElementById('meta-reminder-popup')) {
-                clearInterval(intervalId);
-                metaCheckInProgress = false;
-                if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
-                    createMetaReminderPopup();
-                } else if (attempts >= maxAttempts) {
-                    console.log("[ContentScript Prisma] Meta reminder polling timed out after 30 seconds.");
+            const intervalId = setInterval(() => {
+                const pageText = document.body.textContent || "";
+                const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
+
+                if (conditionsMet || attempts >= maxAttempts) {
+                    clearInterval(intervalId);
+                    metaCheckInProgress = false;
+                    if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
+                        createPrismaReminderPopup({
+                            popupId: 'meta-reminder-popup',
+                            content: {
+                                title: '⚠️ Meta Reconciliation Reminder ⚠️',
+                                message: 'When reconciling Meta, please:',
+                                list: ["Actualise to the 'Supplier' option", "Self-accept the IO", "Push through on trafficking tab to Meta", "Verify success of the push, every time", "Do not just leave the page!"]
+                            },
+                            countdownSeconds: parseInt(settings.prismaCountdownDuration, 10) || 0,
+                            storageKey: 'metaReminderLastShown'
+                        });
+                    }
                 }
-                return;
-            }
-            attempts++;
-        }, 2000);
+                attempts++;
+            }, 2000);
+        });
     });
 }
 
 function checkForIASConditions() {
     if (iasReminderDismissed) return;
+    if (!chrome.runtime || !chrome.runtime.id) return;
 
-    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
-
-    chrome.storage.sync.get('iasReminderEnabled', function(data) {
-        if (chrome.runtime.lastError || data.iasReminderEnabled === false) {
-            return; // Extension setting disabled or error.
-        }
+    chrome.storage.sync.get(['iasReminderEnabled', 'prismaReminderFrequency', 'prismaCountdownDuration'], (settings) => {
+        if (chrome.runtime.lastError || settings.iasReminderEnabled === false) return;
 
         const pageText = document.body.innerText;
         if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit type')) {
-             if (!document.getElementById('ias-reminder-popup')) {
-                createIASReminderPopup();
-             }
+            const frequency = settings.prismaReminderFrequency || 'daily';
+            shouldShowReminder('iasReminderLastShown', frequency, (show) => {
+                if (show && !document.getElementById('ias-reminder-popup')) {
+                    createPrismaReminderPopup({
+                        popupId: 'ias-reminder-popup',
+                        content: {
+                            title: '⚠️ IAS Booking Reminder ⚠️',
+                            message: 'Please ensure you book as CPM',
+                            list: ['With correct rate for media type', 'Check the plan', 'Ensure what is planned is what goes live']
+                        },
+                        countdownSeconds: parseInt(settings.prismaCountdownDuration, 10) || 0,
+                        storageKey: 'iasReminderLastShown'
+                    });
+                }
+            });
         }
     });
 }

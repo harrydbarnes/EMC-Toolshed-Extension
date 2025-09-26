@@ -24,13 +24,21 @@ function showTestCustomReminderOnSettingsPage(reminder) {
     const popup = document.createElement('div');
     popup.id = 'custom-reminder-display-popup'; // Ensure this ID is styled in settings.css or style.css
 
-    popup.innerHTML = `
-        ${reminder.popupMessage}
-        <button id="custom-reminder-display-close" class="settings-button">Got it!</button>
-    `;
+    // Safely parse and append the reminder's HTML content
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(reminder.popupMessage, 'text/html');
+    Array.from(doc.body.childNodes).forEach(node => {
+        popup.appendChild(node.cloneNode(true));
+    });
+
+    const closeButton = document.createElement('button');
+    closeButton.id = 'custom-reminder-display-close';
+    closeButton.className = 'settings-button';
+    closeButton.textContent = 'Got it!';
+    popup.appendChild(closeButton);
+
     document.body.appendChild(popup);
 
-    const closeButton = document.getElementById('custom-reminder-display-close');
     closeButton.addEventListener('click', () => {
         popup.remove();
         overlay.remove();
@@ -41,7 +49,7 @@ function showTestCustomReminderOnSettingsPage(reminder) {
 
 
 // Generic function to show a test reminder popup on the settings page
-function showTestReminderPopup({ popupId, overlayId, innerHTML, closeButtonId, hasCountdown, storageKey }) {
+function showTestReminderPopup({ popupId, overlayId, content, closeButtonId, hasCountdown, storageKey, countdownSeconds = 5 }) {
     // Remove existing popups to prevent duplicates
     const existingPopup = document.getElementById(popupId);
     if (existingPopup) existingPopup.remove();
@@ -55,11 +63,35 @@ function showTestReminderPopup({ popupId, overlayId, innerHTML, closeButtonId, h
 
     const popup = document.createElement('div');
     popup.id = popupId;
-    popup.innerHTML = innerHTML;
+
+    if (content.title) {
+        const h3 = document.createElement('h3');
+        h3.textContent = content.title;
+        popup.appendChild(h3);
+    }
+    if (content.message) {
+        const p = document.createElement('p');
+        p.textContent = content.message;
+        popup.appendChild(p);
+    }
+    if (content.list && content.list.length > 0) {
+        const ul = document.createElement('ul');
+        content.list.forEach(itemText => {
+            const li = document.createElement('li');
+            li.textContent = itemText;
+            ul.appendChild(li);
+        });
+        popup.appendChild(ul);
+    }
+
+    const closeButton = document.createElement('button');
+    closeButton.id = closeButtonId;
+    closeButton.textContent = 'Got it!';
+    popup.appendChild(closeButton);
+
     document.body.appendChild(popup);
     console.log(`[Settings] Test ${popupId} CREATED.`);
 
-    const closeButton = document.getElementById(closeButtonId);
     let countdownInterval;
 
     const cleanupPopup = () => {
@@ -70,13 +102,10 @@ function showTestReminderPopup({ popupId, overlayId, innerHTML, closeButtonId, h
     };
 
     if (closeButton) {
-        if (hasCountdown) {
-            const today = new Date().toDateString();
-            const lastShownDate = localStorage.getItem(storageKey);
-
-            if (lastShownDate !== today) {
+        if (hasCountdown && countdownSeconds > 0) {
+            const runCountdown = () => {
                 closeButton.disabled = true;
-                let secondsLeft = 5;
+                let secondsLeft = countdownSeconds;
                 closeButton.textContent = `Got it! (${secondsLeft}s)`;
                 countdownInterval = setInterval(() => {
                     secondsLeft--;
@@ -86,11 +115,24 @@ function showTestReminderPopup({ popupId, overlayId, innerHTML, closeButtonId, h
                         clearInterval(countdownInterval);
                         closeButton.textContent = 'Got it!';
                         closeButton.disabled = false;
-                        localStorage.setItem(storageKey, today);
+                        if (storageKey) {
+                            localStorage.setItem(storageKey, new Date().toDateString());
+                        }
                     }
                 }, 1000);
+            };
+
+            if (storageKey) {
+                const today = new Date().toDateString();
+                const lastShownDate = localStorage.getItem(storageKey);
+                if (lastShownDate !== today) {
+                    runCountdown();
+                } else {
+                    closeButton.disabled = false;
+                }
             } else {
-                closeButton.disabled = false;
+                // No storageKey, run countdown unconditionally for this session.
+                runCountdown();
             }
         }
         closeButton.addEventListener('click', cleanupPopup);
@@ -142,40 +184,82 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Prisma Reminders
+    const prismaReminderFrequency = document.getElementById('prismaReminderFrequency');
+    const prismaCountdownDuration = document.getElementById('prismaCountdownDuration');
+
+    // Load and save settings for Prisma Reminders
+    if (prismaReminderFrequency && prismaCountdownDuration) {
+        const settingsToGet = ['prismaReminderFrequency', 'prismaCountdownDuration'];
+        chrome.storage.sync.get(settingsToGet, (data) => {
+            prismaReminderFrequency.value = data.prismaReminderFrequency || 'daily';
+            prismaCountdownDuration.value = data.prismaCountdownDuration || '5';
+        });
+
+        prismaReminderFrequency.addEventListener('change', () => {
+            chrome.storage.sync.set({ prismaReminderFrequency: prismaReminderFrequency.value }, () => {
+                console.log('Prisma reminder frequency saved:', prismaReminderFrequency.value);
+            });
+        });
+
+        prismaCountdownDuration.addEventListener('change', () => {
+            chrome.storage.sync.set({ prismaCountdownDuration: prismaCountdownDuration.value }, () => {
+                console.log('Prisma countdown duration saved:', prismaCountdownDuration.value);
+            });
+        });
+    }
+
     setupToggle('metaReminderToggle', 'metaReminderEnabled', 'Meta reminder setting saved:');
     setupToggle('iasReminderToggle', 'iasReminderEnabled', 'IAS reminder setting saved:');
 
     const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
     if (triggerMetaReminderButton) {
-        triggerMetaReminderButton.addEventListener('click', () => showTestReminderPopup({
-            popupId: 'meta-reminder-popup',
-            overlayId: 'meta-reminder-overlay',
-            innerHTML: `
-                <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
-                <p>When reconciling Meta, please:</p>
-                <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
-                <button id="meta-reminder-close">Got it!</button>
-            `,
-            closeButtonId: 'meta-reminder-close',
-            hasCountdown: true,
-            storageKey: 'settingsMetaReminderLastShown'
-        }));
+        triggerMetaReminderButton.addEventListener('click', () => {
+            const countdownDuration = parseInt(prismaCountdownDuration.value, 10);
+            showTestReminderPopup({
+                popupId: 'meta-reminder-popup',
+                overlayId: 'meta-reminder-overlay',
+                content: {
+                    title: '⚠️ Meta Reconciliation Reminder ⚠️',
+                    message: 'When reconciling Meta, please:',
+                    list: [
+                        "Actualise to the 'Supplier' option",
+                        "Self-accept the IO",
+                        "Push through on trafficking tab to Meta",
+                        "Verify success of the push, every time",
+                        "Do not just leave the page!"
+                    ]
+                },
+                closeButtonId: 'meta-reminder-close',
+                hasCountdown: countdownDuration > 0,
+                // No storageKey, so the test button countdown runs every time.
+                // The actual reminder in content.js will still respect the frequency setting.
+                countdownSeconds: countdownDuration
+            });
+        });
     }
 
     const triggerIasReminderButton = document.getElementById('triggerIasReminder');
     if (triggerIasReminderButton) {
-        triggerIasReminderButton.addEventListener('click', () => showTestReminderPopup({
-            popupId: 'ias-reminder-popup',
-            overlayId: 'ias-reminder-overlay',
-            innerHTML: `
-                <h3>⚠️ IAS Booking Reminder ⚠️</h3>
-                <p>Please ensure you book as CPM</p>
-                <ul><li>With correct rate for media type</li><li>Check the plan</li><li>Ensure what is planned is what goes live</li></ul>
-                <button id="ias-reminder-close">Got it!</button>
-            `,
-            closeButtonId: 'ias-reminder-close',
-            hasCountdown: false
-        }));
+        triggerIasReminderButton.addEventListener('click', () => {
+            const countdownDuration = parseInt(prismaCountdownDuration.value, 10);
+            showTestReminderPopup({
+                popupId: 'ias-reminder-popup',
+                overlayId: 'ias-reminder-overlay',
+                content: {
+                    title: '⚠️ IAS Booking Reminder ⚠️',
+                    message: 'Please ensure you book as CPM',
+                    list: [
+                        'With correct rate for media type',
+                        'Check the plan',
+                        'Ensure what is planned is what goes live'
+                    ]
+                },
+                closeButtonId: 'ias-reminder-close',
+                hasCountdown: countdownDuration > 0,
+                // No storageKey for this one, it should countdown every time if enabled
+                countdownSeconds: countdownDuration
+            });
+        });
     }
 
 
@@ -497,10 +581,12 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.storage.sync.get({customReminders: []}, (data) => {
             const reminders = data.customReminders;
             if (!customRemindersListDiv) return;
-            customRemindersListDiv.innerHTML = '';
+            customRemindersListDiv.textContent = ''; // Clear previous content safely
 
             if (reminders.length === 0) {
-                customRemindersListDiv.innerHTML = '<p>No custom reminders saved yet.</p>';
+                const p = document.createElement('p');
+                p.textContent = 'No custom reminders saved yet.';
+                customRemindersListDiv.appendChild(p);
                 return;
             }
 
@@ -520,11 +606,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const textDiv = document.createElement('div');
                 textDiv.style.flexGrow = '1';
-                textDiv.innerHTML = `
-                    <strong>Name:</strong> ${escapeHTML(reminder.name || 'N/A')}<br>
-                    <strong>URL Pattern:</strong> ${escapeHTML(reminder.urlPattern)}<br>
-                    <strong>Trigger Text:</strong> ${reminder.textTrigger ? escapeHTML(reminder.textTrigger) : '<em>N/A</em>'}
-                `;
+
+                const nameStrong = document.createElement('strong');
+                nameStrong.textContent = 'Name:';
+                textDiv.appendChild(nameStrong);
+                textDiv.appendChild(document.createTextNode(` ${reminder.name || 'N/A'}`));
+                textDiv.appendChild(document.createElement('br'));
+
+                const urlStrong = document.createElement('strong');
+                urlStrong.textContent = 'URL Pattern:';
+                textDiv.appendChild(urlStrong);
+                textDiv.appendChild(document.createTextNode(` ${reminder.urlPattern}`));
+                textDiv.appendChild(document.createElement('br'));
+
+                const triggerStrong = document.createElement('strong');
+                triggerStrong.textContent = 'Trigger Text:';
+                textDiv.appendChild(triggerStrong);
+                if (reminder.textTrigger) {
+                    textDiv.appendChild(document.createTextNode(` ${reminder.textTrigger}`));
+                } else {
+                    const em = document.createElement('em');
+                    em.textContent = ' N/A';
+                    textDiv.appendChild(em);
+                }
 
                 const controlsDiv = document.createElement('div');
                 controlsDiv.style.display = 'flex';
@@ -559,9 +663,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const testButton = document.createElement('button');
                 testButton.textContent = 'Test';
-                testButton.className = 'settings-button';
+                testButton.classList.add('settings-button', 'settings-button-test');
                 testButton.style.marginLeft = '10px';
-                testButton.style.backgroundColor = '#17a2b8';
                 testButton.addEventListener('click', () => showTestCustomReminderOnSettingsPage(reminder));
 
                 const editButton = document.createElement('button');

@@ -325,12 +325,20 @@ function checkForMetaConditions() {
 function checkForIASConditions() {
     if (iasReminderDismissed) return;
 
-    const pageText = document.body.innerText;
-    if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
-         if (!document.getElementById('ias-reminder-popup')) {
-            createIASReminderPopup();
-         }
-    }
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
+
+    chrome.storage.sync.get('iasReminderEnabled', function(data) {
+        if (chrome.runtime.lastError || data.iasReminderEnabled === false) {
+            return; // Extension setting disabled or error.
+        }
+
+        const pageText = document.body.innerText;
+        if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
+             if (!document.getElementById('ias-reminder-popup')) {
+                createIASReminderPopup();
+             }
+        }
+    });
 }
 
 let currentUrlForDismissFlags = window.location.href;

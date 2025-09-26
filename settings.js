@@ -101,6 +101,43 @@ function showTestMetaReminderOnSettingsPage() {
     }
 }
 
+// Function to show a test IAS Reminder on the settings page
+function showTestIasReminderOnSettingsPage() {
+    // Remove existing test popups to prevent duplicates
+    const existingPopup = document.getElementById('ias-reminder-popup');
+    if (existingPopup) existingPopup.remove();
+    const existingOverlay = document.getElementById('ias-reminder-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'reminder-overlay';
+    overlay.id = 'ias-reminder-overlay';
+    document.body.appendChild(overlay);
+
+    const popup = document.createElement('div');
+    popup.id = 'ias-reminder-popup';
+    popup.innerHTML = `
+        <h3>⚠️ IAS Booking Reminder ⚠️</h3>
+        <p>Please ensure you book as CPM</p>
+        <ul><li>With correct rate for media type</li><li>Check the plan</li><li>Ensure what is planned is what goes live</li></ul>
+        <button id="ias-reminder-close">Got it!</button>
+    `;
+    document.body.appendChild(popup);
+    console.log("[Settings] Test IAS reminder popup CREATED.");
+
+    const closeButton = document.getElementById('ias-reminder-close');
+
+    const cleanupPopup = () => {
+        popup.remove();
+        overlay.remove();
+        console.log("[Settings] Test IAS reminder popup and overlay removed.");
+    };
+
+    if (closeButton) {
+        closeButton.addEventListener('click', cleanupPopup);
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
@@ -140,6 +177,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (triggerMetaReminderButton) {
         triggerMetaReminderButton.addEventListener('click', showTestMetaReminderOnSettingsPage);
+    }
+
+    const iasReminderToggle = document.getElementById('iasReminderToggle');
+    const triggerIasReminderButton = document.getElementById('triggerIasReminder');
+    if (iasReminderToggle) {
+        chrome.storage.sync.get('iasReminderEnabled', function(data) {
+            iasReminderToggle.checked = data.iasReminderEnabled === undefined ? true : data.iasReminderEnabled;
+            if (data.iasReminderEnabled === undefined) chrome.storage.sync.set({iasReminderEnabled: true});
+        });
+        iasReminderToggle.addEventListener('change', function() {
+            chrome.storage.sync.set({iasReminderEnabled: this.checked}, () => console.log('IAS reminder setting saved:', this.checked));
+        });
+    }
+    if (triggerIasReminderButton) {
+        triggerIasReminderButton.addEventListener('click', showTestIasReminderOnSettingsPage);
     }
 
     // Campaign Management Settings

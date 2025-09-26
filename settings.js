@@ -40,101 +40,79 @@ function showTestCustomReminderOnSettingsPage(reminder) {
 }
 
 
-// Function to show a test Meta Reminder on the settings page
-function showTestMetaReminderOnSettingsPage() {
-    // Remove existing test popups to prevent duplicates
-    const existingPopup = document.getElementById('meta-reminder-popup');
+// Generic function to show a test reminder popup on the settings page
+function showTestReminderPopup({ popupId, overlayId, innerHTML, closeButtonId, hasCountdown, storageKey }) {
+    // Remove existing popups to prevent duplicates
+    const existingPopup = document.getElementById(popupId);
     if (existingPopup) existingPopup.remove();
-    const existingOverlay = document.getElementById('meta-reminder-overlay');
+    const existingOverlay = document.getElementById(overlayId);
     if (existingOverlay) existingOverlay.remove();
 
     const overlay = document.createElement('div');
     overlay.className = 'reminder-overlay';
-    overlay.id = 'meta-reminder-overlay';
+    overlay.id = overlayId;
     document.body.appendChild(overlay);
 
     const popup = document.createElement('div');
-    popup.id = 'meta-reminder-popup';
-    popup.innerHTML = `
-        <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
-        <p>When reconciling Meta, please:</p>
-        <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
-        <button id="meta-reminder-close">Got it!</button>
-    `;
+    popup.id = popupId;
+    popup.innerHTML = innerHTML;
     document.body.appendChild(popup);
-    console.log("[Settings] Test Meta reminder popup CREATED.");
+    console.log(`[Settings] Test ${popupId} CREATED.`);
 
-    const closeButton = document.getElementById('meta-reminder-close');
+    const closeButton = document.getElementById(closeButtonId);
     let countdownInterval;
 
     const cleanupPopup = () => {
         popup.remove();
         overlay.remove();
         clearInterval(countdownInterval);
-        console.log("[Settings] Test Meta reminder popup and overlay removed.");
+        console.log(`[Settings] Test ${popupId} and overlay removed.`);
     };
 
     if (closeButton) {
-        const today = new Date().toDateString();
-        const lastShownDateKey = 'settingsMetaReminderLastShown';
-        const lastShownDate = localStorage.getItem(lastShownDateKey);
+        if (hasCountdown) {
+            const today = new Date().toDateString();
+            const lastShownDate = localStorage.getItem(storageKey);
 
-        if (lastShownDate !== today) {
-            closeButton.disabled = true;
-            let secondsLeft = 5;
-            closeButton.textContent = `Got it! (${secondsLeft}s)`;
-            countdownInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    closeButton.textContent = `Got it! (${secondsLeft}s)`;
-                } else {
-                    clearInterval(countdownInterval);
-                    closeButton.textContent = 'Got it!';
-                    closeButton.disabled = false;
-                    localStorage.setItem(lastShownDateKey, today);
-                }
-            }, 1000);
-        } else {
-            closeButton.disabled = false;
+            if (lastShownDate !== today) {
+                closeButton.disabled = true;
+                let secondsLeft = 5;
+                closeButton.textContent = `Got it! (${secondsLeft}s)`;
+                countdownInterval = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft > 0) {
+                        closeButton.textContent = `Got it! (${secondsLeft}s)`;
+                    } else {
+                        clearInterval(countdownInterval);
+                        closeButton.textContent = 'Got it!';
+                        closeButton.disabled = false;
+                        localStorage.setItem(storageKey, today);
+                    }
+                }, 1000);
+            } else {
+                closeButton.disabled = false;
+            }
         }
         closeButton.addEventListener('click', cleanupPopup);
     }
 }
 
-// Function to show a test IAS Reminder on the settings page
-function showTestIasReminderOnSettingsPage() {
-    // Remove existing test popups to prevent duplicates
-    const existingPopup = document.getElementById('ias-reminder-popup');
-    if (existingPopup) existingPopup.remove();
-    const existingOverlay = document.getElementById('ias-reminder-overlay');
-    if (existingOverlay) existingOverlay.remove();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'reminder-overlay';
-    overlay.id = 'ias-reminder-overlay';
-    document.body.appendChild(overlay);
-
-    const popup = document.createElement('div');
-    popup.id = 'ias-reminder-popup';
-    popup.innerHTML = `
-        <h3>⚠️ IAS Booking Reminder ⚠️</h3>
-        <p>Please ensure you book as CPM</p>
-        <ul><li>With correct rate for media type</li><li>Check the plan</li><li>Ensure what is planned is what goes live</li></ul>
-        <button id="ias-reminder-close">Got it!</button>
-    `;
-    document.body.appendChild(popup);
-    console.log("[Settings] Test IAS reminder popup CREATED.");
-
-    const closeButton = document.getElementById('ias-reminder-close');
-
-    const cleanupPopup = () => {
-        popup.remove();
-        overlay.remove();
-        console.log("[Settings] Test IAS reminder popup and overlay removed.");
-    };
-
-    if (closeButton) {
-        closeButton.addEventListener('click', cleanupPopup);
+// Helper function to set up a toggle switch
+function setupToggle(toggleId, storageKey, logMessage) {
+    const toggle = document.getElementById(toggleId);
+    if (toggle) {
+        chrome.storage.sync.get(storageKey, function(data) {
+            toggle.checked = data[storageKey] === undefined ? true : data[storageKey];
+            if (data[storageKey] === undefined) {
+                chrome.storage.sync.set({ [storageKey]: true });
+            }
+        });
+        toggle.addEventListener('change', function() {
+            const isEnabled = this.checked;
+            chrome.storage.sync.set({ [storageKey]: isEnabled }, () => {
+                console.log(logMessage, isEnabled);
+            });
+        });
     }
 }
 
@@ -164,69 +142,47 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Prisma Reminders
-    const metaReminderToggle = document.getElementById('metaReminderToggle');
+    setupToggle('metaReminderToggle', 'metaReminderEnabled', 'Meta reminder setting saved:');
+    setupToggle('iasReminderToggle', 'iasReminderEnabled', 'IAS reminder setting saved:');
+
     const triggerMetaReminderButton = document.getElementById('triggerMetaReminder');
-    if (metaReminderToggle) {
-        chrome.storage.sync.get('metaReminderEnabled', function(data) {
-            metaReminderToggle.checked = data.metaReminderEnabled === undefined ? true : data.metaReminderEnabled;
-            if (data.metaReminderEnabled === undefined) chrome.storage.sync.set({metaReminderEnabled: true});
-        });
-        metaReminderToggle.addEventListener('change', function() {
-            chrome.storage.sync.set({metaReminderEnabled: this.checked}, () => console.log('Meta reminder setting saved:', this.checked));
-        });
-    }
     if (triggerMetaReminderButton) {
-        triggerMetaReminderButton.addEventListener('click', showTestMetaReminderOnSettingsPage);
+        triggerMetaReminderButton.addEventListener('click', () => showTestReminderPopup({
+            popupId: 'meta-reminder-popup',
+            overlayId: 'meta-reminder-overlay',
+            innerHTML: `
+                <h3>⚠️ Meta Reconciliation Reminder ⚠️</h3>
+                <p>When reconciling Meta, please:</p>
+                <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
+                <button id="meta-reminder-close">Got it!</button>
+            `,
+            closeButtonId: 'meta-reminder-close',
+            hasCountdown: true,
+            storageKey: 'settingsMetaReminderLastShown'
+        }));
     }
 
-    const iasReminderToggle = document.getElementById('iasReminderToggle');
     const triggerIasReminderButton = document.getElementById('triggerIasReminder');
-    if (iasReminderToggle) {
-        chrome.storage.sync.get('iasReminderEnabled', function(data) {
-            iasReminderToggle.checked = data.iasReminderEnabled === undefined ? true : data.iasReminderEnabled;
-            if (data.iasReminderEnabled === undefined) chrome.storage.sync.set({iasReminderEnabled: true});
-        });
-        iasReminderToggle.addEventListener('change', function() {
-            chrome.storage.sync.set({iasReminderEnabled: this.checked}, () => console.log('IAS reminder setting saved:', this.checked));
-        });
-    }
     if (triggerIasReminderButton) {
-        triggerIasReminderButton.addEventListener('click', showTestIasReminderOnSettingsPage);
+        triggerIasReminderButton.addEventListener('click', () => showTestReminderPopup({
+            popupId: 'ias-reminder-popup',
+            overlayId: 'ias-reminder-overlay',
+            innerHTML: `
+                <h3>⚠️ IAS Booking Reminder ⚠️</h3>
+                <p>Please ensure you book as CPM</p>
+                <ul><li>With correct rate for media type</li><li>Check the plan</li><li>Ensure what is planned is what goes live</li></ul>
+                <button id="ias-reminder-close">Got it!</button>
+            `,
+            closeButtonId: 'ias-reminder-close',
+            hasCountdown: false
+        }));
     }
+
 
     // Campaign Management Settings
-    const addCampaignShortcutToggle = document.getElementById('addCampaignShortcutToggle');
-    if (addCampaignShortcutToggle) {
-        chrome.storage.sync.get('addCampaignShortcutEnabled', function(data) {
-            addCampaignShortcutToggle.checked = data.addCampaignShortcutEnabled === undefined ? true : data.addCampaignShortcutEnabled;
-            if (data.addCampaignShortcutEnabled === undefined) chrome.storage.sync.set({addCampaignShortcutEnabled: true});
-        });
-        addCampaignShortcutToggle.addEventListener('change', function() {
-            chrome.storage.sync.set({addCampaignShortcutEnabled: this.checked}, () => console.log('Add Campaign shortcut setting saved:', this.checked));
-        });
-    }
-
-    const hidingSectionsToggle = document.getElementById('hidingSectionsToggle');
-    if (hidingSectionsToggle) {
-        chrome.storage.sync.get('hidingSectionsEnabled', function(data) {
-            hidingSectionsToggle.checked = data.hidingSectionsEnabled === undefined ? true : data.hidingSectionsEnabled;
-            if (data.hidingSectionsEnabled === undefined) chrome.storage.sync.set({hidingSectionsEnabled: true});
-        });
-        hidingSectionsToggle.addEventListener('change', function() {
-            chrome.storage.sync.set({hidingSectionsEnabled: this.checked}, () => console.log('Hiding Sections setting saved:', this.checked));
-        });
-    }
-
-    const automateFormFieldsToggle = document.getElementById('automateFormFieldsToggle');
-    if (automateFormFieldsToggle) {
-        chrome.storage.sync.get('automateFormFieldsEnabled', function(data) {
-            automateFormFieldsToggle.checked = data.automateFormFieldsEnabled === undefined ? true : data.automateFormFieldsEnabled;
-            if (data.automateFormFieldsEnabled === undefined) chrome.storage.sync.set({automateFormFieldsEnabled: true});
-        });
-        automateFormFieldsToggle.addEventListener('change', function() {
-            chrome.storage.sync.set({automateFormFieldsEnabled: this.checked}, () => console.log('Automate Form Fields setting saved:', this.checked));
-        });
-    }
+    setupToggle('addCampaignShortcutToggle', 'addCampaignShortcutEnabled', 'Add Campaign shortcut setting saved:');
+    setupToggle('hidingSectionsToggle', 'hidingSectionsEnabled', 'Hiding Sections setting saved:');
+    setupToggle('automateFormFieldsToggle', 'automateFormFieldsEnabled', 'Automate Form Fields setting saved:');
 
     // Aura Reminders (Timesheet)
     const timesheetReminderToggle = document.getElementById('timesheetReminderToggle');

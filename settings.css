@@ -132,8 +132,6 @@ button:hover, .settings-button:hover {
 .toggle-container .toggle-label {
     font-size: 1em;
     color: #333;
-    margin-left: auto;
-    margin-right: 10px;
 }
 
 .toggle {
@@ -141,6 +139,7 @@ button:hover, .settings-button:hover {
     display: inline-block;
     width: 50px; /* Width of the toggle */
     height: 24px; /* Height of the toggle */
+    margin-left: auto; /* Push the toggle to the far right */
 }
 
 .toggle input {

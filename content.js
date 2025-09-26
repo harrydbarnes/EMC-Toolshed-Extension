@@ -152,6 +152,8 @@ function checkAndReplaceLogo() {
 let metaReminderDismissed = false;
 let iasReminderDismissed = false;
 // Removed metaPopupTimeoutId as it's no longer used
+let metaCheckInProgress = false;
+let metaCheckIntervalId = null;
 
 function createMetaReminderPopup() {
     if (document.getElementById('meta-reminder-popup') || metaReminderDismissed) {
@@ -164,7 +166,12 @@ function createMetaReminderPopup() {
     const overlay = document.createElement('div');
     overlay.className = 'reminder-overlay';
     overlay.id = 'meta-reminder-overlay';
-    document.body.appendChild(overlay);
+    // Force the background color via inline style to win any CSS specificity wars
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+
+    // Find the correct container to inject the popup into, falling back to body
+    const container = document.getElementById('mo-body-container') || document.body;
+    container.appendChild(overlay);
 
     const popup = document.createElement('div');
     popup.id = 'meta-reminder-popup';
@@ -174,18 +181,21 @@ function createMetaReminderPopup() {
         <ul><li>Actualise to the 'Supplier' option</li><li>Self-accept the IO</li><li>Push through on trafficking tab to Meta</li><li>Verify success of the push, every time</li><li>Do not just leave the page!</li></ul>
         <button id="meta-reminder-close">Got it!</button>
     `;
-    document.body.appendChild(popup);
+    container.appendChild(popup); // Append to the correct container
     console.log("[ContentScript Prisma] Meta reminder popup CREATED.");
 
     const closeButton = document.getElementById('meta-reminder-close');
     let countdownInterval; // For the 5-second timer
 
     const cleanupPopup = () => {
-        if (popup.parentNode === document.body) {
-            document.body.removeChild(popup);
+        // Find the elements by their ID and remove them from their actual parent
+        const popupElement = document.getElementById('meta-reminder-popup');
+        if (popupElement && popupElement.parentNode) {
+            popupElement.parentNode.removeChild(popupElement);
         }
-        if (overlay.parentNode === document.body) {
-            document.body.removeChild(overlay);
+        const overlayElement = document.getElementById('meta-reminder-overlay');
+        if (overlayElement && overlayElement.parentNode) {
+            overlayElement.parentNode.removeChild(overlayElement);
         }
         metaReminderDismissed = true; // Set dismissed flag
         clearInterval(countdownInterval); // Clear countdown interval if active
@@ -267,32 +277,68 @@ function createIASReminderPopup() {
 }
 
 function checkForMetaConditions() {
-    if (metaReminderDismissed && !window.forceShowMetaReminder) return;
+    // Force show bypasses all checks.
+    if (window.forceShowMetaReminder) {
+        createMetaReminderPopup();
+        window.forceShowMetaReminder = false;
+        return;
+    }
+
+    // Standard checks.
+    if (metaReminderDismissed || metaCheckInProgress) return;
+
+    const currentUrl = window.location.href;
+    if (!currentUrl.includes('groupmuk-prisma.mediaocean.com/') || !currentUrl.includes('actualize')) {
+        return; // URL doesn't match criteria.
+    }
 
     if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
+
     chrome.storage.sync.get('metaReminderEnabled', function(data) {
-        if (chrome.runtime.lastError) return; // Error guard
-        if (data.metaReminderEnabled !== false) {
-            const pageText = document.body.innerText;
-            if (pageText.includes('000770') && pageText.includes('Redistribute all')) {
-                 if (!document.getElementById('meta-reminder-popup')) {
-                    createMetaReminderPopup();
-                 }
-            }
+        if (chrome.runtime.lastError || data.metaReminderEnabled === false) {
+            return; // Extension setting disabled or error.
         }
+
+        metaCheckInProgress = true;
+        let attempts = 0;
+        const maxAttempts = 15; // 15 attempts * 2s = 30s
+
+        const intervalId = setInterval(() => {
+            const pageText = document.body.textContent || "";
+            const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
+
+            if (conditionsMet || attempts >= maxAttempts || document.getElementById('meta-reminder-popup')) {
+                clearInterval(intervalId);
+                metaCheckInProgress = false;
+                if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
+                    createMetaReminderPopup();
+                } else if (attempts >= maxAttempts) {
+                    console.log("[ContentScript Prisma] Meta reminder polling timed out after 30 seconds.");
+                }
+                return;
+            }
+            attempts++;
+        }, 2000);
     });
-    window.forceShowMetaReminder = false;
 }
 
 function checkForIASConditions() {
     if (iasReminderDismissed) return;
 
-    const pageText = document.body.innerText;
-    if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
-         if (!document.getElementById('ias-reminder-popup')) {
-            createIASReminderPopup();
-         }
-    }
+    if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
+
+    chrome.storage.sync.get('iasReminderEnabled', function(data) {
+        if (chrome.runtime.lastError || data.iasReminderEnabled === false) {
+            return; // Extension setting disabled or error.
+        }
+
+        const pageText = document.body.innerText;
+        if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
+             if (!document.getElementById('ias-reminder-popup')) {
+                createIASReminderPopup();
+             }
+        }
+    });
 }
 
 let currentUrlForDismissFlags = window.location.href;
@@ -602,45 +648,6 @@ function handleApproverPasting() {
         }
     });
 
-    let tooltipTimeout;
-    let tooltipElement;
-
-    pasteFavouritesButton.addEventListener('mouseenter', () => {
-        tooltipTimeout = setTimeout(async () => {
-            if (tooltipElement) return;
-
-            const response = await chrome.runtime.sendMessage({ action: 'getFavouriteApprovers' });
-            if (response.status === 'success') {
-                tooltipElement = document.createElement('div');
-                tooltipElement.className = 'prisma-tooltip';
-
-                const emailsHtml = response.emails.join('<br>');
-                tooltipElement.innerHTML = `
-                    <div class="prisma-tooltip-content">
-                        ${emailsHtml}
-                    </div>
-                    <button class="prisma-tooltip-button">Manage Here</button>
-                `;
-
-                document.body.appendChild(tooltipElement);
-                const rect = pasteFavouritesButton.getBoundingClientRect();
-                tooltipElement.style.left = `${rect.left}px`;
-                tooltipElement.style.top = `${rect.bottom + 5}px`;
-
-                tooltipElement.querySelector('.prisma-tooltip-button').addEventListener('click', () => {
-                    chrome.runtime.sendMessage({ action: 'openApproversPage' });
-                });
-            }
-        }, 1000);
-    });
-
-    pasteFavouritesButton.addEventListener('mouseleave', () => {
-        clearTimeout(tooltipTimeout);
-        if (tooltipElement) {
-            tooltipElement.remove();
-            tooltipElement = null;
-        }
-    });
 
     pasteFavouritesButton.addEventListener('click', async () => {
         pasteFavouritesButton.disabled = true;
@@ -705,7 +712,6 @@ function handleManageFavouritesButton() {
     const manageFavouritesButton = document.createElement('button');
     manageFavouritesButton.textContent = 'Manage Favourites';
     manageFavouritesButton.className = 'btn-link mo-btn-link manage-favourites-button';
-    manageFavouritesButton.style.marginLeft = '5px';
 
     manageFavouritesButton.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'openApproversPage' });

@@ -231,7 +231,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 closeButtonId: 'meta-reminder-close',
                 hasCountdown: countdownDuration > 0,
-                storageKey: 'settingsMetaReminderLastShown',
+                // No storageKey, so the test button countdown runs every time.
+                // The actual reminder in content.js will still respect the frequency setting.
                 countdownSeconds: countdownDuration
             });
         });
@@ -662,9 +663,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const testButton = document.createElement('button');
                 testButton.textContent = 'Test';
-                testButton.className = 'settings-button';
+                testButton.classList.add('settings-button', 'settings-button-test');
                 testButton.style.marginLeft = '10px';
-                testButton.style.backgroundColor = '#17a2b8';
                 testButton.addEventListener('click', () => showTestCustomReminderOnSettingsPage(reminder));
 
                 const editButton = document.createElement('button');

@@ -223,6 +223,7 @@ function createPrismaReminderPopup({ popupId, content, countdownSeconds, storage
 
     const closeButton = document.createElement('button');
     closeButton.id = `${popupId}-close`;
+    closeButton.className = 'reminder-close-button';
     closeButton.textContent = 'Got it!';
     popup.appendChild(closeButton);
 
@@ -435,8 +436,7 @@ function handleGmiChatButton() {
 
     const gmiChatButton = document.createElement('button');
     gmiChatButton.textContent = 'GMI Chat';
-    gmiChatButton.className = 'btn btn-default gmi-chat-button'; // Using existing button styles
-    gmiChatButton.style.marginLeft = '5px';
+    gmiChatButton.className = 'filter-button prisma-paste-button gmi-chat-button';
 
     gmiChatButton.addEventListener('click', () => {
         const clientNameElement = document.querySelector('#gwt-debug-0-idesk-csl-product-label');

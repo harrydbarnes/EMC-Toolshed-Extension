@@ -61,6 +61,21 @@ section:last-of-type {
     padding-bottom: 0;
 }
 
+.section-header-with-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px; /* Same margin as h2 used to have */
+}
+
+.section-header-with-button h2 {
+    margin: 0; /* Remove margin from h2 as the container handles it */
+}
+
+.section-header-with-button .settings-button {
+    margin: 0; /* Remove default button margin for precise alignment */
+}
+
 section h2 {
     font-size: 1.3em;
     color: #555;

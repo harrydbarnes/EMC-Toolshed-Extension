@@ -333,7 +333,7 @@ function checkForIASConditions() {
         }
 
         const pageText = document.body.innerText;
-        if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit Type')) {
+        if (pageText.includes('001148') && pageText.includes('Flat') && pageText.includes('Unit type')) {
              if (!document.getElementById('ias-reminder-popup')) {
                 createIASReminderPopup();
              }

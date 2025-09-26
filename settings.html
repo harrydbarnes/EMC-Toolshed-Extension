@@ -55,10 +55,33 @@
 
         <section id="prisma-reminders">
             <h2>Prisma Reminders</h2>
+            <div class="prisma-reminder-options">
+                <div class="setting-row">
+                    <label for="prismaReminderFrequency">Show Reminders:</label>
+                    <div class="select-container">
+                        <select id="prismaReminderFrequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="once">Once</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label for="prismaCountdownDuration">Countdown to dismiss:</label>
+                    <div class="select-container">
+                        <select id="prismaCountdownDuration">
+                            <option value="3">3 seconds</option>
+                            <option value="5">5 seconds</option>
+                            <option value="0">None</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div class="toggle-container">
                 <span class="toggle-label">Meta Reconciliation Reminder:</span>
                 <div class="button-and-toggle-group">
-                    <button id="triggerMetaReminder" class="settings-button">Test Reminder</button>
+                    <button id="triggerMetaReminder" class="settings-button">Test</button>
                     <label class="toggle">
                         <input type="checkbox" id="metaReminderToggle">
                         <span class="slider"></span>
@@ -68,7 +91,7 @@
             <div class="toggle-container">
                 <span class="toggle-label">IAS Reminder:</span>
                 <div class="button-and-toggle-group">
-                    <button id="triggerIasReminder" class="settings-button">Test Reminder</button>
+                    <button id="triggerIasReminder" class="settings-button">Test</button>
                     <label class="toggle">
                         <input type="checkbox" id="iasReminderToggle">
                         <span class="slider"></span>

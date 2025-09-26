@@ -236,7 +236,10 @@ function createPrismaReminderPopup({ popupId, content, countdownSeconds, storage
         overlay.remove();
         clearInterval(countdownInterval);
         setReminderShown(storageKey);
-        if (popupId === 'meta-reminder-popup') metaReminderDismissed = true;
+        if (popupId === 'meta-reminder-popup') {
+            metaReminderDismissed = true;
+            metaCheckInProgress = false; // Reset the check flag on dismissal
+        }
         if (popupId === 'ias-reminder-popup') iasReminderDismissed = true;
     };
 
@@ -281,10 +284,10 @@ function checkForMetaConditions() {
                 const pageText = document.body.textContent || "";
                 const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
 
-                if (conditionsMet || attempts >= maxAttempts) {
+                if (conditionsMet) {
                     clearInterval(intervalId);
-                    metaCheckInProgress = false;
-                    if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
+                    // metaCheckInProgress remains true until the user dismisses the popup.
+                    if (!document.getElementById('meta-reminder-popup')) {
                         createPrismaReminderPopup({
                             popupId: 'meta-reminder-popup',
                             content: {
@@ -296,6 +299,9 @@ function checkForMetaConditions() {
                             storageKey: 'metaReminderLastShown'
                         });
                     }
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(intervalId);
+                    metaCheckInProgress = false; // Reset only on timeout
                 }
                 attempts++;
             }, 2000);

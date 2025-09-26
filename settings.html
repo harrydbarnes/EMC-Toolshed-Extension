@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap">
     <link rel="stylesheet" href="style.css"> <!-- Added link to shared style.css -->
     <link rel="stylesheet" href="settings.css">
+    <link rel="stylesheet" href="content.css">
     <!-- It's good practice to link a specific CSS for the settings page if major styling differences are expected -->
     <!-- <link rel="stylesheet" href="settings.css"> -->
 </head>
@@ -22,6 +23,31 @@
                 <span>Replace Prisma Logo:</span>
                 <label class="toggle">
                     <input type="checkbox" id="logoToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <section id="campaign-management-settings">
+            <h2>Prisma Efficiency Gains</h2>
+            <div class="toggle-container">
+                <span>'Add Campaign' auto clicks 'Enter Full Details':</span>
+                <label class="toggle">
+                    <input type="checkbox" id="addCampaignShortcutToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span>Hide unused sections on 'Add Campaign':</span>
+                <label class="toggle">
+                    <input type="checkbox" id="hidingSectionsToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span>Automate 'Budget type' and 'Media mix' selection:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="automateFormFieldsToggle">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -48,31 +74,6 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-            </div>
-        </section>
-
-        <section id="campaign-management-settings">
-            <h2>Campaign Management</h2>
-            <div class="toggle-container">
-                <span>Add Campaign shortcut:</span>
-                <label class="toggle">
-                    <input type="checkbox" id="addCampaignShortcutToggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="toggle-container">
-                <span>Hiding Sections:</span>
-                <label class="toggle">
-                    <input type="checkbox" id="hidingSectionsToggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="toggle-container">
-                <span>Automate Form Fields:</span>
-                <label class="toggle">
-                    <input type="checkbox" id="automateFormFieldsToggle">
-                    <span class="slider"></span>
-                </label>
             </div>
         </section>
 

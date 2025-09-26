@@ -3,33 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Release Notes</title>
+    <title>Updates</title>
     <link rel="stylesheet" href="updates.css">
 </head>
 <body>
     <div class="container">
-        <h1>Release Notes</h1>
+        <h1>Updates</h1>
 
-        <div class="release">
-            <h2>r1.2</h2>
-            <ul>
-                <li>New Prisma Approvers tool</li>
-            </ul>
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="release-notes">Release Notes</button>
+            <button class="tab-button" data-tab="roadmap">Roadmap</button>
         </div>
 
-        <div class="release">
-            <h2>r1.1</h2>
-            <ul>
-                <li>Navigation improvements</li>
-                <li>D number open tool</li>
-                <li>Prisma logo replaced in UI to signify extension is enabled</li>
-            </ul>
+        <div id="release-notes" class="tab-content active">
+            <div class="release">
+                <h2>r1.2</h2>
+                <ul>
+                    <li>New Prisma Approvers tool</li>
+                </ul>
+            </div>
+
+            <div class="release">
+                <h2>r1.1</h2>
+                <ul>
+                    <li>Navigation improvements</li>
+                    <li>D number open tool</li>
+                    <li>Prisma logo replaced in UI to signify extension is enabled</li>
+                </ul>
+            </div>
+
+            <div class="release">
+                <h2>r1</h2>
+                <ul>
+                    <li>Initial release</li>
+                </ul>
+            </div>
         </div>
 
-        <div class="release">
-            <h2>r1</h2>
+        <div id="roadmap" class="tab-content">
+            <h2>Roadmap</h2>
             <ul>
-                <li>Initial release</li>
+                <li>Integrate reminders based on senior Prisma users feedback</li>
             </ul>
         </div>
 
@@ -37,5 +51,32 @@
             <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Have an idea? Let the chef know here!</a>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabContainer = document.querySelector('.tab-container');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            if (tabContainer) {
+                tabContainer.addEventListener('click', (e) => {
+                    const clickedButton = e.target.closest('.tab-button');
+                    if (!clickedButton) return;
+
+                    const tabId = clickedButton.dataset.tab;
+                    const targetContent = document.getElementById(tabId);
+
+                    // Deactivate all buttons and content
+                    tabButtons.forEach(button => button.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // Activate the clicked button and corresponding content
+                    clickedButton.classList.add('active');
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

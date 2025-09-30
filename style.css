@@ -377,7 +377,7 @@ a.settings-page-link:active {
 /* Toast Notification */
 .toast {
     position: fixed;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     background-color: #fff;
     color: #333;
@@ -392,16 +392,16 @@ a.settings-page-link:active {
 
 .toast.show {
     visibility: visible;
-    animation: slide-in-down 0.5s forwards;
+    animation: slide-in-up 0.5s forwards;
 }
 
 .toast.hide {
     animation: slide-out-right 0.5s forwards;
 }
 
-@keyframes slide-in-down {
+@keyframes slide-in-up {
     from {
-        transform: translateY(-100px);
+        transform: translateY(100px);
         opacity: 0;
     }
     to {

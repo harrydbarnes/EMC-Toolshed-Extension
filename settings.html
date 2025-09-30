@@ -54,7 +54,10 @@
         </section>
 
         <section id="prisma-reminders">
-            <h2>Prisma Reminders</h2>
+            <div class="section-header-with-button">
+                <h2>Prisma Reminders</h2>
+                <button id="resetRemindersButton" class="settings-button settings-button-secondary">Reset</button>
+            </div>
             <div class="prisma-reminder-options">
                 <div class="setting-row">
                     <label for="prismaReminderFrequency">Show Reminders:</label>
@@ -199,6 +202,9 @@
                 <button id="modalCancelButton" class="settings-button settings-button-secondary">Cancel</button>
             </div>
         </div>
+    </div>
+    <div id="toast-notification" class="toast">
+        <div class="toast-message"></div>
     </div>
 </body>
 </html>

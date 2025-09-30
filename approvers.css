@@ -321,55 +321,6 @@ body {
     }
 }
 
-/* Toast Notification */
-.toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #333;
-    color: #fff;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    visibility: hidden;
-    opacity: 0;
-}
-
-.toast.show {
-    visibility: visible;
-    animation: slide-in-up 0.5s forwards;
-}
-
-.toast.hide {
-    animation: slide-out-right 0.5s forwards;
-}
-
-@keyframes slide-in-up {
-    from {
-        transform: translateY(100px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slide-out-right {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100px);
-        opacity: 0;
-    }
-}
-
-.toast-message {
-    font-size: 16px;
-}
 
 /* Pop animation for the star */
 @keyframes pop-animation {

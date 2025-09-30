@@ -3,33 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Release Notes</title>
+    <title>Updates</title>
     <link rel="stylesheet" href="updates.css">
 </head>
 <body>
     <div class="container">
-        <h1>Release Notes</h1>
+        <h1>Updates</h1>
 
-        <div class="release">
-            <h2>r1.2</h2>
-            <ul>
-                <li>New Prisma Approvers tool</li>
-            </ul>
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="release-notes">Release Notes</button>
+            <button class="tab-button" data-tab="roadmap">Roadmap</button>
         </div>
 
-        <div class="release">
-            <h2>r1.1</h2>
-            <ul>
-                <li>Navigation improvements</li>
-                <li>D number open tool</li>
-                <li>Prisma logo replaced in UI to signify extension is enabled</li>
-            </ul>
+        <div id="release-notes" class="tab-content active">
+            <div class="release">
+                <h2>r1.2</h2>
+                <ul>
+                    <li>New Prisma Approvers tool</li>
+                </ul>
+            </div>
+
+            <div class="release">
+                <h2>r1.1</h2>
+                <ul>
+                    <li>Navigation improvements</li>
+                    <li>D number open tool</li>
+                    <li>Prisma logo replaced in UI to signify extension is enabled</li>
+                </ul>
+            </div>
+
+            <div class="release">
+                <h2>r1</h2>
+                <ul>
+                    <li>Initial release</li>
+                </ul>
+            </div>
         </div>
 
-        <div class="release">
-            <h2>r1</h2>
+        <div id="roadmap" class="tab-content">
+            <h2>Roadmap</h2>
             <ul>
-                <li>Initial release</li>
+                <li>Integrate reminders based on senior Prisma users feedback</li>
+                <li>Counter for how long the loading wheel has appeared on your screen, with averages of per day and per week, month</li>
+                <li>Stats of use of Prisma alongside the above</li>
+                <li>Preventing wrongful setup of certain elements of Campaigns, Placements and Packages</li>
+                <li>Further efficiency automation gains</li>
+                <li>Log campaigns by client for easy searching</li>
+                <li>Remove and automate certain supplier drop-downs (e.g., ad serving)</li>
+                <li>'Recently approved' badge for timesheet approvals</li>
             </ul>
         </div>
 
@@ -37,5 +58,6 @@
             <a href="https://teams.microsoft.com/l/chat/0/0?users=harry.barnes@essencemediacom.com&topicname=Chat" target="_blank">Have an idea? Let the chef know here!</a>
         </div>
     </div>
+    <script src="updates.js"></script>
 </body>
 </html>

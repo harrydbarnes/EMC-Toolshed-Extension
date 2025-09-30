@@ -223,6 +223,7 @@ function createPrismaReminderPopup({ popupId, content, countdownSeconds, storage
 
     const closeButton = document.createElement('button');
     closeButton.id = `${popupId}-close`;
+    closeButton.className = 'reminder-close-button';
     closeButton.textContent = 'Got it!';
     popup.appendChild(closeButton);
 
@@ -235,7 +236,10 @@ function createPrismaReminderPopup({ popupId, content, countdownSeconds, storage
         overlay.remove();
         clearInterval(countdownInterval);
         setReminderShown(storageKey);
-        if (popupId === 'meta-reminder-popup') metaReminderDismissed = true;
+        if (popupId === 'meta-reminder-popup') {
+            metaReminderDismissed = true;
+            metaCheckInProgress = false; // Reset the check flag on dismissal
+        }
         if (popupId === 'ias-reminder-popup') iasReminderDismissed = true;
     };
 
@@ -280,10 +284,10 @@ function checkForMetaConditions() {
                 const pageText = document.body.textContent || "";
                 const conditionsMet = pageText.includes('000770') && pageText.includes('Redistribute all');
 
-                if (conditionsMet || attempts >= maxAttempts) {
+                if (conditionsMet) {
                     clearInterval(intervalId);
-                    metaCheckInProgress = false;
-                    if (conditionsMet && !document.getElementById('meta-reminder-popup')) {
+                    // metaCheckInProgress remains true until the user dismisses the popup.
+                    if (!document.getElementById('meta-reminder-popup')) {
                         createPrismaReminderPopup({
                             popupId: 'meta-reminder-popup',
                             content: {
@@ -295,6 +299,9 @@ function checkForMetaConditions() {
                             storageKey: 'metaReminderLastShown'
                         });
                     }
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(intervalId);
+                    metaCheckInProgress = false; // Reset only on timeout
                 }
                 attempts++;
             }, 2000);
@@ -426,6 +433,33 @@ function createCustomReminderPopup(reminder) {
     console.log(`[ContentScript Prisma] Custom reminder popup created for: ${reminder.name}`);
 }
 
+
+function handleGmiChatButton() {
+    const workflowWidget = document.querySelector('.workflow-widget-wrapper');
+    if (!workflowWidget || workflowWidget.querySelector('.gmi-chat-button')) {
+        return; // Exit if the widget doesn't exist or the button is already there
+    }
+
+    const gmiChatButton = document.createElement('button');
+    gmiChatButton.textContent = 'GMI Chat';
+    gmiChatButton.className = 'filter-button prisma-paste-button gmi-chat-button';
+
+    gmiChatButton.addEventListener('click', () => {
+        const clientNameElement = document.querySelector('#gwt-debug-0-idesk-csl-product-label');
+        const campaignNameElement = document.querySelector('#gwt-debug-campaign-name');
+
+        const clientName = clientNameElement ? clientNameElement.textContent.trim() : 'CLIENT_NAME_HERE';
+        const campaignName = campaignNameElement ? campaignNameElement.getAttribute('title').trim() : 'CAMPAIGN_NAME_HERE';
+        const currentUrl = window.location.href;
+
+        const message = `${clientName} - ${campaignName}`;
+        const teamsUrl = `https://teams.microsoft.com/l/chat/0/0?users=edwin.balagopalan@wppmedia.com,ellie.vigors@wppmedia.com,harry.barnes@wppmedia.com,isobel.shaw@wppmedia.com,jett.hudson@wppmedia.com,lauren.pringle@wppmedia.com,matt.akerman@wppmedia.com,mihaela.lupu@wppmedia.com,rita.bressi@wppmedia.com,santiago.feberero@wppmedia.com,scott.moore@wppmedia.com,shreya.gurung@wppmedia.com,trish.costa@wppmedia.com&message=${encodeURIComponent(message)}%20${encodeURIComponent(currentUrl)}`;
+
+        window.open(teamsUrl, '_blank');
+    });
+
+    workflowWidget.appendChild(gmiChatButton);
+}
 
 function checkCustomReminders() {
     console.log("[ContentScript Prisma] Running checkCustomReminders...");
@@ -747,6 +781,7 @@ function mainContentScriptInit() {
                 handleCampaignManagementFeatures();
                 handleApproverPasting();
                 handleManageFavouritesButton();
+                handleGmiChatButton();
             }, 300);
         }
     });

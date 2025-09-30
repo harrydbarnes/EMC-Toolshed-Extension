@@ -22,7 +22,7 @@
 #meta-reminder-popup ul, #ias-reminder-popup ul, #custom-reminder-display-popup ul { text-align: left; margin-bottom: 20px; font-size: 14px; padding-left: 20px; }
 #meta-reminder-popup li, #ias-reminder-popup li, #custom-reminder-display-popup li { margin-bottom: 5px; }
 
-#meta-reminder-close, #ias-reminder-close, #custom-reminder-display-close {
+.reminder-close-button {
     background-color: white;
     color: #ff4087;
     border: none;
@@ -32,14 +32,17 @@
     font-weight: bold;
     transition: background-color 0.2s, transform 0.1s;
 }
-#meta-reminder-close:hover:not(:disabled), #ias-reminder-close:hover, #custom-reminder-display-close:hover {
+
+.reminder-close-button:hover:not(:disabled) {
     background-color: #f8f8f8;
     animation: vibrate 0.3s ease-in-out; /* This vibrate is for reminder buttons */
 }
-#meta-reminder-close:active:not(:disabled), #ias-reminder-close:active, #custom-reminder-display-close:active {
+
+.reminder-close-button:active:not(:disabled) {
     transform: translateY(2px);
 }
-#meta-reminder-close:disabled, #custom-reminder-display-close:disabled {
+
+.reminder-close-button:disabled {
     background-color: #cccccc;
     color: #666666;
     cursor: not-allowed;

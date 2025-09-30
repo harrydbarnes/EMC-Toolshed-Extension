@@ -162,6 +162,24 @@ function setupToggle(toggleId, storageKey, logMessage) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
 
+    // Toast Notification
+    function showToast(message) {
+        const toastNotification = document.getElementById('toast-notification');
+        const toastMessage = toastNotification.querySelector('.toast-message');
+        if (!toastNotification || !toastMessage) return;
+
+        toastMessage.textContent = message;
+        toastNotification.classList.add('show');
+
+        setTimeout(() => {
+            toastNotification.classList.remove('show');
+            toastNotification.classList.add('hide');
+            setTimeout(() => {
+                toastNotification.classList.remove('hide');
+            }, 500); // Cleanup hide class after animation
+        }, 3000); // Show for 3 seconds
+    }
+
     // General Settings
     const logoToggle = document.getElementById('logoToggle');
     if (logoToggle) {
@@ -204,6 +222,40 @@ document.addEventListener('DOMContentLoaded', function() {
         prismaCountdownDuration.addEventListener('change', () => {
             chrome.storage.sync.set({ prismaCountdownDuration: prismaCountdownDuration.value }, () => {
                 console.log('Prisma countdown duration saved:', prismaCountdownDuration.value);
+            });
+        });
+    }
+
+    const resetRemindersButton = document.getElementById('resetRemindersButton');
+    if (resetRemindersButton) {
+        resetRemindersButton.addEventListener('click', () => {
+            // Clear local storage timestamps to allow reminders to show again
+            chrome.storage.local.remove(['metaReminderLastShown', 'iasReminderLastShown'], () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error clearing reminder timestamps:', chrome.runtime.lastError);
+                } else {
+                    console.log('Reminder timestamps cleared from local storage.');
+                }
+            });
+
+            // Reset sync storage settings to their default values
+            const defaultSettings = {
+                prismaReminderFrequency: 'daily',
+                prismaCountdownDuration: '5'
+            };
+            chrome.storage.sync.set(defaultSettings, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error resetting reminder settings:', chrome.runtime.lastError);
+                    showToast('An error occurred while resetting reminder settings.');
+                } else {
+                    console.log('Reminder settings reset to default in sync storage.');
+
+                    // Update the UI on the settings page to reflect these changes
+                    if (prismaReminderFrequency) prismaReminderFrequency.value = 'daily';
+                    if (prismaCountdownDuration) prismaCountdownDuration.value = '5';
+
+                    showToast('Prisma reminders have been reset.');
+                }
             });
         });
     }

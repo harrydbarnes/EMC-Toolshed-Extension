@@ -396,6 +396,7 @@ a.settings-page-link:active {
 }
 
 .toast.hide {
+    visibility: visible; /* Keep it visible during the hide animation */
     animation: slide-out-right 0.5s forwards;
 }
 

@@ -95,9 +95,6 @@ body::-webkit-scrollbar-thumb:hover {
 /* The general .button-group styles will now apply to the single group */
 
 
-#prismaApproversButton {
-    flex-basis: 100%;
-}
 
 .nav-button, .location-button {
     flex: 1 0 calc(50% - 5px); /* Style to arrange buttons in pairs */

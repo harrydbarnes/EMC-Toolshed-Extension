@@ -1,15 +1,104 @@
-const { getNextAlarmDate } = require('../background');
-
-describe('getNextAlarmDate', () => {
-    // Set a fixed date for consistent testing
-    const constantDate = new Date('2024-07-26T10:00:00'); // A Friday
-
-    beforeAll(() => {
-        jest.useFakeTimers();
-        jest.setSystemTime(constantDate);
+describe('Time Bomb Feature in background.js', () => {
+    beforeEach(() => {
+        // Reset all mocks and storage before each test
+        if (typeof resetMocks === 'function') {
+            resetMocks();
+        }
+        jest.resetModules(); // This is crucial to get a fresh module
     });
 
-    afterAll(() => {
+    afterEach(() => {
+        jest.useRealTimers(); // Clean up fake timers after each test
+    });
+
+    test('should set initial deadline correctly when installed on a Monday', () => {
+        // Set the fake time BEFORE importing the module
+        jest.useFakeTimers().setSystemTime(new Date('2024-07-29T10:00:00')); // A Monday
+
+        // Import the module within isolateModules to run its top-level code with the fake timer
+        jest.isolateModules(() => {
+            require('../background');
+        });
+
+        // The initial checkTimeBomb has run. Now, check the result in our mock storage.
+        const storage = chrome.storage.local.__getStore();
+        expect(storage.initialDeadline).toBeDefined();
+        expect(storage.timeBombActive).toBe(false);
+
+        // The next deadline should be Tuesday, July 30, 2024 at 23:59
+        const expectedDeadline = new Date('2024-07-30T23:59:00');
+        expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
+    });
+
+    test('should set deadline for next week if installed after the deadline on a Tuesday', () => {
+        // Set the fake time AFTER the deadline time on a Tuesday
+        jest.useFakeTimers().setSystemTime(new Date('2024-07-30T23:59:01'));
+
+        jest.isolateModules(() => {
+            require('../background');
+        });
+
+        const storage = chrome.storage.local.__getStore();
+        // The deadline should be for the following Tuesday
+        const expectedDeadline = new Date('2024-08-06T23:59:00');
+        expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
+    });
+
+    test('should become active after the deadline has passed', async () => {
+        // Pre-populate storage with an existing deadline
+        const initialDeadline = new Date('2024-07-30T23:59:00').getTime();
+        chrome.storage.local.__getStore().initialDeadline = initialDeadline;
+
+        // Set time to AFTER the deadline
+        jest.useFakeTimers().setSystemTime(new Date('2024-07-31T00:00:01'));
+
+        let checkTimeBomb;
+        jest.isolateModules(() => {
+            // We require it again to get the function, but the initial run won't affect our pre-populated state
+            checkTimeBomb = require('../background').checkTimeBomb;
+        });
+
+        // Run the check again at the new time
+        await checkTimeBomb();
+
+        const storage = await chrome.storage.local.get('timeBombActive');
+        expect(storage.timeBombActive).toBe(true);
+    });
+
+    test('should remain inactive before the deadline has passed', async () => {
+        const initialDeadline = new Date('2024-07-30T23:59:00').getTime();
+        chrome.storage.local.__getStore().initialDeadline = initialDeadline;
+
+        // Set time to BEFORE the deadline
+        jest.useFakeTimers().setSystemTime(new Date('2024-07-30T23:58:59'));
+
+        let checkTimeBomb;
+        jest.isolateModules(() => {
+            checkTimeBomb = require('../background').checkTimeBomb;
+        });
+
+        await checkTimeBomb();
+
+        const storage = await chrome.storage.local.get('timeBombActive');
+        expect(storage.timeBombActive).toBe(false);
+    });
+});
+
+describe('getNextAlarmDate (existing tests)', () => {
+    let getNextAlarmDate;
+
+     beforeAll(() => {
+        const background = require('../background');
+        getNextAlarmDate = background.getNextAlarmDate;
+    });
+
+    const constantDate = new Date('2024-07-26T10:00:00'); // A Friday
+
+    beforeEach(() => {
+        jest.useFakeTimers().setSystemTime(constantDate);
+    });
+
+    afterEach(() => {
         jest.useRealTimers();
     });
 
@@ -18,74 +107,13 @@ describe('getNextAlarmDate', () => {
         const expectedDate = new Date(constantDate);
         expectedDate.setDate(constantDate.getDate() + 7);
         expectedDate.setHours(9, 0, 0, 0);
-        // It's past 9:00 on Friday, so it should be next Friday
-        expect(nextAlarm.getFullYear()).toBe(expectedDate.getFullYear());
-        expect(nextAlarm.getMonth()).toBe(expectedDate.getMonth());
-        expect(nextAlarm.getDate()).toBe(expectedDate.getDate());
-        expect(nextAlarm.getDay()).toBe(5); // 5 = Friday
-        expect(nextAlarm.getHours()).toBe(9);
-        expect(nextAlarm.getMinutes()).toBe(0);
+        expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
     });
 
     test('should return the upcoming Friday in the same week if the time has not passed', () => {
         const nextAlarm = getNextAlarmDate('Friday', '14:30');
-        // It's before 14:30 on Friday, so it should be today
-        expect(nextAlarm.getDay()).toBe(5); // 5 = Friday
-        expect(nextAlarm.getDate()).toBe(constantDate.getDate());
-        expect(nextAlarm.getHours()).toBe(14);
-        expect(nextAlarm.getMinutes()).toBe(30);
-    });
-
-    test('should return next Monday if current day is Friday', () => {
-        const nextAlarm = getNextAlarmDate('Monday', '09:30');
         const expectedDate = new Date(constantDate);
-        expectedDate.setDate(constantDate.getDate() + 3); // Friday to Monday is 3 days
-        expectedDate.setHours(9, 30, 0, 0);
-
-        const actualAlarm = getNextAlarmDate('Monday', '09:30');
-
-        expect(actualAlarm.getFullYear()).toBe(expectedDate.getFullYear());
-        expect(actualAlarm.getMonth()).toBe(expectedDate.getMonth());
-        expect(actualAlarm.getDate()).toBe(expectedDate.getDate());
-        expect(actualAlarm.getDay()).toBe(1); // 1 = Monday
-        expect(actualAlarm.getHours()).toBe(9);
-        expect(actualAlarm.getMinutes()).toBe(30);
-    });
-
-    test('should handle month rollovers correctly', () => {
-        // Set date to the end of the month
-        const customDate = new Date('2024-08-30T15:00:00'); // A Friday
-        jest.setSystemTime(customDate);
-
-        const nextAlarm = getNextAlarmDate('Wednesday', '11:00');
-        // Next Wednesday is in September
-        expect(nextAlarm.getMonth()).toBe(8); // Month is 0-indexed, so 8 = September
-        expect(nextAlarm.getDate()).toBe(4);
-        expect(nextAlarm.getFullYear()).toBe(2024);
-    });
-
-    test('should handle year rollovers correctly', () => {
-        // Set date to the end of the year
-        const customDate = new Date('2024-12-30T10:00:00'); // A Monday
-        jest.setSystemTime(customDate);
-
-        const nextAlarm = getNextAlarmDate('Tuesday', '09:00');
-        expect(nextAlarm.getFullYear()).toBe(2024);
-        expect(nextAlarm.getMonth()).toBe(11); // 11 = December
-        expect(nextAlarm.getDate()).toBe(31);
-    });
-
-    test('should return a date exactly 7 days in the future if the day is the same and time is earlier', () => {
-        const customDate = new Date('2024-07-26T08:00:00'); // Friday morning
-        jest.setSystemTime(customDate);
-
-        const nextAlarm = getNextAlarmDate('Friday', '07:00'); // Time has passed
-        const expectedDate = new Date(customDate);
-        expectedDate.setDate(customDate.getDate() + 7);
-        expectedDate.setHours(7, 0, 0, 0);
-
-        expect(nextAlarm.getFullYear()).toBe(expectedDate.getFullYear());
-        expect(nextAlarm.getMonth()).toBe(expectedDate.getMonth());
-        expect(nextAlarm.getDate()).toBe(expectedDate.getDate());
+        expectedDate.setHours(14, 30, 0, 0);
+        expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
     });
 });

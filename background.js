@@ -1,6 +1,59 @@
 import { approversData } from './approvers-data.js';
 
+// --- Time-Bomb Feature ---
+const timeBombConfig = {
+  enabled: 'Y', // Change to 'N' to disable
+  disableDay: 2, // Tuesday (0=Sun, 1=Mon, 2=Tue, etc.)
+  disableHour: 23,
+  disableMinute: 59
+};
+
+function getNextDeadline() {
+  const now = new Date();
+  const deadline = new Date(now);
+  const dayOfWeek = now.getDay();
+  let daysUntil = (timeBombConfig.disableDay - dayOfWeek + 7) % 7;
+  if (daysUntil === 0 && (now.getHours() > timeBombConfig.disableHour || (now.getHours() === timeBombConfig.disableHour && now.getMinutes() >= timeBombConfig.disableMinute))) {
+    daysUntil = 7;
+  }
+  deadline.setDate(now.getDate() + daysUntil);
+  deadline.setHours(timeBombConfig.disableHour, timeBombConfig.disableMinute, 0, 0);
+  return deadline.getTime();
+}
+
+function checkTimeBomb() {
+  if (timeBombConfig.enabled !== 'Y') {
+    // If disabled in the code, clear all time bomb variables from storage.
+    chrome.storage.local.remove(['timeBombActive', 'timeBombDeadline', 'initialDeadline']);
+    return;
+  }
+
+  chrome.storage.local.get(['initialDeadline', 'timeBombActive'], (data) => {
+    let initialDeadline = data.initialDeadline;
+    if (!initialDeadline) {
+      initialDeadline = getNextDeadline();
+    }
+
+    const now = new Date().getTime();
+    const isActive = now > initialDeadline;
+
+    const newStorage = { initialDeadline: initialDeadline, timeBombDeadline: initialDeadline };
+    if (data.timeBombActive !== isActive) {
+        newStorage.timeBombActive = isActive;
+    }
+
+    chrome.storage.local.set(newStorage);
+  });
+}
+
+// Initial check and set up a recurring alarm
+checkTimeBomb();
+chrome.alarms.create('timeBombCheck', { periodInMinutes: 1 });
+// --- End Time-Bomb Feature ---
+
+
 chrome.runtime.onInstalled.addListener(() => {
+  checkTimeBomb(); // Run on install
   if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
   chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
     if (chrome.runtime.lastError) return; // Error guard
@@ -118,7 +171,9 @@ async function playAlarmSound() {
 
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'timesheetReminder') {
+  if (alarm.name === 'timeBombCheck') {
+    checkTimeBomb();
+  } else if (alarm.name === 'timesheetReminder') {
     showTimesheetNotification(); // This will now trigger the notification and sound via offscreen document
   }
 });
@@ -363,8 +418,19 @@ function scrapeAndDownloadCsv() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Received message:", request);
-    if (request.action === "showTimesheetNotification") {
+    chrome.storage.local.get('timeBombActive', (data) => {
+        if (data.timeBombActive) {
+            console.log(`Message with action "${request.action}" blocked by time bomb.`);
+            // We can optionally send a response back to the caller to let them know it was blocked.
+            if (sendResponse) {
+                sendResponse({ status: 'error', message: 'All features have been disabled.' });
+            }
+            return; // Stop all further execution of the listener.
+        }
+
+        // If the time bomb is not active, proceed with the normal message handling.
+        console.log("Received message:", request);
+        if (request.action === "showTimesheetNotification") {
         console.log("Showing timesheet notification");
         showTimesheetNotification();
         sendResponse({status: "Notification shown"});
@@ -445,6 +511,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ status: 'success' });
     }
     return true;  // Indicates that the response is sent asynchronously
+    }); // close chrome.storage.local.get
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -467,5 +534,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getNextAlarmDate, createTimesheetAlarm };
+    module.exports = {
+        getNextAlarmDate,
+        createTimesheetAlarm,
+        // For testing
+        getNextDeadline,
+        checkTimeBomb
+    };
 }

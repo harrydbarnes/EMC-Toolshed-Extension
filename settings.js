@@ -160,6 +160,35 @@ function setupToggle(toggleId, storageKey, logMessage) {
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Time-Bomb Disablement ---
+    chrome.storage.local.get('timeBombActive', (data) => {
+        if (data.timeBombActive) {
+            // Show permanent toast
+            const toast = document.getElementById('toast-notification');
+            const message = toast.querySelector('.toast-message');
+            message.textContent = 'Please note all features are disabled, except for exporting custom reminders. Contact Harry for re-install.';
+            toast.classList.add('show', 'permanent'); // 'permanent' class can be styled to ensure it stays
+
+            // Disable all interactive elements except for the export functionality
+            document.querySelectorAll('input, button, select, textarea, a').forEach(el => {
+                // IDs of elements to keep enabled
+                const allowedIds = ['generateExportData', 'exportDataTextarea'];
+                if (!allowedIds.includes(el.id)) {
+                    el.disabled = true;
+                    el.style.pointerEvents = 'none';
+                    el.style.opacity = '0.6';
+                    el.classList.add('disabled-by-time-bomb');
+                }
+            });
+             // Specifically re-enable the export textarea if it got disabled
+            const exportTextarea = document.getElementById('exportDataTextarea');
+            if (exportTextarea) {
+                exportTextarea.disabled = false;
+            }
+        }
+    });
+    // --- End Time-Bomb Disablement ---
+
     console.log('Settings page loaded');
 
     // Toast Notification

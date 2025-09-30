@@ -1,4 +1,15 @@
-console.log("[ContentScript Prisma] Script Injected on URL:", window.location.href, "at", new Date().toLocaleTimeString());
+(function() { // Wrap the entire script in an IIFE to control execution.
+  chrome.storage.local.get('timeBombActive', (data) => {
+    if (data.timeBombActive) {
+      console.log('Ops Toolshed features disabled due to time bomb.');
+      return; // Do not initialize anything if the time bomb is active.
+    }
+    // If not active, run the main script logic.
+    initializeContentScript();
+  });
+
+  function initializeContentScript() {
+    console.log("[ContentScript Prisma] Script Injected on URL:", window.location.href, "at", new Date().toLocaleTimeString());
 
 // Global variables for custom reminders
 let activeCustomReminders = [];
@@ -746,6 +757,9 @@ function handleManageFavouritesButton() {
 // --- End Custom Reminder Functions ---
 
 function shouldReplaceLogoOnThisPage() {
+    if (typeof window === 'undefined' || !window.location || !window.location.href) {
+        return false; // Guard against test environments where window/location might not be fully available
+    }
     const url = window.location.href;
     // Updated condition:
     return url.includes('aura.mediaocean.com') || url.includes('prisma.mediaocean.com');
@@ -816,4 +830,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     return true; // Keep the message channel open for asynchronous response if needed
 });
 
-console.log("[ContentScript Prisma] Event listeners, including onMessage, should be set up now.");
+    console.log("[ContentScript Prisma] Event listeners, including onMessage, should be set up now.");
+  } // End of initializeContentScript
+})(); // End of IIFE

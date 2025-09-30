@@ -91,13 +91,6 @@ body::-webkit-scrollbar-thumb:hover {
     margin-bottom: 5px; /* Default margin-bottom for button groups */
 }
 
-.single-button-container {
-    margin-bottom: 15px;
-}
-
-.single-button-container .nav-button {
-    flex-basis: 100%;
-}
 
 /* Removed specific styles for .button-group.timesheet-group */
 /* The general .button-group styles will now apply to the single group */

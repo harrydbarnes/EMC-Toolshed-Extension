@@ -12,20 +12,24 @@ describe('Time Bomb Feature in background.js', () => {
     });
 
     test('should set initial deadline correctly when installed on a Monday', () => {
-        // Set the fake time BEFORE importing the module
+        // Set the fake time BEFORE running the setup
         jest.useFakeTimers().setSystemTime(new Date('2024-07-29T10:00:00')); // A Monday
 
-        // Import the module within isolateModules to run its top-level code with the fake timer
+        // Load the module, which registers the listener
         jest.isolateModules(() => {
             require('../background');
         });
 
-        // The initial checkTimeBomb has run. Now, check the result in our mock storage.
+        // Manually trigger the onInstalled event to simulate installation
+        if (chrome.runtime.onInstalled.listener) {
+            chrome.runtime.onInstalled.listener();
+        }
+
+        // Now check the storage
         const storage = chrome.storage.local.__getStore();
         expect(storage.initialDeadline).toBeDefined();
         expect(storage.timeBombActive).toBe(false);
 
-        // The next deadline should be Tuesday, July 30, 2024 at 23:59
         const expectedDeadline = new Date('2024-07-30T23:59:00');
         expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
     });
@@ -38,8 +42,12 @@ describe('Time Bomb Feature in background.js', () => {
             require('../background');
         });
 
+        // Manually trigger the onInstalled event
+        if (chrome.runtime.onInstalled.listener) {
+            chrome.runtime.onInstalled.listener();
+        }
+
         const storage = chrome.storage.local.__getStore();
-        // The deadline should be for the following Tuesday
         const expectedDeadline = new Date('2024-08-06T23:59:00');
         expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
     });

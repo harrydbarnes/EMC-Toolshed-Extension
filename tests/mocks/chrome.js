@@ -57,7 +57,10 @@ const localStorage = createStorageAreaMock();
 global.chrome = {
   runtime: {
     onInstalled: {
-      addListener: jest.fn(),
+      addListener: jest.fn((listener) => {
+        global.chrome.runtime.onInstalled.listener = listener;
+      }),
+      listener: null,
     },
     onMessage: {
       addListener: jest.fn((listener) => {
@@ -104,7 +107,9 @@ global.chrome = {
 global.resetMocks = () => {
     // Reset all jest.fn() calls
     global.chrome.runtime.onInstalled.addListener.mockClear();
+    global.chrome.runtime.onInstalled.listener = null;
     global.chrome.runtime.onMessage.addListener.mockClear();
+    global.chrome.runtime.onMessage.listener = null;
     global.chrome.runtime.getURL.mockClear();
     global.chrome.alarms.create.mockClear();
     global.chrome.alarms.clear.mockClear();

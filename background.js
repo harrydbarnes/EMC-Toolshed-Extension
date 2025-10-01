@@ -28,26 +28,22 @@ function checkTimeBomb() {
     return;
   }
 
-  chrome.storage.local.get(['initialDeadline', 'timeBombActive'], (data) => {
+  chrome.storage.local.get(['initialDeadline'], (data) => {
     let initialDeadline = data.initialDeadline;
     if (!initialDeadline) {
       initialDeadline = getNextDeadline();
     }
 
     const now = new Date().getTime();
-    const isActive = now > initialDeadline;
+    const timeBombActive = now > initialDeadline;
 
-    const newStorage = { initialDeadline };
-    if (data.timeBombActive !== isActive) {
-        newStorage.timeBombActive = isActive;
-    }
-
-    chrome.storage.local.set(newStorage);
+    // Set both values. This is simpler and ensures consistency.
+    chrome.storage.local.set({ initialDeadline, timeBombActive });
   });
 }
 
-// Initial check and set up a recurring alarm
-checkTimeBomb();
+// Set up a recurring alarm to check the time bomb status.
+// The onInstalled listener will handle the initial check.
 chrome.alarms.create('timeBombCheck', { periodInMinutes: 1 });
 // --- End Time-Bomb Feature ---
 
@@ -226,42 +222,20 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 function openCampaignWithDNumberScript(dNumber) {
-    const findElement = (selector) => {
+    const findElement = (selector, timeout = 10000) => {
         return new Promise((resolve, reject) => {
-            const timeout = 10000; // 10 seconds
             const intervalTime = 500;
             let elapsedTime = 0;
-
-            const queryShadowDom = (root, selector) => {
-                const elements = root.querySelectorAll(selector);
-                for (const element of elements) {
-                    if (element.offsetParent !== null) {
-                        return element;
-                    }
-                }
-
-                const allElements = root.querySelectorAll('*');
-                for (const element of allElements) {
-                    if (element.shadowRoot) {
-                        const foundInShadow = queryShadowDom(element.shadowRoot, selector);
-                        if (foundInShadow) {
-                            return foundInShadow;
-                        }
-                    }
-                }
-                return null;
-            };
-
             const interval = setInterval(() => {
-                const element = queryShadowDom(document, selector);
-                if (element) {
+                const element = document.querySelector(selector);
+                if (element && element.offsetParent !== null) {
                     clearInterval(interval);
                     resolve(element);
                 } else {
                     elapsedTime += intervalTime;
                     if (elapsedTime >= timeout) {
                         clearInterval(interval);
-                        reject(new Error(`Element not found: ${selector}`));
+                        reject(new Error(`Element not found or not visible: ${selector}`));
                     }
                 }
             }, intervalTime);
@@ -270,7 +244,7 @@ function openCampaignWithDNumberScript(dNumber) {
 
     const clickElement = async (selector) => {
         const element = await findElement(selector);
-        element.click();
+        element.click(); // Using a simple click as dispatchEvent was also unreliable.
     };
 
     const inputText = async (selector, text) => {
@@ -283,19 +257,30 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            // 1. Click the search icon
+            console.log("Step 1: Clicking search icon...");
             await clickElement('mo-icon[name="search"]');
-            await delay(1000); // Wait for the search panel to animate
-            // 2. Click the switch to search by D-Number
+
+            console.log("Step 2: Waiting for panel animation...");
+            await delay(1500); // Explicit wait for panel to open
+
+            console.log("Step 3: Clicking D-Number switch...");
             await clickElement('div.switch[role="switch"]');
-            // 3. Paste the D-Number into the input field
+
+            await delay(500); // Wait for input to be ready
+
+            console.log("Step 4: Entering D-Number...");
             await inputText('input[type="text"][data-is-native-input]', dNumber);
-            await delay(500); // Allow time for any UI updates
-            // 4. Click the search button
-            await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
+
+            await delay(500); // Wait for search button to be ready
+
+            console.log("Step 5: Clicking final search button...");
+            await clickElement('mo-button mo-icon[name="folder-open"]');
+
+            console.log("D-Number script finished successfully.");
+
         } catch (error) {
             console.error('Error during D Number script execution:', error);
-            alert(error.message);
+            alert(`Automation failed: ${error.message}`);
         }
     })();
 }

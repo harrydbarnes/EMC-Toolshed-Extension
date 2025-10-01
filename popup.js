@@ -27,15 +27,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (data.timeBombActive) {
             versionText += ' - Features Disabled';
+            if (versionLink) {
+                versionLink.classList.add('disabled-version');
+            }
             // Disable all interactive elements except settings
             document.querySelectorAll('button, input, textarea, a').forEach(el => {
-                // Keep settings page accessible
-                if (el.id !== 'openSettingsPage' && el.parentElement.id !== 'openSettingsPage') {
+                const allowedIds = ['openSettingsPage', 'feedback-link'];
+                if (!allowedIds.includes(el.id)) {
                      el.disabled = true;
                      el.style.pointerEvents = 'none';
                      el.style.opacity = '0.5';
                 }
             });
+            const feedbackLink = document.getElementById('feedback-link');
+            if (feedbackLink) {
+                feedbackLink.textContent = 'ask for reinstall';
+            }
         } else {
              versionText += formatTimeRemaining(data.timeBombDeadline);
         }

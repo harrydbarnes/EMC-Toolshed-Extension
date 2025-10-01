@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const feedbackLink = document.getElementById('feedback-link');
             if (feedbackLink) {
-                feedbackLink.textContent = 'ask for reinstall';
+                feedbackLink.textContent = 'Submit feedback / ask for reinstall';
             }
         } else {
              versionText += formatTimeRemaining(data.timeBombDeadline);

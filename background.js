@@ -418,10 +418,22 @@ function scrapeAndDownloadCsv() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Allow the disableTimeBomb action to proceed even if the bomb is active.
+    if (request.action === "disableTimeBomb") {
+        chrome.storage.local.remove(['timeBombActive', 'timeBombDeadline', 'initialDeadline'], () => {
+            console.log('Time bomb has been manually disabled via override.');
+            if (chrome.runtime.lastError) {
+                sendResponse({ status: 'error', message: chrome.runtime.lastError.message });
+            } else {
+                sendResponse({ status: 'success' });
+            }
+        });
+        return true; // Required for async sendResponse
+    }
+
     chrome.storage.local.get('timeBombActive', (data) => {
         if (data.timeBombActive) {
             console.log(`Message with action "${request.action}" blocked by time bomb.`);
-            // We can optionally send a response back to the caller to let them know it was blocked.
             if (sendResponse) {
                 sendResponse({ status: 'error', message: 'All features have been disabled.' });
             }

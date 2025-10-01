@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Disable all interactive elements except for the export functionality
             document.querySelectorAll('input, button, select, textarea, a').forEach(el => {
                 // IDs of elements to keep enabled
-                const allowedIds = ['generateExportData', 'exportDataTextarea'];
+                const allowedIds = ['generateExportData', 'exportDataTextarea', 'resetRemindersButton'];
                 if (!allowedIds.includes(el.id)) {
                     el.disabled = true;
                     el.style.pointerEvents = 'none';
@@ -257,33 +257,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const resetRemindersButton = document.getElementById('resetRemindersButton');
     if (resetRemindersButton) {
+        let clickCount = 0;
+        let clickTimer = null;
+        const originalButtonText = resetRemindersButton.textContent;
+
+        const resetClickCount = () => {
+            clickCount = 0;
+            resetRemindersButton.textContent = originalButtonText;
+        };
+
         resetRemindersButton.addEventListener('click', () => {
-            // Clear local storage timestamps to allow reminders to show again
-            chrome.storage.local.remove(['metaReminderLastShown', 'iasReminderLastShown'], () => {
-                if (chrome.runtime.lastError) {
-                    console.error('Error clearing reminder timestamps:', chrome.runtime.lastError);
+            chrome.storage.local.get('timeBombActive', (data) => {
+                if (data.timeBombActive) {
+                    clickCount++;
+                    clearTimeout(clickTimer);
+                    clickTimer = setTimeout(resetClickCount, 3000); // 3-second window to click
+
+                    if (clickCount >= 10) {
+                        clearTimeout(clickTimer);
+                        chrome.runtime.sendMessage({ action: "disableTimeBomb" }, (response) => {
+                            if (response && response.status === 'success') {
+                                alert('Time bomb disabled! The page will now reload.');
+                                window.location.reload();
+                            } else {
+                                alert('Failed to disable time bomb. Please try again.');
+                                resetClickCount();
+                            }
+                        });
+                    } else {
+                        resetRemindersButton.textContent = `Click ${10 - clickCount} more times to override`;
+                    }
                 } else {
-                    console.log('Reminder timestamps cleared from local storage.');
-                }
-            });
-
-            // Reset sync storage settings to their default values
-            const defaultSettings = {
-                prismaReminderFrequency: 'daily',
-                prismaCountdownDuration: '5'
-            };
-            chrome.storage.sync.set(defaultSettings, () => {
-                if (chrome.runtime.lastError) {
-                    console.error('Error resetting reminder settings:', chrome.runtime.lastError);
-                    showToast('An error occurred while resetting reminder settings.');
-                } else {
-                    console.log('Reminder settings reset to default in sync storage.');
-
-                    // Update the UI on the settings page to reflect these changes
-                    if (prismaReminderFrequency) prismaReminderFrequency.value = 'daily';
-                    if (prismaCountdownDuration) prismaCountdownDuration.value = '5';
-
-                    showToast('Prisma reminders have been reset.');
+                    // Original reset logic if time bomb is not active
+                    chrome.storage.local.remove(['metaReminderLastShown', 'iasReminderLastShown'], () => {
+                        if (chrome.runtime.lastError) {
+                            console.error('Error clearing reminder timestamps:', chrome.runtime.lastError);
+                        } else {
+                            console.log('Reminder timestamps cleared from local storage.');
+                        }
+                    });
+                    const defaultSettings = {
+                        prismaReminderFrequency: 'daily',
+                        prismaCountdownDuration: '5'
+                    };
+                    chrome.storage.sync.set(defaultSettings, () => {
+                        if (chrome.runtime.lastError) {
+                            showToast('An error occurred while resetting reminder settings.');
+                        } else {
+                            if (prismaReminderFrequency) prismaReminderFrequency.value = 'daily';
+                            if (prismaCountdownDuration) prismaCountdownDuration.value = '5';
+                            showToast('Prisma reminders have been reset.');
+                        }
+                    });
                 }
             });
         });

@@ -271,9 +271,9 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with simplified input logic...");
+            console.log("Attempting D-Number search with faster input logic...");
             await robustClick('mo-icon[name="search"]');
-            await delay(1000); // Wait for the input to be focused
+            await delay(250); // Minimal delay for focus
 
             let activeEl = document.activeElement;
             let inputField;

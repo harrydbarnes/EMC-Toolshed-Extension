@@ -285,6 +285,7 @@ function openCampaignWithDNumberScript(dNumber) {
         try {
             // 1. Click the search icon
             await clickElement('mo-icon[name="search"]');
+            await delay(1000); // Wait for the search panel to animate
             // 2. Click the switch to search by D-Number
             await clickElement('div.switch[role="switch"]');
             // 3. Paste the D-Number into the input field

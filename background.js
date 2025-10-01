@@ -271,24 +271,22 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with faster input logic...");
+            console.log("Attempting D-Number search with precise focus logic...");
             await robustClick('mo-icon[name="search"]');
             await delay(250); // Minimal delay for focus
 
-            let activeEl = document.activeElement;
-            let inputField;
-            if (activeEl && activeEl.shadowRoot) {
-                inputField = activeEl.shadowRoot.querySelector('input');
-            } else {
-                inputField = activeEl;
+            const activeEl = document.activeElement;
+            if (!activeEl || activeEl.tagName.toLowerCase() !== 'mo-input') {
+                throw new Error(`Focused element is not the expected mo-input component. Found: ${activeEl ? activeEl.tagName : 'null'}`);
             }
 
-            if (inputField && typeof inputField.value !== 'undefined') {
-                inputField.value = dNumber;
-                inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-            } else {
-                throw new Error('Could not find the focused input field.');
+            const inputField = activeEl.shadowRoot.querySelector('input');
+            if (!inputField) {
+                throw new Error('Could not find the native input element within the mo-input shadow DOM.');
             }
+
+            inputField.value = dNumber;
+            inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
             await delay(500);
 

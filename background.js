@@ -283,8 +283,8 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            await clickElement('.icon-inner');
-            await delay(2000);
+            await clickElement('mo-icon[name="search"]');
+            await clickElement('span.slider'); // Rely on the polling of findElement within clickElement
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await delay(500);
             await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');

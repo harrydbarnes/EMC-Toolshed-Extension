@@ -1,6 +1,55 @@
 import { approversData } from './approvers-data.js';
 
+// --- Time-Bomb Feature ---
+const timeBombConfig = {
+  enabled: 'Y', // Change to 'N' to disable
+  disableDay: 2, // Tuesday (0=Sun, 1=Mon, 2=Tue, etc.)
+  disableHour: 23,
+  disableMinute: 59
+};
+
+function getNextDeadline() {
+  const now = new Date();
+  const deadline = new Date(now);
+  const dayOfWeek = now.getDay();
+  let daysUntil = (timeBombConfig.disableDay - dayOfWeek + 7) % 7;
+  if (daysUntil === 0 && (now.getHours() > timeBombConfig.disableHour || (now.getHours() === timeBombConfig.disableHour && now.getMinutes() >= timeBombConfig.disableMinute))) {
+    daysUntil = 7;
+  }
+  deadline.setDate(now.getDate() + daysUntil);
+  deadline.setHours(timeBombConfig.disableHour, timeBombConfig.disableMinute, 0, 0);
+  return deadline.getTime();
+}
+
+function checkTimeBomb() {
+  if (timeBombConfig.enabled !== 'Y') {
+    // If disabled in the code, clear all time bomb variables from storage.
+    chrome.storage.local.remove(['timeBombActive', 'initialDeadline']);
+    return;
+  }
+
+  chrome.storage.local.get(['initialDeadline'], (data) => {
+    let initialDeadline = data.initialDeadline;
+    if (!initialDeadline) {
+      initialDeadline = getNextDeadline();
+    }
+
+    const now = new Date().getTime();
+    const timeBombActive = now > initialDeadline;
+
+    // Set both values. This is simpler and ensures consistency.
+    chrome.storage.local.set({ initialDeadline, timeBombActive });
+  });
+}
+
+// Set up a recurring alarm to check the time bomb status.
+// The onInstalled listener will handle the initial check.
+chrome.alarms.create('timeBombCheck', { periodInMinutes: 1 });
+// --- End Time-Bomb Feature ---
+
+
 chrome.runtime.onInstalled.addListener(() => {
+  checkTimeBomb(); // Run on install
   if (!chrome.runtime || !chrome.runtime.id) return; // Context guard
   chrome.storage.sync.get(['timesheetReminderEnabled', 'reminderDay', 'reminderTime'], function(data) {
     if (chrome.runtime.lastError) return; // Error guard
@@ -118,7 +167,9 @@ async function playAlarmSound() {
 
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'timesheetReminder') {
+  if (alarm.name === 'timeBombCheck') {
+    checkTimeBomb();
+  } else if (alarm.name === 'timesheetReminder') {
     showTimesheetNotification(); // This will now trigger the notification and sound via offscreen document
   }
 });
@@ -171,27 +222,20 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 function openCampaignWithDNumberScript(dNumber) {
-    const findElement = (selector) => {
+    const findElement = (selector, timeout = 15000) => { // Increased timeout
         return new Promise((resolve, reject) => {
-            const timeout = 10000; // 10 seconds
             const intervalTime = 500;
             let elapsedTime = 0;
 
             const queryShadowDom = (root, selector) => {
-                const elements = root.querySelectorAll(selector);
-                for (const element of elements) {
-                    if (element.offsetParent !== null) {
-                        return element;
-                    }
-                }
+                const element = root.querySelector(selector);
+                if (element && element.offsetParent !== null) return element;
 
                 const allElements = root.querySelectorAll('*');
-                for (const element of allElements) {
-                    if (element.shadowRoot) {
-                        const foundInShadow = queryShadowDom(element.shadowRoot, selector);
-                        if (foundInShadow) {
-                            return foundInShadow;
-                        }
+                for (const el of allElements) {
+                    if (el.shadowRoot) {
+                        const foundInShadow = queryShadowDom(el.shadowRoot, selector);
+                        if (foundInShadow) return foundInShadow;
                     }
                 }
                 return null;
@@ -206,16 +250,21 @@ function openCampaignWithDNumberScript(dNumber) {
                     elapsedTime += intervalTime;
                     if (elapsedTime >= timeout) {
                         clearInterval(interval);
-                        reject(new Error(`Element not found: ${selector}`));
+                        reject(new Error(`Element not found or not visible: ${selector}`));
                     }
                 }
             }, intervalTime);
         });
     };
 
-    const clickElement = async (selector) => {
+    const robustClick = async (selector) => {
         const element = await findElement(selector);
-        element.click();
+        const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+        const mouseupEvent = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
+        const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        element.dispatchEvent(mousedownEvent);
+        element.dispatchEvent(mouseupEvent);
+        element.dispatchEvent(clickEvent);
     };
 
     const inputText = async (selector, text) => {
@@ -224,19 +273,17 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-
     (async () => {
         try {
-            await clickElement('.icon-inner');
-            await delay(2000);
-            await clickElement('span.slider');
+            console.log("Attempting D-Number search...");
+            await robustClick('mo-icon[name="search"]');
+            await robustClick('div.switch[role="switch"]');
             await inputText('input[type="text"][data-is-native-input]', dNumber);
-            await delay(500);
-            await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
+            await robustClick('mo-button mo-icon[name="folder-open"]');
+            console.log("D-Number script finished.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);
-            alert(error.message);
+            alert(`Automation failed: ${error.message}`);
         }
     })();
 }
@@ -363,8 +410,31 @@ function scrapeAndDownloadCsv() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Received message:", request);
-    if (request.action === "showTimesheetNotification") {
+    // Allow the disableTimeBomb action to proceed even if the bomb is active.
+    if (request.action === "disableTimeBomb") {
+        chrome.storage.local.remove(['timeBombActive', 'initialDeadline'], () => {
+            console.log('Time bomb has been manually disabled via override.');
+            if (chrome.runtime.lastError) {
+                sendResponse({ status: 'error', message: chrome.runtime.lastError.message });
+            } else {
+                sendResponse({ status: 'success' });
+            }
+        });
+        return true; // Required for async sendResponse
+    }
+
+    chrome.storage.local.get('timeBombActive', (data) => {
+        if (data.timeBombActive) {
+            console.log(`Message with action "${request.action}" blocked by time bomb.`);
+            if (sendResponse) {
+                sendResponse({ status: 'error', message: 'All features have been disabled.' });
+            }
+            return; // Stop all further execution of the listener.
+        }
+
+        // If the time bomb is not active, proceed with the normal message handling.
+        console.log("Received message:", request);
+        if (request.action === "showTimesheetNotification") {
         console.log("Showing timesheet notification");
         showTimesheetNotification();
         sendResponse({status: "Notification shown"});
@@ -384,7 +454,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });
-            }, 5000);
+            }, 15000);
         })();
         sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {
@@ -445,6 +515,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ status: 'success' });
     }
     return true;  // Indicates that the response is sent asynchronously
+    }); // close chrome.storage.local.get
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -467,5 +538,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getNextAlarmDate, createTimesheetAlarm };
+    module.exports = {
+        getNextAlarmDate,
+        createTimesheetAlarm,
+        // For testing
+        getNextDeadline,
+        checkTimeBomb
+    };
 }

@@ -4,4 +4,7 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ["json", "lcov", "text", "clover"],
   coverageDirectory: "coverage",
+  transform: {
+    "^.+\\.js$": "babel-jest",
+  },
 };

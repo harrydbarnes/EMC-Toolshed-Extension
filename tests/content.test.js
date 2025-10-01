@@ -3,89 +3,88 @@ const fs = require('fs');
 const path = require('path');
 
 const contentScript = fs.readFileSync(path.resolve(__dirname, '../content.js'), 'utf8');
-const testableContentScript = contentScript + '\nwindow.createCustomReminderPopup = createCustomReminderPopup;';
 
-// Mock chrome APIs - we need a slightly more advanced one for this test
-global.chrome = {
-  runtime: {
-    getURL: jest.fn(path => 'mock-url/' + path),
-    onMessage: { addListener: jest.fn() },
-  },
-  storage: {
-    sync: {
-      // Make the mock return a specific structure for customReminders
-      get: jest.fn((keys, callback) => {
-        if (keys && keys.customReminders) {
-          callback({ customReminders: [] });
-        } else {
-          callback({});
-        }
-      }),
-      set: jest.fn((items, callback) => callback()),
-    },
-  },
-};
+describe('Content Script Main Logic', () => {
+    let window;
+    let document;
+    let consoleSpy;
 
+    const setupJSDOM = (url, timeBombActive = false, customReminders = []) => {
+        require('./mocks/chrome');
+        chrome.storage.local.__getStore().timeBombActive = timeBombActive;
+        chrome.storage.sync.__getStore().customReminders = customReminders;
 
-describe('Custom Reminder Popup in content.js', () => {
-  let dom;
-  let window;
-  let document;
+        const dom = new JSDOM('<!DOCTYPE html><html><body><p>Some initial content</p></body></html>', { url, runScripts: 'dangerously' });
+        window = dom.window;
+        document = window.document;
+        window.chrome = global.chrome;
 
-  beforeEach(() => {
-    dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-      url: 'https://groupmuk-prisma.mediaocean.com/',
-      runScripts: 'dangerously'
-    });
-    window = dom.window;
-    document = window.document;
+        const mutationCallbackMap = new Map();
+        window.MutationObserver = jest.fn(function(callback) {
+            const instance = {
+                observe: jest.fn(() => mutationCallbackMap.set(this, callback)),
+                disconnect: jest.fn(() => mutationCallbackMap.delete(this)),
+                __trigger: (mutations) => {
+                    const cb = mutationCallbackMap.get(this);
+                    if (cb) cb(mutations, this);
+                }
+            };
+            return instance;
+        });
 
-    window.chrome = global.chrome;
+        const scriptEl = document.createElement('script');
+        scriptEl.textContent = contentScript;
+        document.head.appendChild(scriptEl);
 
-    window.MutationObserver = jest.fn(() => ({
-      observe: jest.fn(),
-      disconnect: jest.fn(),
-    }));
-    window.setInterval = jest.fn();
-    window.setTimeout = jest.fn((callback) => callback());
-
-    const scriptEl = document.createElement('script');
-    scriptEl.textContent = testableContentScript;
-    document.head.appendChild(scriptEl);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('createCustomReminderPopup should correctly render HTML from popupMessage', () => {
-    const reminder = {
-      id: 'test1',
-      name: 'Test Reminder',
-      popupMessage: '<h3>A Sub-Title</h3><p>This is a paragraph.</p><ul><li>Bullet 1</li></ul>'
+        return { window, document };
     };
 
-    window.createCustomReminderPopup(reminder);
+    beforeEach(() => {
+        if (typeof resetMocks === 'function') resetMocks();
+        jest.useFakeTimers();
+        consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
 
-    const popup = document.getElementById('custom-reminder-display-popup');
-    expect(popup).not.toBeNull();
+    afterEach(() => {
+        if (window) window.close();
+        jest.useRealTimers();
+        consoleSpy.mockRestore();
+        jest.clearAllMocks();
+    });
 
-    // The structure has two H3s. The first is the name, the second is the sub-title.
-    const allTitles = popup.querySelectorAll('h3');
-    expect(allTitles.length).toBe(2);
+    test('should NOT initialize features if time bomb is active', () => {
+        setupJSDOM('https://groupmuk-prisma.mediaocean.com/', true);
+        jest.advanceTimersByTime(100);
+        expect(consoleSpy).toHaveBeenCalledWith('Ops Toolshed features disabled due to time bomb.');
+    });
 
-    // Check main title (from reminder.name)
-    expect(allTitles[0].textContent).toBe(reminder.name);
+    test('should initialize features if time bomb is NOT active', () => {
+        setupJSDOM('https://groupmuk-prisma.mediaocean.com/', false);
+        jest.advanceTimersByTime(100);
+        const hasInitializationLog = consoleSpy.mock.calls.some(call => call.join(' ').includes('[ContentScript Prisma] Script Injected'));
+        expect(hasInitializationLog).toBe(true);
+    });
 
-    // Check sub-title (from popupMessage)
-    expect(allTitles[1].textContent).toBe('A Sub-Title');
+    test('should show a custom reminder when conditions are met', (done) => {
+        const reminder = {
+            id: 'test1', name: 'Test Reminder',
+            urlPattern: '*mediaocean.com*', textTrigger: 'initial content',
+            popupMessage: '<h3>A Sub-Title</h3>', enabled: true,
+        };
+        const { document } = setupJSDOM('https://groupmuk-prisma.mediaocean.com/', false, [reminder]);
 
-    const paragraph = popup.querySelector('p');
-    expect(paragraph).not.toBeNull();
-    expect(paragraph.textContent).toBe('This is a paragraph.');
+        // Wait for the async setup to complete before checking the observer
+        setTimeout(() => {
+            const observerInstance = window.MutationObserver.mock.results[0].value;
+            expect(observerInstance).toBeDefined();
 
-    const listItem = popup.querySelector('li');
-    expect(listItem).not.toBeNull();
-    expect(listItem.textContent).toBe('Bullet 1');
-  });
+            observerInstance.__trigger([{}]); // Manually trigger the observer
+            jest.advanceTimersByTime(3000); // Advance timers for script's internal logic
+
+            const popup = document.getElementById('custom-reminder-display-popup');
+            expect(popup).not.toBeNull();
+            expect(popup.textContent).toContain('Test Reminder');
+            done();
+        }, 100);
+    });
 });

@@ -222,26 +222,20 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 function openCampaignWithDNumberScript(dNumber) {
-    const findElement = (selector, timeout = 10000) => {
+    const findElement = (selector, timeout = 15000) => { // Increased timeout
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
 
             const queryShadowDom = (root, selector) => {
-                const elements = root.querySelectorAll(selector);
-                for (const element of elements) {
-                    if (element.offsetParent !== null) { // Check if element is visible
-                        return element;
-                    }
-                }
+                const element = root.querySelector(selector);
+                if (element && element.offsetParent !== null) return element;
 
                 const allElements = root.querySelectorAll('*');
-                for (const element of allElements) {
-                    if (element.shadowRoot) {
-                        const foundInShadow = queryShadowDom(element.shadowRoot, selector);
-                        if (foundInShadow) {
-                            return foundInShadow;
-                        }
+                for (const el of allElements) {
+                    if (el.shadowRoot) {
+                        const foundInShadow = queryShadowDom(el.shadowRoot, selector);
+                        if (foundInShadow) return foundInShadow;
                     }
                 }
                 return null;
@@ -263,9 +257,14 @@ function openCampaignWithDNumberScript(dNumber) {
         });
     };
 
-    const clickElement = async (selector) => {
+    const robustClick = async (selector) => {
         const element = await findElement(selector);
-        element.click(); // Using a simple click as dispatchEvent was also unreliable.
+        const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+        const mouseupEvent = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
+        const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        element.dispatchEvent(mousedownEvent);
+        element.dispatchEvent(mouseupEvent);
+        element.dispatchEvent(clickEvent);
     };
 
     const inputText = async (selector, text) => {
@@ -274,31 +273,14 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-
     (async () => {
         try {
-            console.log("Step 1: Clicking search icon...");
-            await clickElement('mo-icon[name="search"]');
-
-            console.log("Step 2: Waiting for panel animation...");
-            await delay(1500); // Explicit wait for panel to open
-
-            console.log("Step 3: Clicking D-Number switch...");
-            await clickElement('div.switch[role="switch"]');
-
-            await delay(500); // Wait for input to be ready
-
-            console.log("Step 4: Entering D-Number...");
+            console.log("Attempting D-Number search...");
+            await robustClick('mo-icon[name="search"]');
+            await robustClick('div.switch[role="switch"]');
             await inputText('input[type="text"][data-is-native-input]', dNumber);
-
-            await delay(500); // Wait for search button to be ready
-
-            console.log("Step 5: Clicking final search button...");
-            await clickElement('mo-button mo-icon[name="folder-open"]');
-
-            console.log("D-Number script finished successfully.");
-
+            await robustClick('mo-button mo-icon[name="folder-open"]');
+            console.log("D-Number script finished.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(`Automation failed: ${error.message}`);

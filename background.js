@@ -24,7 +24,7 @@ function getNextDeadline() {
 function checkTimeBomb() {
   if (timeBombConfig.enabled !== 'Y') {
     // If disabled in the code, clear all time bomb variables from storage.
-    chrome.storage.local.remove(['timeBombActive', 'timeBombDeadline', 'initialDeadline']);
+    chrome.storage.local.remove(['timeBombActive', 'initialDeadline']);
     return;
   }
 
@@ -37,7 +37,7 @@ function checkTimeBomb() {
     const now = new Date().getTime();
     const isActive = now > initialDeadline;
 
-    const newStorage = { initialDeadline: initialDeadline, timeBombDeadline: initialDeadline };
+    const newStorage = { initialDeadline };
     if (data.timeBombActive !== isActive) {
         newStorage.timeBombActive = isActive;
     }
@@ -420,7 +420,7 @@ function scrapeAndDownloadCsv() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Allow the disableTimeBomb action to proceed even if the bomb is active.
     if (request.action === "disableTimeBomb") {
-        chrome.storage.local.remove(['timeBombActive', 'timeBombDeadline', 'initialDeadline'], () => {
+        chrome.storage.local.remove(['timeBombActive', 'initialDeadline'], () => {
             console.log('Time bomb has been manually disabled via override.');
             if (chrome.runtime.lastError) {
                 sendResponse({ status: 'error', message: chrome.runtime.lastError.message });

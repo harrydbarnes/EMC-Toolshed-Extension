@@ -116,4 +116,31 @@ describe('getNextAlarmDate (existing tests)', () => {
         expectedDate.setHours(14, 30, 0, 0);
         expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
     });
+
+    test('should return next Monday if current day is Friday', () => {
+        const nextAlarm = getNextAlarmDate('Monday', '09:30');
+        const expectedDate = new Date('2024-07-29T09:30:00');
+        expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
+    });
+
+    test('should handle month rollovers correctly', () => {
+        jest.setSystemTime(new Date('2024-08-30T15:00:00')); // A Friday
+        const nextAlarm = getNextAlarmDate('Wednesday', '11:00');
+        const expectedDate = new Date('2024-09-04T11:00:00');
+        expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
+    });
+
+    test('should handle year rollovers correctly', () => {
+        jest.setSystemTime(new Date('2024-12-30T10:00:00')); // A Monday
+        const nextAlarm = getNextAlarmDate('Tuesday', '09:00');
+        const expectedDate = new Date('2024-12-31T09:00:00');
+        expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
+    });
+
+    test('should return a date exactly 7 days in the future if the day is the same and time is earlier', () => {
+        jest.setSystemTime(new Date('2024-07-26T08:00:00')); // Friday morning
+        const nextAlarm = getNextAlarmDate('Friday', '07:00'); // Time has passed
+        const expectedDate = new Date('2024-08-02T07:00:00');
+        expect(nextAlarm.getTime()).toBe(expectedDate.getTime());
+    });
 });

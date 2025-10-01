@@ -20,7 +20,7 @@ function formatTimeRemaining(deadline) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    chrome.storage.local.get(['timeBombActive', 'timeBombDeadline'], function(data) {
+    chrome.storage.local.get(['timeBombActive', 'initialDeadline'], function(data) {
         const versionLink = document.getElementById('version-link');
         const manifest = chrome.runtime.getManifest();
         let versionText = `r${manifest.version}`;
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 feedbackLink.textContent = 'Submit feedback / ask for reinstall';
             }
         } else {
-             versionText += formatTimeRemaining(data.timeBombDeadline);
+             versionText += formatTimeRemaining(data.initialDeadline);
         }
 
         if (versionLink) {

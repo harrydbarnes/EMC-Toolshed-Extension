@@ -226,9 +226,30 @@ function openCampaignWithDNumberScript(dNumber) {
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
+
+            const queryShadowDom = (root, selector) => {
+                const elements = root.querySelectorAll(selector);
+                for (const element of elements) {
+                    if (element.offsetParent !== null) { // Check if element is visible
+                        return element;
+                    }
+                }
+
+                const allElements = root.querySelectorAll('*');
+                for (const element of allElements) {
+                    if (element.shadowRoot) {
+                        const foundInShadow = queryShadowDom(element.shadowRoot, selector);
+                        if (foundInShadow) {
+                            return foundInShadow;
+                        }
+                    }
+                }
+                return null;
+            };
+
             const interval = setInterval(() => {
-                const element = document.querySelector(selector);
-                if (element && element.offsetParent !== null) {
+                const element = queryShadowDom(document, selector);
+                if (element) {
                     clearInterval(interval);
                     resolve(element);
                 } else {
@@ -451,7 +472,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });
-            }, 5000);
+            }, 15000);
         })();
         sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {

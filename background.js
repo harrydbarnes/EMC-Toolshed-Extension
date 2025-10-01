@@ -271,11 +271,8 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with improved script...");
+            console.log("Attempting D-Number search with new logic...");
             await robustClick('mo-icon[name="search"]');
-            await delay(1000);
-
-            await robustClick('div.switch[role="switch"]');
             await delay(1000);
 
             const moInputComponent = await new Promise((resolve, reject) => {
@@ -308,6 +305,9 @@ function openCampaignWithDNumberScript(dNumber) {
             nativeInput.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
             await delay(500);
+
+            await robustClick('div.switch[role="switch"]');
+            await delay(1000);
 
             await robustClick('mo-button mo-icon[name="folder-open"]');
             console.log("D-Number script finished successfully.");

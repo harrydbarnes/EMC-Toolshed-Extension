@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 resetClickCount();
                             }
                         });
-                    } else {
+                    } else if (clickCount > 7) { // Only show the countdown for the last 3 clicks
                         resetRemindersButton.textContent = `Click ${10 - clickCount} more times to override`;
                     }
                 } else {

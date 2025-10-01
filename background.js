@@ -271,38 +271,24 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with new logic...");
+            console.log("Attempting D-Number search with simplified input logic...");
             await robustClick('mo-icon[name="search"]');
-            await delay(1000);
+            await delay(1000); // Wait for the input to be focused
 
-            const moInputComponent = await new Promise((resolve, reject) => {
-                let retries = 20; // Try for 10 seconds
-                const interval = setInterval(() => {
-                    if (retries-- === 0) {
-                        clearInterval(interval);
-                        return reject(new Error('Could not find the correct mo-input text field.'));
-                    }
-                    const inputs = Array.from(document.querySelectorAll('mo-input')).filter(el => el.offsetParent !== null);
-                    for (const input of inputs) {
-                        if (!input.closest('mo-search-box')) {
-                            clearInterval(interval);
-                            return resolve(input);
-                        }
-                    }
-                }, 500);
-            });
-
-            if (!moInputComponent || !moInputComponent.shadowRoot) {
-                throw new Error('Could not find the correct mo-input component or its shadowRoot.');
+            let activeEl = document.activeElement;
+            let inputField;
+            if (activeEl && activeEl.shadowRoot) {
+                inputField = activeEl.shadowRoot.querySelector('input');
+            } else {
+                inputField = activeEl;
             }
 
-            const nativeInput = moInputComponent.shadowRoot.querySelector('input');
-            if (!nativeInput) {
-                throw new Error('Could not find the native input element within the mo-input shadow DOM.');
+            if (inputField && typeof inputField.value !== 'undefined') {
+                inputField.value = dNumber;
+                inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+            } else {
+                throw new Error('Could not find the focused input field.');
             }
-
-            nativeInput.value = dNumber;
-            nativeInput.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
             await delay(500);
 

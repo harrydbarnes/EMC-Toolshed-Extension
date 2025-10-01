@@ -283,10 +283,14 @@ function openCampaignWithDNumberScript(dNumber) {
 
     (async () => {
         try {
+            // 1. Click the search icon
             await clickElement('mo-icon[name="search"]');
-            await clickElement('span.slider'); // Rely on the polling of findElement within clickElement
+            // 2. Click the switch to search by D-Number
+            await clickElement('div.switch[role="switch"]');
+            // 3. Paste the D-Number into the input field
             await inputText('input[type="text"][data-is-native-input]', dNumber);
-            await delay(500);
+            await delay(500); // Allow time for any UI updates
+            // 4. Click the search button
             await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
         } catch (error) {
             console.error('Error during D Number script execution:', error);

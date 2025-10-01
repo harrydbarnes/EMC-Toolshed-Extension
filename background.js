@@ -267,20 +267,50 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(clickEvent);
     };
 
-    const inputText = async (selector, text) => {
-        const element = await findElement(selector);
-        element.value = text;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-    };
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
     (async () => {
         try {
-            console.log("Attempting D-Number search...");
+            console.log("Attempting D-Number search with improved script...");
             await robustClick('mo-icon[name="search"]');
+            await delay(1000);
+
             await robustClick('div.switch[role="switch"]');
-            await inputText('input[type="text"][data-is-native-input]', dNumber);
+            await delay(1000);
+
+            const moInputComponent = await new Promise((resolve, reject) => {
+                let retries = 20; // Try for 10 seconds
+                const interval = setInterval(() => {
+                    if (retries-- === 0) {
+                        clearInterval(interval);
+                        return reject(new Error('Could not find the correct mo-input text field.'));
+                    }
+                    const inputs = Array.from(document.querySelectorAll('mo-input')).filter(el => el.offsetParent !== null);
+                    for (const input of inputs) {
+                        if (!input.closest('mo-search-box')) {
+                            clearInterval(interval);
+                            return resolve(input);
+                        }
+                    }
+                }, 500);
+            });
+
+            if (!moInputComponent || !moInputComponent.shadowRoot) {
+                throw new Error('Could not find the correct mo-input component or its shadowRoot.');
+            }
+
+            const nativeInput = moInputComponent.shadowRoot.querySelector('input');
+            if (!nativeInput) {
+                throw new Error('Could not find the native input element within the mo-input shadow DOM.');
+            }
+
+            nativeInput.value = dNumber;
+            nativeInput.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+
+            await delay(500);
+
             await robustClick('mo-button mo-icon[name="folder-open"]');
-            console.log("D-Number script finished.");
+            console.log("D-Number script finished successfully.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(`Automation failed: ${error.message}`);
@@ -454,7 +484,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });
-            }, 15000);
+            }, 5000); // Reduced timeout to 5 seconds
         })();
         sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {

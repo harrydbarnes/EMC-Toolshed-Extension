@@ -222,22 +222,25 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 function openCampaignWithDNumberScript(dNumber) {
-    const findElement = (selector, timeout = 15000) => {
+    const findElement = (selector, timeout = 15000) => { // Increased timeout
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
-            const queryShadowDom = (root, sel) => {
-                const el = root.querySelector(sel);
-                if (el && el.offsetParent !== null) return el;
+
+            const queryShadowDom = (root, selector) => {
+                const element = root.querySelector(selector);
+                if (element && element.offsetParent !== null) return element;
+
                 const allElements = root.querySelectorAll('*');
-                for (const anElement of allElements) {
-                    if (anElement.shadowRoot) {
-                        const found = queryShadowDom(anElement.shadowRoot, sel);
-                        if (found) return found;
+                for (const el of allElements) {
+                    if (el.shadowRoot) {
+                        const foundInShadow = queryShadowDom(el.shadowRoot, selector);
+                        if (foundInShadow) return foundInShadow;
                     }
                 }
                 return null;
             };
+
             const interval = setInterval(() => {
                 const element = queryShadowDom(document, selector);
                 if (element) {
@@ -254,9 +257,14 @@ function openCampaignWithDNumberScript(dNumber) {
         });
     };
 
-    const clickElement = async (selector) => {
+    const robustClick = async (selector) => {
         const element = await findElement(selector);
-        element.click();
+        const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+        const mouseupEvent = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
+        const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        element.dispatchEvent(mousedownEvent);
+        element.dispatchEvent(mouseupEvent);
+        element.dispatchEvent(clickEvent);
     };
 
     const inputText = async (selector, text) => {
@@ -265,26 +273,14 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-
     (async () => {
         try {
-            await clickElement('mo-icon[name="search"]');
-            await delay(1500);
-            await clickElement('div.switch[role="switch"]');
-            await delay(500);
-
-            const inputs = document.querySelectorAll('input[type="text"][data-is-native-input]');
-            if (inputs.length > 0) {
-                const dNumberInput = inputs[inputs.length - 1];
-                dNumberInput.value = dNumber;
-                dNumberInput.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-                throw new Error('D-Number input field not found.');
-            }
-
-            await delay(500);
-            await clickElement('mo-button mo-icon[name="folder-open"]');
+            console.log("Attempting D-Number search...");
+            await robustClick('mo-icon[name="search"]');
+            await robustClick('div.switch[role="switch"]');
+            await inputText('input[type="text"][data-is-native-input]', dNumber);
+            await robustClick('mo-button mo-icon[name="folder-open"]');
+            console.log("D-Number script finished.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(`Automation failed: ${error.message}`);

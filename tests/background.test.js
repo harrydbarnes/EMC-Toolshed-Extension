@@ -1,4 +1,17 @@
 describe('Time Bomb Feature in background.js', () => {
+    // Helper function to robustly flush all timers and microtasks
+    async function flushPromisesAndTimers() {
+        // Await a `setImmediate` to allow any pending microtasks (like promise resolutions) to process first.
+        await new Promise(jest.requireActual('timers').setImmediate);
+
+        // Loop to run all pending timers (macrotasks), including any that are scheduled by other timers.
+        while (jest.getTimerCount() > 0) {
+            jest.runOnlyPendingTimers();
+            // Await another `setImmediate` to process microtasks queued by the timers.
+            await new Promise(jest.requireActual('timers').setImmediate);
+        }
+    }
+
     beforeEach(() => {
         // Reset all mocks and storage before each test
         if (typeof resetMocks === 'function') {
@@ -23,12 +36,7 @@ describe('Time Bomb Feature in background.js', () => {
             chrome.runtime.onInstalled.listener();
         }
 
-        // Flush all pending timers and microtasks
-        await new Promise(jest.requireActual('timers').setImmediate);
-        while (jest.getTimerCount() > 0) {
-            jest.runOnlyPendingTimers();
-            await new Promise(jest.requireActual('timers').setImmediate);
-        }
+        await flushPromisesAndTimers();
 
         const storage = chrome.storage.local.__getStore();
         expect(storage.initialDeadline).toBeDefined();
@@ -48,12 +56,7 @@ describe('Time Bomb Feature in background.js', () => {
             chrome.runtime.onInstalled.listener();
         }
 
-        // Flush all pending timers and microtasks
-        await new Promise(jest.requireActual('timers').setImmediate);
-        while (jest.getTimerCount() > 0) {
-            jest.runOnlyPendingTimers();
-            await new Promise(jest.requireActual('timers').setImmediate);
-        }
+        await flushPromisesAndTimers();
 
         const storage = chrome.storage.local.__getStore();
         const expectedDeadline = new Date('2024-08-06T23:59:00');
@@ -73,12 +76,7 @@ describe('Time Bomb Feature in background.js', () => {
         });
 
         const promise = checkTimeBomb();
-
-        // Flush all pending timers and microtasks
-        while (jest.getTimerCount() > 0) {
-            jest.runOnlyPendingTimers();
-            await new Promise(jest.requireActual('timers').setImmediate);
-        }
+        await flushPromisesAndTimers();
         await promise;
 
         const storage = chrome.storage.local.__getStore();
@@ -98,12 +96,7 @@ describe('Time Bomb Feature in background.js', () => {
         });
 
         const promise = checkTimeBomb();
-
-        // Flush all pending timers and microtasks
-        while (jest.getTimerCount() > 0) {
-            jest.runOnlyPendingTimers();
-            await new Promise(jest.requireActual('timers').setImmediate);
-        }
+        await flushPromisesAndTimers();
         await promise;
 
         const storage = chrome.storage.local.__getStore();

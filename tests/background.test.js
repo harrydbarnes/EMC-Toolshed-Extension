@@ -40,6 +40,7 @@ describe('Time Bomb Feature in background.js', () => {
 
         const storage = chrome.storage.local.__getStore();
         expect(storage.initialDeadline).toBeDefined();
+        expect(storage.timeBombActive).toBe(false);
         const expectedDeadline = new Date('2024-07-30T23:59:00');
         expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
     });

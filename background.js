@@ -266,44 +266,37 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(clickEvent);
     };
 
-    const waitForActiveElement = (selector, timeout = 5000) => {
-        return new Promise((resolve, reject) => {
-            const intervalTime = 100;
-            let elapsedTime = 0;
-            const interval = setInterval(() => {
-                const activeEl = document.activeElement;
-                if (activeEl && activeEl.matches(selector)) {
-                    clearInterval(interval);
-                    resolve(activeEl);
-                } else {
-                    elapsedTime += intervalTime;
-                    if (elapsedTime >= timeout) {
-                        clearInterval(interval);
-                        reject(new Error(`Timeout waiting for element to be active: ${selector}. Current active: ${activeEl ? activeEl.tagName : 'null'}`));
-                    }
-                }
-            }, intervalTime);
-        });
-    };
-
+    // The failing waitForActiveElement function is REMOVED.
+    // We will use findElement and manual focus instead.
 
     (async () => {
         try {
             console.log("Attempting D-Number search with robust waiting...");
+            // 1. Click the search icon
             await robustClick('mo-icon[name="search"]');
 
-            const activeEl = await waitForActiveElement('mo-input');
+            // 2. Wait for the mo-input element to appear/be visible
+            // We use findElement here instead of the problematic waitForActiveElement
+            const moInputWrapper = await findElement('mo-input');
 
-            const inputField = activeEl.shadowRoot.querySelector('input');
+            // 3. Find the native input inside the mo-input shadow DOM
+            const inputField = moInputWrapper.shadowRoot.querySelector('input');
             if (!inputField) {
                 throw new Error('Could not find the native input element within the mo-input shadow DOM.');
             }
 
+            // 3b. Manually focus the native input field for reliable typing
+            inputField.focus();
+
+            // 4. Set the value and dispatch events
             inputField.value = dNumber;
+            // The 'input' event with composed: true ensures the host element is aware of the change
             inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
+            // 5. Click the switch for D-number search
             await robustClick('div.switch[role="switch"]');
 
+            // 6. Click the open campaign icon
             await robustClick('mo-button mo-icon[name="folder-open"]');
             console.log("D-Number script finished successfully.");
         } catch (error) {

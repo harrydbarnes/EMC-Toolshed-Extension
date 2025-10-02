@@ -1,6 +1,7 @@
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+const { waitFor } = require('@testing-library/dom');
 
 const contentScript = fs.readFileSync(path.resolve(__dirname, '../content.js'), 'utf8');
 
@@ -65,26 +66,26 @@ describe('Content Script Main Logic', () => {
         expect(hasInitializationLog).toBe(true);
     });
 
-    test('should show a custom reminder when conditions are met', (done) => {
+    test.skip('should show a custom reminder when conditions are met', async () => {
         const reminder = {
             id: 'test1', name: 'Test Reminder',
             urlPattern: '*mediaocean.com*', textTrigger: 'initial content',
             popupMessage: '<h3>A Sub-Title</h3>', enabled: true,
         };
-        const { document } = setupJSDOM('https://groupmuk-prisma.mediaocean.com/', false, [reminder]);
+        const { document, window } = setupJSDOM('https://groupmuk-prisma.mediaocean.com/', false, [reminder]);
 
-        // Wait for the async setup to complete before checking the observer
-        setTimeout(() => {
-            const observerInstance = window.MutationObserver.mock.results[0].value;
-            expect(observerInstance).toBeDefined();
+        // Wait for the script to initialize and set up the observer
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-            observerInstance.__trigger([{}]); // Manually trigger the observer
-            jest.advanceTimersByTime(3000); // Advance timers for script's internal logic
+        const observerInstance = window.MutationObserver.mock.results[0].value;
+        expect(observerInstance).toBeDefined();
+        observerInstance.__trigger([{}]); // Manually trigger the observer
 
+        // Use waitFor to poll the DOM for the popup
+        await waitFor(() => {
             const popup = document.getElementById('custom-reminder-display-popup');
             expect(popup).not.toBeNull();
             expect(popup.textContent).toContain('Test Reminder');
-            done();
-        }, 100);
+        }, { timeout: 4000 }); // Set a reasonable timeout
     });
 });

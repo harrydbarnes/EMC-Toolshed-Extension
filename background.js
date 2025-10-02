@@ -267,20 +267,34 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(clickEvent);
     };
 
-    const inputText = async (selector, text) => {
-        const element = await findElement(selector);
-        element.value = text;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-    };
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
     (async () => {
         try {
-            console.log("Attempting D-Number search...");
+            console.log("Attempting D-Number search with precise focus logic...");
             await robustClick('mo-icon[name="search"]');
+            await delay(250); // Minimal delay for focus
+
+            const activeEl = document.activeElement;
+            if (!activeEl || activeEl.tagName.toLowerCase() !== 'mo-input') {
+                throw new Error(`Focused element is not the expected mo-input component. Found: ${activeEl ? activeEl.tagName : 'null'}`);
+            }
+
+            const inputField = activeEl.shadowRoot.querySelector('input');
+            if (!inputField) {
+                throw new Error('Could not find the native input element within the mo-input shadow DOM.');
+            }
+
+            inputField.value = dNumber;
+            inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+
+            await delay(500);
+
             await robustClick('div.switch[role="switch"]');
-            await inputText('input[type="text"][data-is-native-input]', dNumber);
+            await delay(1000);
+
             await robustClick('mo-button mo-icon[name="folder-open"]');
-            console.log("D-Number script finished.");
+            console.log("D-Number script finished successfully.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(`Automation failed: ${error.message}`);
@@ -454,7 +468,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });
-            }, 15000);
+            }, 5000); // Reduced timeout to 5 seconds
         })();
         sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {

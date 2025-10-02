@@ -275,9 +275,9 @@ function openCampaignWithDNumberScript(dNumber) {
             // 1. Click the search icon
             await robustClick('mo-icon[name="search"]');
 
-            // 2. Wait for the mo-input element to appear/be visible
-            // We use findElement here instead of the problematic waitForActiveElement
-            const moInputWrapper = await findElement('mo-input');
+            // 2. Wait for the mo-input element within the search box to appear/be visible
+            // We use a more specific selector to target the correct input field.
+            const moInputWrapper = await findElement('mo-search-box mo-input');
 
             // 3. Find the native input inside the mo-input shadow DOM
             const inputField = moInputWrapper.shadowRoot.querySelector('input');

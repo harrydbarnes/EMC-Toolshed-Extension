@@ -3,46 +3,61 @@ const createStorageAreaMock = () => {
   let storage = {};
   return {
     get: jest.fn((keys, callback) => {
-      const result = {};
-      if (!keys) { // Get all items
-          Object.assign(result, storage);
-      } else if (Array.isArray(keys)) {
-        keys.forEach(key => {
-          if (storage[key] !== undefined) {
-            result[key] = storage[key];
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const result = {};
+          if (!keys) { // Get all items
+              Object.assign(result, storage);
+          } else if (Array.isArray(keys)) {
+            keys.forEach(key => {
+              if (storage[key] !== undefined) {
+                result[key] = storage[key];
+              }
+            });
+          } else if (typeof keys === 'object' && keys !== null) {
+            Object.keys(keys).forEach(key => {
+              result[key] = storage[key] === undefined ? keys[key] : storage[key];
+            });
+          } else if (typeof keys === 'string') {
+            if(storage[keys] !== undefined) {
+                result[keys] = storage[keys];
+            }
           }
-        });
-      } else if (typeof keys === 'object' && keys !== null) {
-        Object.keys(keys).forEach(key => {
-          result[key] = storage[key] === undefined ? keys[key] : storage[key];
-        });
-      } else if (typeof keys === 'string') {
-        if(storage[keys] !== undefined) {
-            result[keys] = storage[keys];
-        }
-      }
-      // Wrap callback in a timeout to make it async and controllable by Jest timers
-      if (callback) setTimeout(() => callback(result), 0);
-      return Promise.resolve(result);
+          if (callback) callback(result);
+          resolve(result);
+        }, 0);
+      });
     }),
     set: jest.fn((items, callback) => {
-      Object.assign(storage, items);
-      if (callback) setTimeout(callback, 0);
-      return Promise.resolve();
+      return new Promise(resolve => {
+        setTimeout(() => {
+          Object.assign(storage, items);
+          if (callback) callback();
+          resolve();
+        }, 0);
+      });
     }),
     remove: jest.fn((keys, callback) => {
-        if (Array.isArray(keys)) {
-            keys.forEach(key => delete storage[key]);
-        } else if (typeof keys === 'string') {
-            delete storage[keys];
-        }
-        if (callback) setTimeout(callback, 0);
-        return Promise.resolve();
+      return new Promise(resolve => {
+        setTimeout(() => {
+          if (Array.isArray(keys)) {
+              keys.forEach(key => delete storage[key]);
+          } else if (typeof keys === 'string') {
+              delete storage[keys];
+          }
+          if (callback) callback();
+          resolve();
+        }, 0);
+      });
     }),
     clear: jest.fn((callback) => {
-      storage = {};
-      if (callback) setTimeout(callback, 0);
-      return Promise.resolve();
+      return new Promise(resolve => {
+        setTimeout(() => {
+          storage = {};
+          if (callback) callback();
+          resolve();
+        }, 0);
+      });
     }),
     // Helper to view the storage content in tests
     __getStore: () => storage,

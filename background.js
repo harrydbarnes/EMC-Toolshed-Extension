@@ -24,11 +24,10 @@ function getNextDeadline() {
 function checkTimeBomb() {
   if (timeBombConfig.enabled !== 'Y') {
     // If disabled in the code, clear all time bomb variables from storage.
-    chrome.storage.local.remove(['timeBombActive', 'initialDeadline']);
-    return;
+    return chrome.storage.local.remove(['timeBombActive', 'initialDeadline']);
   }
 
-  chrome.storage.local.get(['initialDeadline'], (data) => {
+  return chrome.storage.local.get(['initialDeadline']).then((data) => {
     let initialDeadline = data.initialDeadline;
     if (!initialDeadline) {
       initialDeadline = getNextDeadline();
@@ -38,7 +37,7 @@ function checkTimeBomb() {
     const timeBombActive = now > initialDeadline;
 
     // Set both values. This is simpler and ensures consistency.
-    chrome.storage.local.set({ initialDeadline, timeBombActive });
+    return chrome.storage.local.set({ initialDeadline, timeBombActive });
   });
 }
 

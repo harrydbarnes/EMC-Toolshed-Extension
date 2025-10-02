@@ -1,7 +1,6 @@
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
-const { waitFor } = require('@testing-library/dom');
 
 const contentScript = fs.readFileSync(path.resolve(__dirname, '../content.js'), 'utf8');
 
@@ -20,6 +19,9 @@ describe('Content Script Main Logic', () => {
         document = window.document;
         window.chrome = global.chrome;
 
+        // Mock setInterval to prevent infinite loops when using jest.runAllTimers()
+        window.setInterval = jest.fn();
+
         const mutationCallbackMap = new Map();
         window.MutationObserver = jest.fn(function(callback) {
             const instance = {
@@ -36,6 +38,9 @@ describe('Content Script Main Logic', () => {
         const scriptEl = document.createElement('script');
         scriptEl.textContent = contentScript;
         document.head.appendChild(scriptEl);
+
+        // Manually dispatch DOMContentLoaded to ensure the script's main logic runs
+        document.dispatchEvent(new window.Event('DOMContentLoaded', { bubbles: true, cancelable: true }));
 
         return { window, document };
     };
@@ -66,26 +71,29 @@ describe('Content Script Main Logic', () => {
         expect(hasInitializationLog).toBe(true);
     });
 
-    test.skip('should show a custom reminder when conditions are met', async () => {
+    // This test has been temporarily skipped due to a persistent and complex timing issue
+    // in the Jest/JSDOM environment. The test fails because the reminder popup is not
+    // reliably created before the test asserts its existence. This needs further investigation.
+    // TODO: Fix the underlying timing issue and re-enable this test.
+    test.skip('should show a custom reminder on initial load when conditions are met', () => {
         const reminder = {
-            id: 'test1', name: 'Test Reminder',
-            urlPattern: '*mediaocean.com*', textTrigger: 'initial content',
-            popupMessage: '<h3>A Sub-Title</h3>', enabled: true,
+            id: 'test1',
+            name: 'Test Reminder',
+            urlPattern: '*mediaocean.com*',
+            textTrigger: 'initial content',
+            popupMessage: '<h3>A Sub-Title</h3>',
+            enabled: true,
         };
-        const { document, window } = setupJSDOM('https://groupmuk-prisma.mediaocean.com/', false, [reminder]);
+        const { document } = setupJSDOM('https://groupmuk-prisma.mediaocean.com/', false, [reminder]);
 
-        // Wait for the script to initialize and set up the observer
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // The script runs checkCustomReminders after a 2000ms timeout on initialization.
+        // Run all timers to execute this initial check.
+        jest.runAllTimers();
 
-        const observerInstance = window.MutationObserver.mock.results[0].value;
-        expect(observerInstance).toBeDefined();
-        observerInstance.__trigger([{}]); // Manually trigger the observer
-
-        // Use waitFor to poll the DOM for the popup
-        await waitFor(() => {
-            const popup = document.getElementById('custom-reminder-display-popup');
-            expect(popup).not.toBeNull();
-            expect(popup.textContent).toContain('Test Reminder');
-        }, { timeout: 4000 }); // Set a reasonable timeout
+        // Now assert the popup exists
+        const popup = document.getElementById('custom-reminder-display-popup');
+        expect(popup).not.toBeNull();
+        expect(popup.innerHTML).toContain('<h3>A Sub-Title</h3>');
+        expect(popup.textContent).toContain('Test Reminder');
     });
 });

@@ -25,6 +25,9 @@ describe('Time Bomb Feature in background.js', () => {
             chrome.runtime.onInstalled.listener();
         }
 
+        // Run timers to ensure the async storage operations complete
+        jest.runAllTimers();
+
         // Now check the storage
         const storage = chrome.storage.local.__getStore();
         expect(storage.initialDeadline).toBeDefined();
@@ -47,6 +50,9 @@ describe('Time Bomb Feature in background.js', () => {
             chrome.runtime.onInstalled.listener();
         }
 
+        // Run timers to ensure the async storage operations complete
+        jest.runAllTimers();
+
         const storage = chrome.storage.local.__getStore();
         const expectedDeadline = new Date('2024-08-06T23:59:00');
         expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
@@ -67,7 +73,8 @@ describe('Time Bomb Feature in background.js', () => {
         });
 
         // Run the check again at the new time
-        await checkTimeBomb();
+        checkTimeBomb();
+        jest.runAllTimers(); // Wait for the async storage operations to complete
 
         const storage = await chrome.storage.local.get('timeBombActive');
         expect(storage.timeBombActive).toBe(true);
@@ -85,7 +92,8 @@ describe('Time Bomb Feature in background.js', () => {
             checkTimeBomb = require('../background').checkTimeBomb;
         });
 
-        await checkTimeBomb();
+        checkTimeBomb();
+        jest.runAllTimers(); // Wait for the async storage operations to complete
 
         const storage = await chrome.storage.local.get('timeBombActive');
         expect(storage.timeBombActive).toBe(false);

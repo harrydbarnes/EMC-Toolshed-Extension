@@ -267,18 +267,33 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(clickEvent);
     };
 
-    const delay = ms => new Promise(res => setTimeout(res, ms));
+    const waitForActiveElement = (selector, timeout = 5000) => {
+        return new Promise((resolve, reject) => {
+            const intervalTime = 100;
+            let elapsedTime = 0;
+            const interval = setInterval(() => {
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.matches(selector)) {
+                    clearInterval(interval);
+                    resolve(activeEl);
+                } else {
+                    elapsedTime += intervalTime;
+                    if (elapsedTime >= timeout) {
+                        clearInterval(interval);
+                        reject(new Error(`Timeout waiting for element to be active: ${selector}. Current active: ${activeEl ? activeEl.tagName : 'null'}`));
+                    }
+                }
+            }, intervalTime);
+        });
+    };
+
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with precise focus logic...");
+            console.log("Attempting D-Number search with robust waiting...");
             await robustClick('mo-icon[name="search"]');
-            await delay(250); // Minimal delay for focus
 
-            const activeEl = document.activeElement;
-            if (!activeEl || activeEl.tagName.toLowerCase() !== 'mo-input') {
-                throw new Error(`Focused element is not the expected mo-input component. Found: ${activeEl ? activeEl.tagName : 'null'}`);
-            }
+            const activeEl = await waitForActiveElement('mo-input');
 
             const inputField = activeEl.shadowRoot.querySelector('input');
             if (!inputField) {
@@ -288,10 +303,7 @@ function openCampaignWithDNumberScript(dNumber) {
             inputField.value = dNumber;
             inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
-            await delay(500);
-
             await robustClick('div.switch[role="switch"]');
-            await delay(1000);
 
             await robustClick('mo-button mo-icon[name="folder-open"]');
             console.log("D-Number script finished successfully.");
@@ -468,7 +480,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });
-            }, 5000); // Reduced timeout to 5 seconds
+            }, 10000); // Increased timeout to 10 seconds for reliability
         })();
         sendResponse({status: "Action initiated"});
     } else if (request.action === "metaBillingCheck") {

@@ -21,7 +21,8 @@ const createStorageAreaMock = () => {
             result[keys] = storage[keys];
         }
       }
-      if (callback) callback(result);
+      // Wrap callback in a timeout to make it async and controllable by Jest timers
+      if (callback) setTimeout(() => callback(result), 0);
       return Promise.resolve(result);
     }),
     set: jest.fn((items, callback) => {

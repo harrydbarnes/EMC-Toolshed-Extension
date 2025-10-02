@@ -1,4 +1,17 @@
 describe('Time Bomb Feature in background.js', () => {
+    // Helper function to robustly flush all timers and microtasks
+    async function flushPromisesAndTimers() {
+        // Await a `setImmediate` to allow any pending microtasks (like promise resolutions) to process first.
+        await new Promise(jest.requireActual('timers').setImmediate);
+
+        // Loop to run all pending timers (macrotasks), including any that are scheduled by other timers.
+        while (jest.getTimerCount() > 0) {
+            jest.runOnlyPendingTimers();
+            // Await another `setImmediate` to process microtasks queued by the timers.
+            await new Promise(jest.requireActual('timers').setImmediate);
+        }
+    }
+
     beforeEach(() => {
         // Reset all mocks and storage before each test
         if (typeof resetMocks === 'function') {
@@ -11,41 +24,40 @@ describe('Time Bomb Feature in background.js', () => {
         jest.useRealTimers(); // Clean up fake timers after each test
     });
 
-    test('should set initial deadline correctly when installed on a Monday', () => {
-        // Set the fake time BEFORE running the setup
-        jest.useFakeTimers().setSystemTime(new Date('2024-07-29T10:00:00')); // A Monday
+    test('should set initial deadline correctly when installed on a Monday', async () => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2024-07-29T10:00:00')); // A Monday
 
-        // Load the module, which registers the listener
         jest.isolateModules(() => {
             require('../background');
         });
 
-        // Manually trigger the onInstalled event to simulate installation
         if (chrome.runtime.onInstalled.listener) {
             chrome.runtime.onInstalled.listener();
         }
 
-        // Now check the storage
+        await flushPromisesAndTimers();
+
         const storage = chrome.storage.local.__getStore();
         expect(storage.initialDeadline).toBeDefined();
         expect(storage.timeBombActive).toBe(false);
-
         const expectedDeadline = new Date('2024-07-30T23:59:00');
         expect(storage.initialDeadline).toBe(expectedDeadline.getTime());
     });
 
-    test('should set deadline for next week if installed after the deadline on a Tuesday', () => {
-        // Set the fake time AFTER the deadline time on a Tuesday
-        jest.useFakeTimers().setSystemTime(new Date('2024-07-30T23:59:01'));
+    test('should set deadline for next week if installed after the deadline on a Tuesday', async () => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2024-07-30T23:59:01'));
 
         jest.isolateModules(() => {
             require('../background');
         });
 
-        // Manually trigger the onInstalled event
         if (chrome.runtime.onInstalled.listener) {
             chrome.runtime.onInstalled.listener();
         }
+
+        await flushPromisesAndTimers();
 
         const storage = chrome.storage.local.__getStore();
         const expectedDeadline = new Date('2024-08-06T23:59:00');
@@ -53,23 +65,22 @@ describe('Time Bomb Feature in background.js', () => {
     });
 
     test('should become active after the deadline has passed', async () => {
-        // Pre-populate storage with an existing deadline
         const initialDeadline = new Date('2024-07-30T23:59:00').getTime();
         chrome.storage.local.__getStore().initialDeadline = initialDeadline;
 
-        // Set time to AFTER the deadline
-        jest.useFakeTimers().setSystemTime(new Date('2024-07-31T00:00:01'));
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2024-07-31T00:00:01'));
 
         let checkTimeBomb;
         jest.isolateModules(() => {
-            // We require it again to get the function, but the initial run won't affect our pre-populated state
             checkTimeBomb = require('../background').checkTimeBomb;
         });
 
-        // Run the check again at the new time
-        await checkTimeBomb();
+        const promise = checkTimeBomb();
+        await flushPromisesAndTimers();
+        await promise;
 
-        const storage = await chrome.storage.local.get('timeBombActive');
+        const storage = chrome.storage.local.__getStore();
         expect(storage.timeBombActive).toBe(true);
     });
 
@@ -77,17 +88,19 @@ describe('Time Bomb Feature in background.js', () => {
         const initialDeadline = new Date('2024-07-30T23:59:00').getTime();
         chrome.storage.local.__getStore().initialDeadline = initialDeadline;
 
-        // Set time to BEFORE the deadline
-        jest.useFakeTimers().setSystemTime(new Date('2024-07-30T23:58:59'));
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2024-07-30T23:58:59'));
 
         let checkTimeBomb;
         jest.isolateModules(() => {
             checkTimeBomb = require('../background').checkTimeBomb;
         });
 
-        await checkTimeBomb();
+        const promise = checkTimeBomb();
+        await flushPromisesAndTimers();
+        await promise;
 
-        const storage = await chrome.storage.local.get('timeBombActive');
+        const storage = chrome.storage.local.__getStore();
         expect(storage.timeBombActive).toBe(false);
     });
 });

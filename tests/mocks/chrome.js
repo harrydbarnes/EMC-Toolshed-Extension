@@ -27,7 +27,7 @@ const createStorageAreaMock = () => {
     }),
     set: jest.fn((items, callback) => {
       Object.assign(storage, items);
-      if (callback) callback();
+      if (callback) setTimeout(callback, 0);
       return Promise.resolve();
     }),
     remove: jest.fn((keys, callback) => {
@@ -36,12 +36,12 @@ const createStorageAreaMock = () => {
         } else if (typeof keys === 'string') {
             delete storage[keys];
         }
-        if (callback) callback();
+        if (callback) setTimeout(callback, 0);
         return Promise.resolve();
     }),
     clear: jest.fn((callback) => {
       storage = {};
-      if (callback) callback();
+      if (callback) setTimeout(callback, 0);
       return Promise.resolve();
     }),
     // Helper to view the storage content in tests

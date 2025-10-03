@@ -221,99 +221,150 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 const openCampaignWithDNumberScript = (dNumber) => {
-    // This script is injected into the page. It needs to be self-contained.
-    // We are including the helper functions from content.js here.
+    // Helper to introduce a pause
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
-    /**
-     * Recursively searches for an element matching the selector, piercing through shadow DOMs.
-     */
-    function queryShadowDom(selector, root = document) {
-        const found = root.querySelector(selector);
-        if (found) return found;
+    // REFINED: findElement now recursively searches nested shadow DOMs for the selector.
+    const findElement = (selector, rootElement = document, timeout = 30000) => { // Increased timeout to 30 seconds
+        return new Promise((resolve, reject) => {
+            const intervalTime = 500;
+            let elapsedTime = 0;
 
-        const allElements = root.querySelectorAll('*');
-        for (const element of allElements) {
-            if (element.shadowRoot) {
-                const foundInShadow = queryShadowDom(selector, element.shadowRoot);
-                if (foundInShadow) return foundInShadow;
-            }
-        }
-        return null;
-    }
+            const queryShadowDomRecursive = (root, targetSelector) => {
+                // 1. Check the current root for the element
+                // Use querySelector directly to find elements even if they are in the light DOM
+                const element = root.querySelector(targetSelector);
+                // Check for existence AND visibility (offsetParent is best guess for visibility)
+                // Visibility check is only reliable for DOM elements, not Shadow Roots.
+                if (element && (element.offsetParent !== null || element.tagName === 'INPUT')) {
+                    // console.log("Found element in DOM or Shadow DOM:", element);
+                    return element;
+                }
 
-    /**
-     * Waits for an element to appear in the DOM.
-     */
-    function waitForElement(selector, timeout = 5000) {
-      return new Promise((resolve, reject) => {
-        const interval = setInterval(() => {
-          const element = document.querySelector(selector);
-          if (element) {
-            clearInterval(interval);
-            clearTimeout(timer);
-            resolve(element);
-          }
-        }, 100);
-        const timer = setTimeout(() => {
-          clearInterval(interval);
-          reject(new Error(`Element '${selector}' not found within ${timeout}ms`));
-        }, timeout);
-      });
-    }
+                // 2. Recursively search nested shadow roots
+                // Ensure we only query children of the current root if it is a DOM element
+                const allElements = root.querySelectorAll ? root.querySelectorAll('*') : [];
+                for (const el of allElements) {
+                    if (el.shadowRoot) {
+                        const foundInShadow = queryShadowDomRecursive(el.shadowRoot, targetSelector);
+                        if (foundInShadow) return foundInShadow;
+                    }
+                }
+                return null;
+            };
 
-    // This is the main execution logic, adapted from handleDNumberOpen in content.js
+            const interval = setInterval(() => {
+                // Start the search from the provided rootElement
+                const element = queryShadowDomRecursive(rootElement, selector);
+                if (element) {
+                    clearInterval(interval);
+                    resolve(element);
+                } else {
+                    elapsedTime += intervalTime;
+                    if (elapsedTime >= timeout) {
+                        clearInterval(interval);
+                        const scope = rootElement === document ? 'document' : (rootElement.tagName || 'ShadowRoot');
+                        reject(new Error(`Element not found or not visible: ${selector} within ${scope} after ${timeout/1000}s`));
+                    }
+                }
+            }, intervalTime);
+        });
+    };
+
+    // Helper for robustly clicking an element.
+    const robustClick = async (selector, rootElement = document) => {
+        const element = await findElement(selector, rootElement);
+        // Simulate a full user click sequence for maximum compatibility
+        const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+        const mouseupEvent = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
+        const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        element.dispatchEvent(mousedownEvent);
+        element.dispatchEvent(mouseupEvent);
+        element.dispatchEvent(clickEvent);
+    };
+
     (async () => {
-        console.log('[D-Number Open - Injected] Start');
-
-        if (!/^D\d+$/.test(dNumber)) {
-            alert(`Provided content "${dNumber}" does not look like a D-number (Dxxxxxxx).`);
-            return;
-        }
-
-        const searchBoxComponent = document.querySelector('mo-banner mo-banner-module#mo-banner-module-prsm-cm-spa mo-search-box');
-        if (!searchBoxComponent) {
-            alert('Could not find the Campaign Management search box component.');
-            return;
-        }
-
-        const inputElement = queryShadowDom('input', searchBoxComponent);
-        if (!inputElement) {
-            alert('Could not find the input field within the search box.');
-            return;
-        }
-
-        searchBoxComponent.click();
-
-        const overlaySelector = '#mo-overlay-4';
         try {
-            await waitForElement(overlaySelector, 1000);
-        } catch (e) {
-            console.warn('[D-Number Open - Injected] Search overlay failed to appear in time.');
-        }
+            console.log("Attempting D-Number search with PRE-WAIT and DIRECT Shadow DOM pierce...");
 
-        inputElement.value = dNumber;
-        inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-        inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+            // 1. Action: Click the main search icon to open the search banner.
+            await robustClick('mo-icon[name="search"]');
+            console.log("Clicked search icon.");
 
-        console.log(`[D-Number Open - Injected] D-Number "${dNumber}" pasted. Waiting for result link...`);
+            // 2. Action & Wait: Wait for the search BANNER to appear (our stable scope).
+            // Increased timeout here to 10 seconds.
+            const searchBanner = await findElement('mo-banner-recent-menu-content', document, 10000);
+            console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-        const resultLinkSelector = `${overlaySelector} a.item-row[href*="campaign-id"]`;
-        try {
-            const resultLink = await waitForElement(resultLinkSelector, 5000);
-            console.log('[D-Number Open - Injected] Result link found. Navigating directly.');
+            // 3. Action & Wait: Find the native input element inside the banner.
+            // The original selector was unreliable. We'll stick to searching for the native input,
+            // but use the broader scope of the whole banner, hoping the previous function can pierce it.
+            // Note: The visibility check for <input> is simplified in `findElement` as input.offsetParent is sometimes null
+            // even when visible if it is inside multiple shadow DOMs.
+            const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner, 10000);
 
-            if (resultLink.href) {
-                window.location.href = resultLink.href;
-                const overlay = document.querySelector(overlaySelector);
-                if (overlay) overlay.remove();
-            } else {
-                 resultLink.click();
+            if (!inputField) {
+                 throw new Error('Could not find the native input field for search.');
             }
+
+            console.log("Found native input field. Targeting:", inputField);
+
+            // 4. Action: Explicitly focus the element, as suggested by your workflow.
+            inputField.focus();
+
+            // NEW STEP: The log shows a mouse click *after* the paste operation.
+            // Since the paste is failing and the field is focused, we'll try sending
+            // a synthetic click/mousedown event to the field to ensure all listeners are activated.
+            const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+            inputField.dispatchEvent(clickEvent);
+            console.log("Dispatched synthetic click event to input field.");
+
+            // 5. FIX: Directly set the value and dispatch robust events.
+            inputField.value = dNumber;
+            console.log(`D-Number assigned value: ${dNumber}.`);
+
+            const eventConfig = { bubbles: true, composed: true };
+
+            // Dispatch input, change, and keyup events for framework reactivity
+            inputField.dispatchEvent(new Event('input', eventConfig));
+            inputField.dispatchEvent(new Event('change', eventConfig));
+
+            // Dispatch keydown and keyup for ENTER, which might trigger the search
+            inputField.dispatchEvent(new KeyboardEvent('keydown', {
+                 ...eventConfig,
+                 key: 'Enter',
+                 keyCode: 13,
+                 which: 13,
+             }));
+            inputField.dispatchEvent(new KeyboardEvent('keyup', {
+                ...eventConfig,
+                key: 'Enter',
+                keyCode: 13,
+                which: 13,
+            }));
+
+            // Wait briefly for the input to register
+            await delay(500);
+
+            console.log("Input, change, and Enter key events dispatched to simulate text entry and submission.");
+
+            // 6. Action: Click the toggle switch to enable D-number search.
+            await robustClick('mo-toggle-switch', searchBanner);
+            console.log("Clicked toggle switch.");
+
+            // 7. Action: Click the search button to open the campaign.
+            // We search for a mo-button that is a sibling or child of the search banner.
+            // Note: In your previous version, this was `mo-button` which searches the entire banner content.
+            // We keep it searching the banner content to find the search button.
+            await robustClick('mo-button', searchBanner);
+            console.log("Clicked final search button.");
+
+            console.log("D-Number script finished successfully.");
         } catch (error) {
-            console.error('[D-Number Open - Injected] Timeout or error waiting for search result link.', error);
-            alert('Search result for D-Number not found on the current campaign list screen.');
+            console.error('Error during D Number script execution:', error);
+            // Added error message to match the string in the original code, but kept the timeout longer in `findElement`
+            alert(`Automation failed: ${error.message}`);
         }
-        console.log('[D-Number Open - Injected] Finished.');
     })();
 };
 
@@ -555,11 +606,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
         sendResponse({ status: 'success' });
     }
+    return true;  // Indicates that the response is sent asynchronously
     }); // close chrome.storage.local.get
-
-    // Return true AFTER the callback is set up to indicate that the response will be sent asynchronously.
-    // This is crucial for keeping the message channel open while we wait for the storage.get() result.
-    return true;
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

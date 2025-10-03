@@ -477,39 +477,74 @@ function handleGmiChatButton() {
  */
 async function handleDNumberOpen() {
     console.log('[D-Number Open] Start');
+
     // 1. Read D-Number from clipboard (Requires 'clipboardRead' permission)
     const clipboardResponse = await chrome.runtime.sendMessage({ action: 'getClipboardText' });
     const dNumber = clipboardResponse.status === 'success' ? clipboardResponse.text.trim() : '';
 
-    if (!/^D\d+$/.test(dNumber)) {
+    // Check clipboard content, allowing additional characters after 'D' number if applicable (e.g., 'D1234567-stuff')
+    if (!/^D\d+/.test(dNumber)) {
         alert(`Clipboard content "${dNumber}" does not look like a D-number (Dxxxxxxx). Please copy a valid D-Number.`);
         return;
     }
 
-    // 2. Find the outer search box component in the banner area
-    // Selector based on the click log parent structure: banner module, search box.
-    const searchBoxComponent = document.querySelector('mo-banner mo-banner-module#mo-banner-module-prsm-cm-spa mo-search-box');
-    if (!searchBoxComponent) {
-        alert('Could not find the Campaign Management search box component.');
+    // 2. Find the main quick search box on the campaign dashboard
+    const initialSearchBox = document.querySelector('mo-search-box[data-cy="quick_search"]');
+    if (!initialSearchBox) {
+        alert('Could not find the Quick Search Box on the Campaign Dashboard. Are you on the correct page?');
         return;
     }
 
-    // 3. Find the actual input element within the web component's shadow DOM
-    const inputElement = queryShadowDom('input', searchBoxComponent);
-    if (!inputElement) {
-        alert('Could not find the input field within the search box.');
-        return;
-    }
-
-    // 4. Click the component to ensure the search overlay is open/active
-    searchBoxComponent.click();
+    // 3. Click the initial search box component to open the overlay
+    initialSearchBox.click();
 
     const overlaySelector = '#mo-overlay-4';
-    try {
-        await waitForElement(overlaySelector, 1000);
-    } catch (e) {
-        console.warn('[D-Number Open] Search overlay failed to appear in time.');
+    const inputSelector = 'input[type="text"][data-is-native-input]';
+    const resultLinkSelector = `${overlaySelector} a.item-row[href*="campaign-id"]`;
+
+    // 4. Wait for the native input element inside the newly opened overlay
+    // by explicitly piercing the Shadow DOM layers.
+    let inputElement = null;
+    let attempts = 0;
+    const maxAttempts = 30; // Max 3 seconds total wait time (30 * 100ms)
+
+    while (!inputElement && attempts < maxAttempts) {
+        try {
+            const overlay = document.querySelector(overlaySelector);
+            // Wait until the overlay is actually in the DOM
+            if (!overlay) throw new Error('Overlay not yet present.');
+
+            const recentMenuContent = overlay.querySelector('mo-banner-recent-menu-content');
+            if (recentMenuContent && recentMenuContent.shadowRoot) {
+                // 1st pierce: mo-search-box inside mo-banner-recent-menu-content's Shadow DOM
+                const searchBox = recentMenuContent.shadowRoot.querySelector('mo-search-box');
+                if (searchBox && searchBox.shadowRoot) {
+                    // 2nd pierce: mo-input inside mo-search-box's Shadow DOM
+                    const moInput = searchBox.shadowRoot.querySelector('mo-input');
+                    if (moInput && moInput.shadowRoot) {
+                        // 3rd pierce: Native input inside mo-input's Shadow DOM
+                        inputElement = moInput.shadowRoot.querySelector(inputSelector);
+                    }
+                }
+            }
+        } catch(e) {
+            // An error during selection means an element is null/not fully rendered yet.
+        }
+
+        if (inputElement) {
+            break;
+        }
+
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms
     }
+
+    if (!inputElement) {
+        alert(`Failed to find the search input field inside the overlay. Check element structure.`);
+        return;
+    }
+
+    console.log(`[D-Number Open] Native input element found. Typing "${dNumber}"...`);
 
     // 5. Paste the D-Number and trigger search events
     inputElement.value = dNumber;
@@ -518,21 +553,20 @@ async function handleDNumberOpen() {
 
     console.log(`[D-Number Open] D-Number "${dNumber}" pasted. Waiting for result link...`);
 
-    // 6. Wait for the result link and click it
-    // Selector targets the definitive campaign link that appeared in the manual log.
-    const resultLinkSelector = `${overlaySelector} a.item-row[href*="campaign-id"]`;
+    // 6. Wait for the result link and navigate
     try {
-        const resultLink = await waitForElement(resultLinkSelector, 5000);
+        const resultLink = await waitForElement(resultLinkSelector, 5000); // Increased wait for result
         console.log('[D-Number Open] Result link found. Navigating directly.');
 
-        // Use direct navigation for reliability and automatically close the overlay
+        // Navigate directly to bypass possible click issues on the link element
         if (resultLink.href) {
             window.location.href = resultLink.href;
 
+            // Optionally remove the overlay after successful navigation is triggered
             const overlay = document.querySelector(overlaySelector);
             if (overlay) overlay.remove();
         } else {
-             // Fallback to native click if href is missing (should not happen)
+             // Fallback to native click if href is missing (unlikely but safe)
              resultLink.click();
         }
 
@@ -542,7 +576,7 @@ async function handleDNumberOpen() {
     } finally {
         // 7. Restore the clipboard
         await chrome.runtime.sendMessage({ action: 'copyToClipboard', text: dNumber });
-        console.log('[D-Number Open] Finished.');
+        console.log('[D-Number Open] End');
     }
 }
 
@@ -887,7 +921,6 @@ function mainContentScriptInit() {
             checkForIASConditions();
             checkCustomReminders(); // Initial check for custom reminders
             handleCampaignManagementFeatures();
-            // >> ADDED INITIAL CALL <<
             addDNumberSearchButton();
         }, 2000);
     }
@@ -904,8 +937,7 @@ function mainContentScriptInit() {
                 handleApproverPasting();
                 handleManageFavouritesButton();
                 handleGmiChatButton();
-                // >> ADDED OBSERVER CALL <<
-                addDNumberSearchButton(); // Ensure the button is present after SPA navigations
+                addDNumberSearchButton();
             }, 300);
         }
     });

@@ -306,16 +306,21 @@ const openCampaignWithDNumberScript = (dNumber) => {
             console.log("Found native input field. Targeting:", inputField);
 
             // 5. Action: Manually focus the native input field.
-            // Time: Immediate
             inputField.focus();
 
-            // 6. Action: Set the value and dispatch events.
-            // Time: Immediate
-            inputField.value = dNumber;
-            inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+            // 6. Action: Set the value by simulating a paste.
+            inputField.focus();
+            const pasteSuccess = document.execCommand('paste');
+            console.log('Paste command success:', pasteSuccess);
+
+            // Fallback for browsers/pages that block execCommand or where the clipboard is empty.
+            if (!pasteSuccess || !inputField.value) {
+                console.warn('execCommand("paste") failed or did not populate the field. Falling back to direct value assignment.');
+                inputField.value = dNumber; // dNumber is still available in this scope
+                inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+            }
 
             // 7. Action: Click the switch for D-number search *within the banner*.
-            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
             await robustClick('div.switch[role="switch"]', searchBanner);
 
             // 8. Action: Click the open campaign icon *within the banner*.
@@ -452,112 +457,121 @@ function scrapeAndDownloadCsv() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // Allow the disableTimeBomb action to proceed even if the bomb is active.
-    if (request.action === "disableTimeBomb") {
-        chrome.storage.local.remove(['timeBombActive', 'initialDeadline'], () => {
-            console.log('Time bomb has been manually disabled via override.');
-            if (chrome.runtime.lastError) {
-                sendResponse({ status: 'error', message: chrome.runtime.lastError.message });
-            } else {
+    (async () => {
+        // Allow the disableTimeBomb action to proceed even if the bomb is active.
+        if (request.action === "disableTimeBomb") {
+            try {
+                await chrome.storage.local.remove(['timeBombActive', 'initialDeadline']);
+                console.log('Time bomb has been manually disabled via override.');
                 sendResponse({ status: 'success' });
+            } catch (error) {
+                sendResponse({ status: 'error', message: error.message });
             }
-        });
-        return true; // Required for async sendResponse
-    }
+            return;
+        }
 
-    chrome.storage.local.get('timeBombActive', (data) => {
+        const data = await chrome.storage.local.get('timeBombActive');
         if (data.timeBombActive) {
             console.log(`Message with action "${request.action}" blocked by time bomb.`);
-            if (sendResponse) {
-                sendResponse({ status: 'error', message: 'All features have been disabled.' });
-            }
-            return; // Stop all further execution of the listener.
+            sendResponse({ status: 'error', message: 'All features have been disabled.' });
+            return;
         }
 
         // If the time bomb is not active, proceed with the normal message handling.
         console.log("Received message:", request);
-        if (request.action === "showTimesheetNotification") {
-        console.log("Showing timesheet notification");
-        showTimesheetNotification();
-        sendResponse({status: "Notification shown"});
-    } else if (request.action === "createTimesheetAlarm") {
-        createTimesheetAlarm(request.day, request.time);
-        sendResponse({status: "Alarm created"});
-    } else if (request.action === "removeTimesheetAlarm") {
-        chrome.alarms.clear('timesheetReminder');
-        sendResponse({status: "Alarm removed"});
-    } else if (request.action === "openCampaignWithDNumber") {
-        (async () => {
-            const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
-
-            setTimeout(() => {
-                chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    func: openCampaignWithDNumberScript,
-                    args: [request.dNumber]
-                });
-            }, 10000); // Increased timeout to 10 seconds for reliability
-        })();
-        sendResponse({status: "Action initiated"});
-    } else if (request.action === "metaBillingCheck") {
-        (async () => {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tab) {
-                return sendResponse({ status: 'error', message: 'Could not find active tab.' });
-            }
-            if (tab.url && tab.url.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
+        switch (request.action) {
+            case "showTimesheetNotification":
+                console.log("Showing timesheet notification");
+                showTimesheetNotification(); // This is async inside, but doesn't use sendResponse
+                sendResponse({status: "Notification shown"});
+                break;
+            case "createTimesheetAlarm":
+                createTimesheetAlarm(request.day, request.time);
+                sendResponse({status: "Alarm created"});
+                break;
+            case "removeTimesheetAlarm":
+                chrome.alarms.clear('timesheetReminder');
+                sendResponse({status: "Alarm removed"});
+                break;
+            case "openCampaignWithDNumber":
                 try {
-                    await chrome.scripting.executeScript({
-                        target: { tabId: tab.id },
-                        func: scrapeAndDownloadCsv,
+                    // First, copy the D-Number to the clipboard via the offscreen document.
+                    await createOffscreenDocument();
+                    await chrome.runtime.sendMessage({
+                        action: 'copyToClipboard',
+                        text: request.dNumber
                     });
-                    sendResponse({ status: 'success', message: 'Scraping process initiated.' });
-                } catch (e) {
-                    console.error("Failed to inject scripts:", e);
-                    sendResponse({ status: 'error', message: `Failed to start scraper: ${e.message}` });
+
+                    // Now, proceed with opening the tab and executing the script.
+                    const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
+
+                    // Wait for the tab to be ready before injecting the script.
+                    setTimeout(() => {
+                        chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: openCampaignWithDNumberScript,
+                            args: [request.dNumber] // Pass dNumber as a fallback
+                        });
+                    }, 10000); // 10-second delay for page load.
+
+                    sendResponse({ status: "Action initiated" });
+                } catch (error) {
+                    console.error("Error in openCampaignWithDNumber:", error);
+                    sendResponse({ status: "error", message: error.message });
                 }
-            } else {
-                sendResponse({ status: 'error', message: 'You need to be on the Meta Ads Manager campaigns page for this to work.' });
-            }
-        })();
-        return true; // Required for async sendResponse
-    } else if (request.action === 'getClipboardText' || request.action === 'copyToClipboard') {
-        handleOffscreenClipboard(request, sendResponse);
-        return true; // Required for async sendResponse
-    } else if (request.action === 'getFavouriteApprovers') {
-        (async () => {
-            try {
-                const data = await new Promise((resolve, reject) => {
-                    chrome.storage.local.get(['favoriteApprovers'], (result) => {
-                        if (chrome.runtime.lastError) {
-                            return reject(chrome.runtime.lastError);
-                        }
-                        resolve(result);
-                    });
-                });
-
-                const favoriteIds = new Set(data.favoriteApprovers || []);
-                if (favoriteIds.size === 0) {
-                    return sendResponse({ status: 'success', emails: [] });
+                break;
+            case "metaBillingCheck":
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (!tab) {
+                    sendResponse({ status: 'error', message: 'Could not find active tab.' });
+                    break;
                 }
+                if (tab.url && tab.url.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
+                    try {
+                        await chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: scrapeAndDownloadCsv,
+                        });
+                        sendResponse({ status: 'success', message: 'Scraping process initiated.' });
+                    } catch (e) {
+                        console.error("Failed to inject scripts:", e);
+                        sendResponse({ status: 'error', message: `Failed to start scraper: ${e.message}` });
+                    }
+                } else {
+                    sendResponse({ status: 'error', message: 'You need to be on the Meta Ads Manager campaigns page for this to work.' });
+                }
+                break;
+            case 'getClipboardText':
+            case 'copyToClipboard':
+                handleOffscreenClipboard(request, sendResponse);
+                break;
+            case 'getFavouriteApprovers':
+                try {
+                    const storageData = await chrome.storage.local.get(['favoriteApprovers']);
+                    const favoriteIds = new Set(storageData.favoriteApprovers || []);
+                    if (favoriteIds.size === 0) {
+                        sendResponse({ status: 'success', emails: [] });
+                        break;
+                    }
 
-                const favoriteEmails = approversData
-                    .filter(approver => favoriteIds.has(approver.id))
-                    .map(approver => approver.email);
+                    const favoriteEmails = approversData
+                        .filter(approver => favoriteIds.has(approver.id))
+                        .map(approver => approver.email);
 
-                sendResponse({ status: 'success', emails: favoriteEmails });
-            } catch (error) {
-                console.error('Error getting favourite approvers:', error);
-                sendResponse({ status: 'error', message: error.message });
-            }
-        })();
-        return true; // Required for async sendResponse
-    } else if (request.action === 'openApproversPage') {
-        chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
-        sendResponse({ status: 'success' });
-    }
+                    sendResponse({ status: 'success', emails: favoriteEmails });
+                } catch (error) {
+                    console.error('Error getting favourite approvers:', error);
+                    sendResponse({ status: 'error', message: error.message });
+                }
+                break;
+            case 'openApproversPage':
+                chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
+                sendResponse({ status: 'success' });
+                break;
+        }
+    })();
+
     return true;  // Indicates that the response is sent asynchronously
-    }); // close chrome.storage.local.get
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

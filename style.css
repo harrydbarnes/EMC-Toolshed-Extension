@@ -127,6 +127,17 @@ body::-webkit-scrollbar-thumb:hover {
     width: 100%;
 }
 
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.input-wrapper .input-group {
+    flex-grow: 1;
+    margin-bottom: 0; /* Override default margin */
+}
+
 .input-group input {
     width: 100%;
     padding: 8px;
@@ -134,6 +145,24 @@ body::-webkit-scrollbar-thumb:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
+}
+
+.test-button {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #6c757d; /* A neutral grey */
+    border: none;
+    border-radius: 50%; /* Make it circular */
+    cursor: default; /* Not clickable */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1; /* Ensure text is centered vertically */
 }
 
 .campaign-actions-grid {

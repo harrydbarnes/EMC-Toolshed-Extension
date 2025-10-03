@@ -294,49 +294,9 @@ const openCampaignWithDNumberScript = (dNumber) => {
             const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000);
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-            // 3. Find all `mo-input` custom components and inject numbered buttons for debugging.
-            const allMoInputs = [];
-            const queryForMoInputs = (root) => {
-                const inputs = root.querySelectorAll('mo-input');
-                inputs.forEach(input => {
-                    if (input.offsetParent !== null) { // Check if input is visible
-                        allMoInputs.push(input);
-                    }
-                });
-                root.querySelectorAll('*').forEach(el => {
-                    if (el.shadowRoot) {
-                        queryForMoInputs(el.shadowRoot);
-                    }
-                });
-            };
-            queryForMoInputs(searchBanner);
-            console.log(`Jules-debug: Found ${allMoInputs.length} visible <mo-input> components.`);
-
-            const injectNumberedButton = (targetElement, number) => {
-                try {
-                    const doc = targetElement.ownerDocument;
-                    const button = doc.createElement('button');
-                    button.textContent = String(number);
-                    Object.assign(button.style, {
-                        position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)',
-                        width: '22px', height: '22px', backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                        color: 'white', borderRadius: '50%', border: '1px solid white',
-                        zIndex: '99999', fontSize: '12px', lineHeight: '22px', textAlign: 'center',
-                        cursor: 'default'
-                    });
-                    targetElement.appendChild(button);
-                    console.log(`Jules-debug: Injected button ${number} into`, targetElement);
-                } catch (e) {
-                    console.error(`Jules-debug: Error injecting button ${number}:`, e);
-                }
-            };
-
-            allMoInputs.forEach((input, index) => {
-                injectNumberedButton(input, index + 1);
-            });
-
-            // 4. Action & Wait: Find the native input element inside the banner, piercing all nested shadow roots.
-            const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner);
+            // 4. Action & Wait: Find the native input element inside the banner.
+            // Based on the replay file, we need the actual <input> inside the <mo-input> web component.
+            const inputField = await findElement('mo-input input', searchBanner);
 
             if (!inputField) {
                  throw new Error('Could not find the native input field for search.');
@@ -344,28 +304,19 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
             console.log("Found native input field. Targeting:", inputField);
 
-            // 5. Action: Manually focus the native input field.
-            // Time: Immediate
+            // 5. Action: Manually focus and set the value.
             inputField.focus();
+            inputField.value = dNumber;
+            inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+            inputField.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
 
-            // 6. Action: Set the value by simulating a paste.
-            const pasteSuccess = document.execCommand('paste');
-            console.log('Paste command success:', pasteSuccess);
+            // 6. Action: Click the toggle switch to enable D-number search.
+            // The selector is taken from the user's replay file.
+            await robustClick('mo-toggle-switch', searchBanner);
 
-            // Fallback for browsers/pages that block execCommand or where the clipboard is empty.
-            if (!pasteSuccess || !inputField.value) {
-                console.warn('execCommand("paste") failed or did not populate the field. Falling back to direct value assignment.');
-                inputField.value = dNumber; // dNumber is still available in this scope
-                inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-            }
-
-            // 7. Action: Click the switch for D-number search *within the banner*.
-            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
-            await robustClick('div.switch[role="switch"]', searchBanner);
-
-            // 8. Action: Click the open campaign icon *within the banner*.
-            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
-            await robustClick('mo-button mo-icon[name="folder-open"]', searchBanner);
+            // 7. Action: Click the search button to open the campaign.
+            // The selector is taken from the user's replay file.
+            await robustClick('mo-button', searchBanner);
 
             console.log("D-Number script finished successfully.");
         } catch (error) {

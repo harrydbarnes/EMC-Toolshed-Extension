@@ -225,19 +225,25 @@ const openCampaignWithDNumberScript = (dNumber) => {
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
     // REFINED: findElement now recursively searches nested shadow DOMs for the selector.
-    const findElement = (selector, rootElement = document, timeout = 20000) => { // Timeout: 20 seconds
+    const findElement = (selector, rootElement = document, timeout = 30000) => { // Increased timeout to 30 seconds
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
 
             const queryShadowDomRecursive = (root, targetSelector) => {
                 // 1. Check the current root for the element
+                // Use querySelector directly to find elements even if they are in the light DOM
                 const element = root.querySelector(targetSelector);
                 // Check for existence AND visibility (offsetParent is best guess for visibility)
-                if (element && element.offsetParent !== null) return element;
+                // Visibility check is only reliable for DOM elements, not Shadow Roots.
+                if (element && (element.offsetParent !== null || element.tagName === 'INPUT')) {
+                    // console.log("Found element in DOM or Shadow DOM:", element);
+                    return element;
+                }
 
                 // 2. Recursively search nested shadow roots
-                const allElements = root.querySelectorAll('*');
+                // Ensure we only query children of the current root if it is a DOM element
+                const allElements = root.querySelectorAll ? root.querySelectorAll('*') : [];
                 for (const el of allElements) {
                     if (el.shadowRoot) {
                         const foundInShadow = queryShadowDomRecursive(el.shadowRoot, targetSelector);
@@ -258,7 +264,7 @@ const openCampaignWithDNumberScript = (dNumber) => {
                     if (elapsedTime >= timeout) {
                         clearInterval(interval);
                         const scope = rootElement === document ? 'document' : (rootElement.tagName || 'ShadowRoot');
-                        reject(new Error(`Element not found or not visible: ${selector} within ${scope}`));
+                        reject(new Error(`Element not found or not visible: ${selector} within ${scope} after ${timeout/1000}s`));
                     }
                 }
             }, intervalTime);
@@ -283,16 +289,19 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
             // 1. Action: Click the main search icon to open the search banner.
             await robustClick('mo-icon[name="search"]');
+            console.log("Clicked search icon.");
 
-            // 2. Delay: Wait a short time to allow the UI to start loading the banner.
-            await delay(1500);
-
-            // 3. Action & Wait: Wait for the search BANNER to appear (our stable scope).
-            const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000);
+            // 2. Action & Wait: Wait for the search BANNER to appear (our stable scope).
+            // Increased timeout here to 10 seconds.
+            const searchBanner = await findElement('mo-banner-recent-menu-content', document, 10000);
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-            // 4. Action & Wait: Find the native input element inside the banner, piercing all nested shadow roots.
-            const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner);
+            // 3. Action & Wait: Find the native input element inside the banner.
+            // The original selector was unreliable. We'll stick to searching for the native input,
+            // but use the broader scope of the whole banner, hoping the previous function can pierce it.
+            // Note: The visibility check for <input> is simplified in `findElement` as input.offsetParent is sometimes null
+            // even when visible if it is inside multiple shadow DOMs.
+            const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner, 10000);
 
             if (!inputField) {
                  throw new Error('Could not find the native input field for search.');
@@ -300,42 +309,60 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
             console.log("Found native input field. Targeting:", inputField);
 
-            // 5. Action: Manually focus the native input field.
+            // 4. Action: Explicitly focus the element, as suggested by your workflow.
             inputField.focus();
 
-            // FIX: Directly set the value and dispatch robust events to mimic user typing,
-            // bypassing unreliable clipboard/paste operations in injected scripts.
+            // NEW STEP: The log shows a mouse click *after* the paste operation.
+            // Since the paste is failing and the field is focused, we'll try sending
+            // a synthetic click/mousedown event to the field to ensure all listeners are activated.
+            const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+            inputField.dispatchEvent(clickEvent);
+            console.log("Dispatched synthetic click event to input field.");
+
+            // 5. FIX: Directly set the value and dispatch robust events.
             inputField.value = dNumber;
             console.log(`D-Number assigned value: ${dNumber}.`);
 
             const eventConfig = { bubbles: true, composed: true };
 
-            // Dispatch input and change events for framework reactivity
+            // Dispatch input, change, and keyup events for framework reactivity
             inputField.dispatchEvent(new Event('input', eventConfig));
             inputField.dispatchEvent(new Event('change', eventConfig));
 
-            // Dispatch a synthetic 'keyup' event to mimic a final keypress, which often
-            // triggers search/input handlers in web components.
+            // Dispatch keydown and keyup for ENTER, which might trigger the search
+            inputField.dispatchEvent(new KeyboardEvent('keydown', {
+                 ...eventConfig,
+                 key: 'Enter',
+                 keyCode: 13,
+                 which: 13,
+             }));
             inputField.dispatchEvent(new KeyboardEvent('keyup', {
                 ...eventConfig,
-                key: ' ', // Using space is safer than Enter to avoid premature submission.
-                keyCode: 32,
-                which: 32,
+                key: 'Enter',
+                keyCode: 13,
+                which: 13,
             }));
 
-            console.log("Input and keyup events dispatched to simulate text entry.");
-            // END FIX
+            // Wait briefly for the input to register
+            await delay(500);
 
+            console.log("Input, change, and Enter key events dispatched to simulate text entry and submission.");
 
             // 6. Action: Click the toggle switch to enable D-number search.
             await robustClick('mo-toggle-switch', searchBanner);
+            console.log("Clicked toggle switch.");
 
             // 7. Action: Click the search button to open the campaign.
+            // We search for a mo-button that is a sibling or child of the search banner.
+            // Note: In your previous version, this was `mo-button` which searches the entire banner content.
+            // We keep it searching the banner content to find the search button.
             await robustClick('mo-button', searchBanner);
+            console.log("Clicked final search button.");
 
             console.log("D-Number script finished successfully.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);
+            // Added error message to match the string in the original code, but kept the timeout longer in `findElement`
             alert(`Automation failed: ${error.message}`);
         }
     })();

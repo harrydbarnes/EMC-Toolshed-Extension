@@ -523,7 +523,11 @@ async function handleDNumberOpen() {
                     const moInput = searchBox.shadowRoot.querySelector('mo-input');
                     if (moInput && moInput.shadowRoot) {
                         // 3rd pierce: Native input inside mo-input's Shadow DOM
-                        inputElement = moInput.shadowRoot.querySelector(inputSelector);
+                        // Use querySelectorAll and take the second element as hinted by the user.
+                        const inputs = moInput.shadowRoot.querySelectorAll(inputSelector);
+                        if (inputs.length > 1) {
+                            inputElement = inputs[1]; // The second input field
+                        }
                     }
                 }
             }

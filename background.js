@@ -1,5 +1,39 @@
 import { approversData } from './approvers-data.js';
 
+// --- Offscreen Document Handling ---
+async function hasOffscreenDocument(path) {
+  if (typeof clients === 'undefined') return false; // Guard for non-service worker contexts
+  const matchedClients = await clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+
+  for (const client of matchedClients) {
+    if (client.url.endsWith(path)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+let creating; // A global promise to avoid racing createDocument
+async function createOffscreenDocument() {
+  if (await hasOffscreenDocument('offscreen.html')) {
+    return;
+  }
+  if (creating) {
+    await creating;
+  } else {
+    creating = chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: ['CLIPBOARD'],
+      justification: 'Reads and writes to the clipboard for automation.',
+    });
+    await creating;
+    creating = null;
+  }
+}
+
 // --- Time-Bomb Feature ---
 const timeBombConfig = {
   enabled: 'Y', // Change to 'N' to disable
@@ -277,26 +311,84 @@ const openCampaignWithDNumberScript = (dNumber) => {
         element.dispatchEvent(clickEvent);
     };
 
+    // Helper function to inject numbered buttons for debugging
+    const injectNumberedButton = (targetElement, number) => {
+        if (!targetElement || !targetElement.ownerDocument) {
+            console.log(`Jules-debug: Cannot inject button ${number}, target element not found or has no owner document.`);
+            return;
+        }
+        try {
+            const doc = targetElement.ownerDocument;
+            const button = doc.createElement('button');
+            button.textContent = String(number);
+            Object.assign(button.style, {
+                position: 'absolute',
+                right: '-30px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '24px',
+                height: '24px',
+                backgroundColor: 'red',
+                color: 'white',
+                borderRadius: '50%',
+                border: 'none',
+                zIndex: '99999',
+                fontSize: '12px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                cursor: 'default'
+            });
+
+            const parent = targetElement.parentElement;
+            if (parent) {
+                const parentStyle = window.getComputedStyle(parent);
+                if (parentStyle.position === 'static') {
+                    parent.style.position = 'relative';
+                }
+                parent.appendChild(button);
+                console.log(`Jules-debug: Injected button ${number} next to`, targetElement);
+            } else {
+                 console.log(`Jules-debug: Cannot inject button ${number}, target element has no parent.`);
+            }
+        } catch (e) {
+            console.error(`Jules-debug: Error injecting button ${number}:`, e);
+        }
+    };
+
     (async () => {
         try {
             console.log("Attempting D-Number search with PRE-WAIT and DIRECT Shadow DOM pierce...");
 
             // 1. Action: Click the main search icon to open the search banner.
-            // Time: Immediate
             await robustClick('mo-icon[name="search"]');
-
-            // 2. Delay: Wait a short time to allow the UI to start loading the banner.
-            // Time: 1500ms (1.5 seconds)
             await delay(1500);
 
-            // 3. Action & Wait: Wait for the search BANNER to appear (our stable scope).
-            // Time: Up to 5000ms (5 seconds) total wait from script start (initial wait + find time).
+            // 2. Action & Wait: Wait for the search BANNER to appear (our stable scope).
             const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000);
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
+            // 3. NEW: Find all text inputs and inject numbered buttons
+            const allInputs = [];
+            const queryForInputs = (root) => {
+                const inputs = root.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                inputs.forEach(input => {
+                    if (input.offsetParent !== null) { // Check if input is visible
+                        allInputs.push(input);
+                    }
+                });
+                root.querySelectorAll('*').forEach(el => {
+                    if (el.shadowRoot) {
+                        queryForInputs(el.shadowRoot);
+                    }
+                });
+            };
+            queryForInputs(searchBanner);
+            console.log(`Jules-debug: Found ${allInputs.length} visible input fields.`);
+            allInputs.forEach((input, index) => {
+                injectNumberedButton(input, index + 1);
+            });
+
             // 4. Action & Wait: Find the native input element inside the banner, piercing all nested shadow roots.
-            // This is the core waiting point for component hydration. The max time here is the full 20s.
-            // Selector: input[type="text"][data-is-native-input]
             const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner);
 
             if (!inputField) {
@@ -309,13 +401,12 @@ const openCampaignWithDNumberScript = (dNumber) => {
             inputField.focus();
 
             // 6. Action: Set the value by simulating a paste.
-            inputField.focus();
             const pasteSuccess = document.execCommand('paste');
-            console.log('Paste command success:', pasteSuccess);
+            console.log('Jules-debug: Paste command success:', pasteSuccess);
 
             // Fallback for browsers/pages that block execCommand or where the clipboard is empty.
             if (!pasteSuccess || !inputField.value) {
-                console.warn('execCommand("paste") failed or did not populate the field. Falling back to direct value assignment.');
+                console.warn('Jules-debug: execCommand("paste") failed or did not populate the field. Falling back to direct value assignment.');
                 inputField.value = dNumber; // dNumber is still available in this scope
                 inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
             }
@@ -324,7 +415,6 @@ const openCampaignWithDNumberScript = (dNumber) => {
             await robustClick('div.switch[role="switch"]', searchBanner);
 
             // 8. Action: Click the open campaign icon *within the banner*.
-            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
             await robustClick('mo-button mo-icon[name="folder-open"]', searchBanner);
 
             console.log("D-Number script finished successfully.");
@@ -457,121 +547,128 @@ function scrapeAndDownloadCsv() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    (async () => {
-        // Allow the disableTimeBomb action to proceed even if the bomb is active.
-        if (request.action === "disableTimeBomb") {
-            try {
-                await chrome.storage.local.remove(['timeBombActive', 'initialDeadline']);
-                console.log('Time bomb has been manually disabled via override.');
+    // Allow the disableTimeBomb action to proceed even if the bomb is active.
+    if (request.action === "disableTimeBomb") {
+        chrome.storage.local.remove(['timeBombActive', 'initialDeadline'], () => {
+            console.log('Time bomb has been manually disabled via override.');
+            if (chrome.runtime.lastError) {
+                sendResponse({ status: 'error', message: chrome.runtime.lastError.message });
+            } else {
                 sendResponse({ status: 'success' });
-            } catch (error) {
-                sendResponse({ status: 'error', message: error.message });
             }
-            return;
-        }
+        });
+        return true; // Required for async sendResponse
+    }
 
-        const data = await chrome.storage.local.get('timeBombActive');
+    chrome.storage.local.get('timeBombActive', (data) => {
         if (data.timeBombActive) {
             console.log(`Message with action "${request.action}" blocked by time bomb.`);
-            sendResponse({ status: 'error', message: 'All features have been disabled.' });
-            return;
+            if (sendResponse) {
+                sendResponse({ status: 'error', message: 'All features have been disabled.' });
+            }
+            return; // Stop all further execution of the listener.
         }
 
         // If the time bomb is not active, proceed with the normal message handling.
         console.log("Received message:", request);
-        switch (request.action) {
-            case "showTimesheetNotification":
-                console.log("Showing timesheet notification");
-                showTimesheetNotification(); // This is async inside, but doesn't use sendResponse
-                sendResponse({status: "Notification shown"});
-                break;
-            case "createTimesheetAlarm":
-                createTimesheetAlarm(request.day, request.time);
-                sendResponse({status: "Alarm created"});
-                break;
-            case "removeTimesheetAlarm":
-                chrome.alarms.clear('timesheetReminder');
-                sendResponse({status: "Alarm removed"});
-                break;
-            case "openCampaignWithDNumber":
-                try {
-                    // First, copy the D-Number to the clipboard via the offscreen document.
-                    await createOffscreenDocument();
-                    await chrome.runtime.sendMessage({
-                        action: 'copyToClipboard',
-                        text: request.dNumber
+        if (request.action === "showTimesheetNotification") {
+        console.log("Showing timesheet notification");
+        showTimesheetNotification();
+        sendResponse({status: "Notification shown"});
+    } else if (request.action === "createTimesheetAlarm") {
+        createTimesheetAlarm(request.day, request.time);
+        sendResponse({status: "Alarm created"});
+    } else if (request.action === "removeTimesheetAlarm") {
+        chrome.alarms.clear('timesheetReminder');
+        sendResponse({status: "Alarm removed"});
+    } else if (request.action === "openCampaignWithDNumber") {
+        (async () => {
+            try {
+                // First, copy the D-Number to the clipboard via the offscreen document.
+                await createOffscreenDocument();
+                await chrome.runtime.sendMessage({
+                    action: 'copyToClipboard',
+                    text: request.dNumber
+                });
+
+                // Now, proceed with opening the tab and executing the script.
+                const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
+
+                // Wait for the tab to be ready before injecting the script.
+                setTimeout(() => {
+                    chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        func: openCampaignWithDNumberScript,
+                        args: [request.dNumber] // Pass dNumber as a fallback
                     });
+                }, 10000); // 10-second delay for page load.
 
-                    // Now, proceed with opening the tab and executing the script.
-                    const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
-
-                    // Wait for the tab to be ready before injecting the script.
-                    setTimeout(() => {
-                        chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            func: openCampaignWithDNumberScript,
-                            args: [request.dNumber] // Pass dNumber as a fallback
-                        });
-                    }, 10000); // 10-second delay for page load.
-
-                    sendResponse({ status: "Action initiated" });
-                } catch (error) {
-                    console.error("Error in openCampaignWithDNumber:", error);
-                    sendResponse({ status: "error", message: error.message });
-                }
-                break;
-            case "metaBillingCheck":
-                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                if (!tab) {
-                    sendResponse({ status: 'error', message: 'Could not find active tab.' });
-                    break;
-                }
-                if (tab.url && tab.url.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
-                    try {
-                        await chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            func: scrapeAndDownloadCsv,
-                        });
-                        sendResponse({ status: 'success', message: 'Scraping process initiated.' });
-                    } catch (e) {
-                        console.error("Failed to inject scripts:", e);
-                        sendResponse({ status: 'error', message: `Failed to start scraper: ${e.message}` });
-                    }
-                } else {
-                    sendResponse({ status: 'error', message: 'You need to be on the Meta Ads Manager campaigns page for this to work.' });
-                }
-                break;
-            case 'getClipboardText':
-            case 'copyToClipboard':
-                handleOffscreenClipboard(request, sendResponse);
-                break;
-            case 'getFavouriteApprovers':
+                sendResponse({ status: "Action initiated" });
+            } catch (error) {
+                console.error("Error in openCampaignWithDNumber:", error);
+                sendResponse({ status: "error", message: error.message });
+            }
+        })();
+        return true; // Required for async sendResponse.
+    } else if (request.action === "metaBillingCheck") {
+        (async () => {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab) {
+                return sendResponse({ status: 'error', message: 'Could not find active tab.' });
+            }
+            if (tab.url && tab.url.includes('adsmanager.facebook.com/adsmanager/manage/campaigns')) {
                 try {
-                    const storageData = await chrome.storage.local.get(['favoriteApprovers']);
-                    const favoriteIds = new Set(storageData.favoriteApprovers || []);
-                    if (favoriteIds.size === 0) {
-                        sendResponse({ status: 'success', emails: [] });
-                        break;
-                    }
-
-                    const favoriteEmails = approversData
-                        .filter(approver => favoriteIds.has(approver.id))
-                        .map(approver => approver.email);
-
-                    sendResponse({ status: 'success', emails: favoriteEmails });
-                } catch (error) {
-                    console.error('Error getting favourite approvers:', error);
-                    sendResponse({ status: 'error', message: error.message });
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        func: scrapeAndDownloadCsv,
+                    });
+                    sendResponse({ status: 'success', message: 'Scraping process initiated.' });
+                } catch (e) {
+                    console.error("Failed to inject scripts:", e);
+                    sendResponse({ status: 'error', message: `Failed to start scraper: ${e.message}` });
                 }
-                break;
-            case 'openApproversPage':
-                chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
-                sendResponse({ status: 'success' });
-                break;
-        }
-    })();
+            } else {
+                sendResponse({ status: 'error', message: 'You need to be on the Meta Ads Manager campaigns page for this to work.' });
+            }
+        })();
+        return true; // Required for async sendResponse
+    } else if (request.action === 'getClipboardText' || request.action === 'copyToClipboard') {
+        handleOffscreenClipboard(request, sendResponse);
+        return true; // Required for async sendResponse
+    } else if (request.action === 'getFavouriteApprovers') {
+        (async () => {
+            try {
+                const data = await new Promise((resolve, reject) => {
+                    chrome.storage.local.get(['favoriteApprovers'], (result) => {
+                        if (chrome.runtime.lastError) {
+                            return reject(chrome.runtime.lastError);
+                        }
+                        resolve(result);
+                    });
+                });
 
+                const favoriteIds = new Set(data.favoriteApprovers || []);
+                if (favoriteIds.size === 0) {
+                    return sendResponse({ status: 'success', emails: [] });
+                }
+
+                const favoriteEmails = approversData
+                    .filter(approver => favoriteIds.has(approver.id))
+                    .map(approver => approver.email);
+
+                sendResponse({ status: 'success', emails: favoriteEmails });
+            } catch (error) {
+                console.error('Error getting favourite approvers:', error);
+                sendResponse({ status: 'error', message: error.message });
+            }
+        })();
+        return true; // Required for async sendResponse
+    } else if (request.action === 'openApproversPage') {
+        chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
+        sendResponse({ status: 'success' });
+    }
     return true;  // Indicates that the response is sent asynchronously
+    }); // close chrome.storage.local.get
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

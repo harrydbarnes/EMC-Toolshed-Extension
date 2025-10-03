@@ -221,8 +221,11 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 const openCampaignWithDNumberScript = (dNumber) => {
+    // Helper to introduce a pause
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
     // REFINED: findElement now recursively searches nested shadow DOMs for the selector.
-    const findElement = (selector, rootElement = document, timeout = 20000) => { // Timeout increased to 20s
+    const findElement = (selector, rootElement = document, timeout = 20000) => { // Timeout: 20 seconds
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
@@ -231,7 +234,6 @@ const openCampaignWithDNumberScript = (dNumber) => {
                 // 1. Check the current root for the element
                 const element = root.querySelector(targetSelector);
                 // Check for existence AND visibility (offsetParent is best guess for visibility)
-                // We'll keep the visibility check, as finding an invisible element won't help
                 if (element && element.offsetParent !== null) return element;
 
                 // 2. Recursively search nested shadow roots
@@ -277,21 +279,24 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with RECURSIVE Shadow DOM pierce (20s timeout)...");
+            console.log("Attempting D-Number search with PRE-WAIT and DIRECT Shadow DOM pierce...");
 
-            // 1. Click the main search icon to open the search banner.
+            // 1. Action: Click the main search icon to open the search banner.
+            // Time: Immediate
             await robustClick('mo-icon[name="search"]');
 
-            // 2. Wait for the search BANNER to appear. This is our new scope.
-            const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000); // 5s wait for banner
+            // 2. Delay: Wait a short time to allow the UI to start loading the banner.
+            // Time: 1500ms (1.5 seconds)
+            await delay(1500);
+
+            // 3. Action & Wait: Wait for the search BANNER to appear (our stable scope).
+            // Time: Up to 5000ms (5 seconds) total wait from script start (initial wait + find time).
+            const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000);
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-            // NEW STEP 3: Wait specifically for the high-level search box component within the banner
-            const searchBox = await findElement('mo-search-box', searchBanner, 5000); // Wait another 5s for search box hydration
-            console.log("Found mo-search-box container. Proceeding to input field.");
-
-            // 4. Find the native input element inside the banner, piercing all nested shadow roots.
-            // Search will now start from the *more stable* searchBanner element.
+            // 4. Action & Wait: Find the native input element inside the banner, piercing all nested shadow roots.
+            // This is the core waiting point for component hydration. The max time here is the full 20s.
+            // Selector: input[type="text"][data-is-native-input]
             const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner);
 
             if (!inputField) {
@@ -300,18 +305,21 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
             console.log("Found native input field. Targeting:", inputField);
 
-            // 5. Manually focus the native input field.
+            // 5. Action: Manually focus the native input field.
+            // Time: Immediate
             inputField.focus();
 
-            // 6. Set the value and dispatch events.
+            // 6. Action: Set the value and dispatch events.
+            // Time: Immediate
             inputField.value = dNumber;
-            // The composed: true flag is crucial for events to cross the shadow DOM boundary
             inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
-            // 7. Click the switch for D-number search *within the banner*.
+            // 7. Action: Click the switch for D-number search *within the banner*.
+            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
             await robustClick('div.switch[role="switch"]', searchBanner);
 
-            // 8. Click the open campaign icon *within the banner*.
+            // 8. Action: Click the open campaign icon *within the banner*.
+            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
             await robustClick('mo-button mo-icon[name="folder-open"]', searchBanner);
 
             console.log("D-Number script finished successfully.");

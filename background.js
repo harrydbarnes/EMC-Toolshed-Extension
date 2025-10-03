@@ -222,7 +222,7 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 
 const openCampaignWithDNumberScript = (dNumber) => {
     // REFINED: findElement now recursively searches nested shadow DOMs for the selector.
-    const findElement = (selector, rootElement = document, timeout = 15000) => {
+    const findElement = (selector, rootElement = document, timeout = 20000) => { // Timeout increased to 20s
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
@@ -231,6 +231,7 @@ const openCampaignWithDNumberScript = (dNumber) => {
                 // 1. Check the current root for the element
                 const element = root.querySelector(targetSelector);
                 // Check for existence AND visibility (offsetParent is best guess for visibility)
+                // We'll keep the visibility check, as finding an invisible element won't help
                 if (element && element.offsetParent !== null) return element;
 
                 // 2. Recursively search nested shadow roots
@@ -276,17 +277,21 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
     (async () => {
         try {
-            console.log("Attempting D-Number search with RECURSIVE Shadow DOM pierce...");
+            console.log("Attempting D-Number search with RECURSIVE Shadow DOM pierce (20s timeout)...");
 
             // 1. Click the main search icon to open the search banner.
             await robustClick('mo-icon[name="search"]');
 
             // 2. Wait for the search BANNER to appear. This is our new scope.
-            const searchBanner = await findElement('mo-banner-recent-menu-content');
+            const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000); // 5s wait for banner
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-            // 3. Find the native input element inside the banner, piercing all nested shadow roots.
-            // We use 'input[type="text"][data-is-native-input]' for the most specific target.
+            // NEW STEP 3: Wait specifically for the high-level search box component within the banner
+            const searchBox = await findElement('mo-search-box', searchBanner, 5000); // Wait another 5s for search box hydration
+            console.log("Found mo-search-box container. Proceeding to input field.");
+
+            // 4. Find the native input element inside the banner, piercing all nested shadow roots.
+            // Search will now start from the *more stable* searchBanner element.
             const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner);
 
             if (!inputField) {
@@ -295,18 +300,18 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
             console.log("Found native input field. Targeting:", inputField);
 
-            // 4. Manually focus the native input field.
+            // 5. Manually focus the native input field.
             inputField.focus();
 
-            // 5. Set the value and dispatch events.
+            // 6. Set the value and dispatch events.
             inputField.value = dNumber;
             // The composed: true flag is crucial for events to cross the shadow DOM boundary
             inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
-            // 6. Click the switch for D-number search *within the banner*.
+            // 7. Click the switch for D-number search *within the banner*.
             await robustClick('div.switch[role="switch"]', searchBanner);
 
-            // 7. Click the open campaign icon *within the banner*.
+            // 8. Click the open campaign icon *within the banner*.
             await robustClick('mo-button mo-icon[name="folder-open"]', searchBanner);
 
             console.log("D-Number script finished successfully.");

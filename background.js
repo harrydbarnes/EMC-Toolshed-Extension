@@ -1,39 +1,5 @@
 import { approversData } from './approvers-data.js';
 
-// --- Offscreen Document Handling ---
-async function hasOffscreenDocument(path) {
-  if (typeof clients === 'undefined') return false; // Guard for non-service worker contexts
-  const matchedClients = await clients.matchAll({
-    type: 'window',
-    includeUncontrolled: true,
-  });
-
-  for (const client of matchedClients) {
-    if (client.url.endsWith(path)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-let creating; // A global promise to avoid racing createDocument
-async function createOffscreenDocument() {
-  if (await hasOffscreenDocument('offscreen.html')) {
-    return;
-  }
-  if (creating) {
-    await creating;
-  } else {
-    creating = chrome.offscreen.createDocument({
-      url: 'offscreen.html',
-      reasons: ['CLIPBOARD'],
-      justification: 'Reads and writes to the clipboard for automation.',
-    });
-    await creating;
-    creating = null;
-  }
-}
-
 // --- Time-Bomb Feature ---
 const timeBombConfig = {
   enabled: 'Y', // Change to 'N' to disable
@@ -402,19 +368,21 @@ const openCampaignWithDNumberScript = (dNumber) => {
 
             // 6. Action: Set the value by simulating a paste.
             const pasteSuccess = document.execCommand('paste');
-            console.log('Jules-debug: Paste command success:', pasteSuccess);
+            console.log('Paste command success:', pasteSuccess);
 
             // Fallback for browsers/pages that block execCommand or where the clipboard is empty.
             if (!pasteSuccess || !inputField.value) {
-                console.warn('Jules-debug: execCommand("paste") failed or did not populate the field. Falling back to direct value assignment.');
+                console.warn('execCommand("paste") failed or did not populate the field. Falling back to direct value assignment.');
                 inputField.value = dNumber; // dNumber is still available in this scope
                 inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
             }
 
             // 7. Action: Click the switch for D-number search *within the banner*.
+            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
             await robustClick('div.switch[role="switch"]', searchBanner);
 
             // 8. Action: Click the open campaign icon *within the banner*.
+            // Time: Immediate, plus wait-time for robustClick (up to 20s if element is unstable).
             await robustClick('mo-button mo-icon[name="folder-open"]', searchBanner);
 
             console.log("D-Number script finished successfully.");

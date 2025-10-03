@@ -221,18 +221,22 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // --- Meta Billing Check Logic ---
 
 function openCampaignWithDNumberScript(dNumber) {
-    const findElement = (selector, timeout = 15000) => { // Increased timeout
+    // REFACTORED: findElement now accepts an optional root element to search within.
+    const findElement = (selector, rootElement = document, timeout = 15000) => {
         return new Promise((resolve, reject) => {
             const intervalTime = 500;
             let elapsedTime = 0;
 
             const queryShadowDom = (root, selector) => {
                 const element = root.querySelector(selector);
+                // Check for visibility (offsetParent is a common way to check if an element is rendered)
                 if (element && element.offsetParent !== null) return element;
 
+                // Also search within shadow roots of all elements in the current root
                 const allElements = root.querySelectorAll('*');
                 for (const el of allElements) {
                     if (el.shadowRoot) {
+                        // Important: Pass the selector down, not just search for anything.
                         const foundInShadow = queryShadowDom(el.shadowRoot, selector);
                         if (foundInShadow) return foundInShadow;
                     }
@@ -241,7 +245,8 @@ function openCampaignWithDNumberScript(dNumber) {
             };
 
             const interval = setInterval(() => {
-                const element = queryShadowDom(document, selector);
+                // Start the search from the provided rootElement
+                const element = queryShadowDom(rootElement, selector);
                 if (element) {
                     clearInterval(interval);
                     resolve(element);
@@ -249,15 +254,18 @@ function openCampaignWithDNumberScript(dNumber) {
                     elapsedTime += intervalTime;
                     if (elapsedTime >= timeout) {
                         clearInterval(interval);
-                        reject(new Error(`Element not found or not visible: ${selector}`));
+                        // Make the error message more specific about the scope
+                        const scope = rootElement === document ? 'document' : rootElement.tagName;
+                        reject(new Error(`Element not found or not visible: ${selector} within ${scope}`));
                     }
                 }
             }, intervalTime);
         });
     };
 
-    const robustClick = async (selector) => {
-        const element = await findElement(selector);
+    // REFACTORED: robustClick now accepts an optional root element.
+    const robustClick = async (selector, rootElement = document) => {
+        const element = await findElement(selector, rootElement);
         const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
         const mouseupEvent = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
         const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
@@ -266,45 +274,46 @@ function openCampaignWithDNumberScript(dNumber) {
         element.dispatchEvent(clickEvent);
     };
 
-    const waitForActiveElement = (selector, timeout = 5000) => {
-        return new Promise((resolve, reject) => {
-            const intervalTime = 100;
-            let elapsedTime = 0;
-            const interval = setInterval(() => {
-                const activeEl = document.activeElement;
-                if (activeEl && activeEl.matches(selector)) {
-                    clearInterval(interval);
-                    resolve(activeEl);
-                } else {
-                    elapsedTime += intervalTime;
-                    if (elapsedTime >= timeout) {
-                        clearInterval(interval);
-                        reject(new Error(`Timeout waiting for element to be active: ${selector}. Current active: ${activeEl ? activeEl.tagName : 'null'}`));
-                    }
-                }
-            }, intervalTime);
-        });
-    };
-
-
     (async () => {
         try {
-            console.log("Attempting D-Number search with robust waiting...");
+            console.log("Attempting D-Number search with SCOPED waiting...");
+
+            // 1. Click the main search icon to open the search banner. This is a global action.
             await robustClick('mo-icon[name="search"]');
 
-            const activeEl = await waitForActiveElement('mo-input');
+            // 2. IMPORTANT: Wait for the search BANNER to appear. This is our new scope.
+            // All subsequent actions will be performed inside this banner.
+            const searchBanner = await findElement('mo-banner-recent-menu-content');
+            console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-            const inputField = activeEl.shadowRoot.querySelector('input');
+            // 3. Find the search box *within the banner*.
+            const searchBox = await findElement('mo-search-box', searchBanner);
+
+            // 4. Find the mo-input *within the search box's shadow DOM*.
+            const moInputWrapper = searchBox.shadowRoot.querySelector('mo-input');
+            if (!moInputWrapper) {
+                throw new Error('Could not find mo-input within the mo-search-box shadow DOM.');
+            }
+
+            // 5. Find the native input *within the mo-input's shadow DOM*.
+            const inputField = moInputWrapper.shadowRoot.querySelector('input');
             if (!inputField) {
                 throw new Error('Could not find the native input element within the mo-input shadow DOM.');
             }
 
+            // 6. Manually focus the native input field.
+            inputField.focus();
+
+            // 7. Set the value and dispatch events.
             inputField.value = dNumber;
             inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
-            await robustClick('div.switch[role="switch"]');
+            // 8. Click the switch for D-number search *within the banner*.
+            await robustClick('div.switch[role="switch"]', searchBanner);
 
-            await robustClick('mo-button mo-icon[name="folder-open"]');
+            // 9. Click the open campaign icon *within the banner*.
+            await robustClick('mo-button mo-icon[name="folder-open"]', searchBanner);
+
             console.log("D-Number script finished successfully.");
         } catch (error) {
             console.error('Error during D Number script execution:', error);

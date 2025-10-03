@@ -472,6 +472,7 @@ function handleGmiChatButton() {
     workflowWidget.appendChild(gmiChatButton);
 }
 
+
 function checkCustomReminders() {
     console.log("[ContentScript Prisma] Running checkCustomReminders...");
     if (activeCustomReminders.length === 0) {

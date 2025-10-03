@@ -82,6 +82,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (openCampaignDNumberButton) {
         openCampaignDNumberButton.addEventListener('click', handleOpenCampaignDNumber);
     }
+
+    const dNumberInput = document.getElementById('dNumber');
+    if (dNumberInput) {
+        dNumberInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Stop default form submission
+                handleOpenCampaignDNumber();
+            }
+        });
+    }
     // Event listeners for logoToggle, metaReminderToggle, timesheetReminderToggle, reminderDay, reminderTime, settingsToggle, saveReminderSettingsButton are removed.
 
     if (triggerTimesheetReminderButton) {

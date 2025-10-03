@@ -277,80 +277,61 @@ const openCampaignWithDNumberScript = (dNumber) => {
         element.dispatchEvent(clickEvent);
     };
 
-    // Helper function to inject numbered buttons for debugging
-    const injectNumberedButton = (targetElement, number) => {
-        if (!targetElement || !targetElement.ownerDocument) {
-            console.log(`Jules-debug: Cannot inject button ${number}, target element not found or has no owner document.`);
-            return;
-        }
-        try {
-            const doc = targetElement.ownerDocument;
-            const button = doc.createElement('button');
-            button.textContent = String(number);
-            Object.assign(button.style, {
-                position: 'absolute',
-                right: '-30px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '24px',
-                height: '24px',
-                backgroundColor: 'red',
-                color: 'white',
-                borderRadius: '50%',
-                border: 'none',
-                zIndex: '99999',
-                fontSize: '12px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                cursor: 'default'
-            });
-
-            const parent = targetElement.parentElement;
-            if (parent) {
-                const parentStyle = window.getComputedStyle(parent);
-                if (parentStyle.position === 'static') {
-                    parent.style.position = 'relative';
-                }
-                parent.appendChild(button);
-                console.log(`Jules-debug: Injected button ${number} next to`, targetElement);
-            } else {
-                 console.log(`Jules-debug: Cannot inject button ${number}, target element has no parent.`);
-            }
-        } catch (e) {
-            console.error(`Jules-debug: Error injecting button ${number}:`, e);
-        }
-    };
-
     (async () => {
         try {
             console.log("Attempting D-Number search with PRE-WAIT and DIRECT Shadow DOM pierce...");
 
             // 1. Action: Click the main search icon to open the search banner.
+            // Time: Immediate
             await robustClick('mo-icon[name="search"]');
+
+            // 2. Delay: Wait a short time to allow the UI to start loading the banner.
+            // Time: 1500ms (1.5 seconds)
             await delay(1500);
 
-            // 2. Action & Wait: Wait for the search BANNER to appear (our stable scope).
+            // 3. Action & Wait: Wait for the search BANNER to appear (our stable scope).
+            // Time: Up to 5000ms (5 seconds) total wait from script start (initial wait + find time).
             const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000);
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
-            // 3. NEW: Find all text inputs and inject numbered buttons
-            const allInputs = [];
-            const queryForInputs = (root) => {
-                const inputs = root.querySelectorAll('input[type="text"], input[type="search"], textarea');
+            // 3. Find all `mo-input` custom components and inject numbered buttons for debugging.
+            const allMoInputs = [];
+            const queryForMoInputs = (root) => {
+                const inputs = root.querySelectorAll('mo-input');
                 inputs.forEach(input => {
                     if (input.offsetParent !== null) { // Check if input is visible
-                        allInputs.push(input);
+                        allMoInputs.push(input);
                     }
                 });
                 root.querySelectorAll('*').forEach(el => {
                     if (el.shadowRoot) {
-                        queryForInputs(el.shadowRoot);
+                        queryForMoInputs(el.shadowRoot);
                     }
                 });
             };
-            queryForInputs(searchBanner);
-            console.log(`Jules-debug: Found ${allInputs.length} visible input fields.`);
-            allInputs.forEach((input, index) => {
+            queryForMoInputs(searchBanner);
+            console.log(`Jules-debug: Found ${allMoInputs.length} visible <mo-input> components.`);
+
+            const injectNumberedButton = (targetElement, number) => {
+                try {
+                    const doc = targetElement.ownerDocument;
+                    const button = doc.createElement('button');
+                    button.textContent = String(number);
+                    Object.assign(button.style, {
+                        position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)',
+                        width: '22px', height: '22px', backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                        color: 'white', borderRadius: '50%', border: '1px solid white',
+                        zIndex: '99999', fontSize: '12px', lineHeight: '22px', textAlign: 'center',
+                        cursor: 'default'
+                    });
+                    targetElement.appendChild(button);
+                    console.log(`Jules-debug: Injected button ${number} into`, targetElement);
+                } catch (e) {
+                    console.error(`Jules-debug: Error injecting button ${number}:`, e);
+                }
+            };
+
+            allMoInputs.forEach((input, index) => {
                 injectNumberedButton(input, index + 1);
             });
 
@@ -364,6 +345,7 @@ const openCampaignWithDNumberScript = (dNumber) => {
             console.log("Found native input field. Targeting:", inputField);
 
             // 5. Action: Manually focus the native input field.
+            // Time: Immediate
             inputField.focus();
 
             // 6. Action: Set the value by simulating a paste.

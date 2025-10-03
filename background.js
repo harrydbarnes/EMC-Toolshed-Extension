@@ -282,21 +282,16 @@ const openCampaignWithDNumberScript = (dNumber) => {
             console.log("Attempting D-Number search with PRE-WAIT and DIRECT Shadow DOM pierce...");
 
             // 1. Action: Click the main search icon to open the search banner.
-            // Time: Immediate
             await robustClick('mo-icon[name="search"]');
 
             // 2. Delay: Wait a short time to allow the UI to start loading the banner.
-            // Time: 1500ms (1.5 seconds)
             await delay(1500);
 
             // 3. Action & Wait: Wait for the search BANNER to appear (our stable scope).
-            // Time: Up to 5000ms (5 seconds) total wait from script start (initial wait + find time).
             const searchBanner = await findElement('mo-banner-recent-menu-content', document, 5000);
             console.log("Found search banner. All subsequent searches will be scoped to this element.");
 
             // 4. Action & Wait: Find the native input element inside the banner, piercing all nested shadow roots.
-            // This is the core waiting point for component hydration. The max time here is the full 20s.
-            // Selector: input[type="text"][data-is-native-input]
             const inputField = await findElement('input[type="text"][data-is-native-input]', searchBanner);
 
             if (!inputField) {
@@ -306,25 +301,36 @@ const openCampaignWithDNumberScript = (dNumber) => {
             console.log("Found native input field. Targeting:", inputField);
 
             // 5. Action: Manually focus the native input field.
-            // Time: Immediate
             inputField.focus();
 
-            // 6. Action: Use execCommand('paste') to simulate a real user pasting the D-number.
-            const pasteSuccess = document.execCommand('paste');
-            console.log('Paste command successful:', pasteSuccess);
+            // FIX: Directly set the value and dispatch robust events to mimic user typing,
+            // bypassing unreliable clipboard/paste operations in injected scripts.
+            inputField.value = dNumber;
+            console.log(`D-Number assigned value: ${dNumber}.`);
 
-            // Fallback in case paste is blocked or fails.
-            if (!pasteSuccess || !inputField.value) {
-                console.warn('execCommand("paste") failed. Falling back to direct value assignment.');
-                inputField.value = dNumber;
-                inputField.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-                inputField.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-            }
+            const eventConfig = { bubbles: true, composed: true };
 
-            // 7. Action: Click the toggle switch to enable D-number search.
+            // Dispatch input and change events for framework reactivity
+            inputField.dispatchEvent(new Event('input', eventConfig));
+            inputField.dispatchEvent(new Event('change', eventConfig));
+
+            // Dispatch a synthetic 'keyup' event to mimic a final keypress, which often
+            // triggers search/input handlers in web components.
+            inputField.dispatchEvent(new KeyboardEvent('keyup', {
+                ...eventConfig,
+                key: ' ', // Using space is safer than Enter to avoid premature submission.
+                keyCode: 32,
+                which: 32,
+            }));
+
+            console.log("Input and keyup events dispatched to simulate text entry.");
+            // END FIX
+
+
+            // 6. Action: Click the toggle switch to enable D-number search.
             await robustClick('mo-toggle-switch', searchBanner);
 
-            // 8. Action: Click the search button to open the campaign.
+            // 7. Action: Click the search button to open the campaign.
             await robustClick('mo-button', searchBanner);
 
             console.log("D-Number script finished successfully.");
@@ -494,15 +500,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "openCampaignWithDNumber") {
         (async () => {
             try {
-                // First, copy the D-Number to the clipboard via the offscreen document.
-                // Awaiting this message ensures the copy operation completes before we proceed.
-                await createOffscreenDocument();
-                await chrome.runtime.sendMessage({
-                    action: 'copyToClipboard',
-                    text: request.dNumber
-                });
+                // Simplified logic: Removed clipboard operations as they are unreliable
+                // and the dNumber is passed directly to the injected script.
 
-                // Now that the clipboard is set, proceed with opening the tab and executing the script.
+                // Open the tab.
                 const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
 
                 // Wait for the tab to be ready before injecting the script.
@@ -510,7 +511,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         func: openCampaignWithDNumberScript,
-                        args: [request.dNumber] // Pass dNumber as a fallback
+                        args: [request.dNumber] // Pass dNumber directly
                     });
                 }, 10000); // 10-second delay for page load.
 

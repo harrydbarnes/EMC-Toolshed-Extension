@@ -175,7 +175,8 @@ function openCampaignWithDNumberScript(dNumber) {
                     elapsedTime += intervalTime;
                     if (elapsedTime >= timeout) {
                         clearInterval(interval);
-                        reject(new Error(`Element not found: ${selector}`));
+                        const iframeCount = document.querySelectorAll('iframe').length;
+                        reject(new Error(`Element not found: ${selector}. Found ${iframeCount} iframes.`));
                     }
                 }
             }, intervalTime);
@@ -196,13 +197,25 @@ function openCampaignWithDNumberScript(dNumber) {
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
     (async () => {
+        // Pre-flight check to see if we're in the correct frame.
+        // Try to find the first element in the sequence. If it doesn't exist here,
+        // this isn't the right frame, so we exit silently.
+        const anchorElement = await findElement('mo-icon[name="search"]').catch(() => null);
+        if (!anchorElement) {
+            return; // Exit silently if not in the right frame.
+        }
+
+        // If the anchor was found, proceed with the automation.
+        // Any errors from this point on are real errors and should be reported.
         try {
-            await clickElement('.icon-inner');
-            await delay(2000);
-            await clickElement('span.slider');
+            // The findElement above doesn't click, so we still need to click the anchor.
+            await clickElement('mo-icon[name="search"]');
+            await delay(1000);
+            await clickElement('mo-toggle-switch');
+            await delay(500);
             await inputText('input[type="text"][data-is-native-input]', dNumber);
             await delay(500);
-            await clickElement('mo-button[slot=""][role="button"][type="secondary"][size="m"]');
+            await clickElement('mo-button:has(mo-icon[name="folder-open"])');
         } catch (error) {
             console.error('Error during D Number script execution:', error);
             alert(error.message);
@@ -349,7 +362,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             setTimeout(() => {
                 chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
+                    target: { tabId: tab.id, allFrames: true },
                     func: openCampaignWithDNumberScript,
                     args: [request.dNumber]
                 });

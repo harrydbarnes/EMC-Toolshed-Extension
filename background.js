@@ -606,8 +606,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.tabs.create({ url: chrome.runtime.getURL('approvers.html') });
         sendResponse({ status: 'success' });
     }
-    return true;  // Indicates that the response is sent asynchronously
     }); // close chrome.storage.local.get
+
+    // Return true AFTER the callback is set up to indicate that the response will be sent asynchronously.
+    // This is crucial for keeping the message channel open while we wait for the storage.get() result.
+    return true;
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

@@ -550,6 +550,12 @@ async function handleDNumberOpen() {
  * Adds the 'Search D-Number' button to the campaign header.
  */
 function addDNumberSearchButton() {
+    // This selector is specific to the campaign list view, preventing the button from appearing on other pages.
+    const campaignPageIdentifier = document.querySelector('mo-banner-module#mo-banner-module-prsm-cm-spa');
+    if (!campaignPageIdentifier) {
+        return; // We are not on the campaign management page.
+    }
+
     const headerToolbar = document.querySelector('mo-toolbar.pad'); // Targeting a nearby toolbar
 
     if (!headerToolbar || headerToolbar.querySelector('.d-number-search-button')) {

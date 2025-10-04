@@ -220,7 +220,7 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 
 // --- Meta Billing Check Logic ---
 
-const openCampaignWithDNumberScript = (dNumber) => {
+const openCampaignWithDNumberScript = () => {
     // This script is injected into the page and must be self-contained.
 
     /**
@@ -273,11 +273,6 @@ const openCampaignWithDNumberScript = (dNumber) => {
     (async () => {
         console.log('[D-Number Open - Injected] Start');
 
-        if (!/^D\d+/.test(dNumber)) {
-            alert(`Provided content "${dNumber}" does not look like a D-number (Dxxxxxxx).`);
-            return;
-        }
-
         try {
             // Click the main quick search box to open the overlay
             const initialSearchBox = await waitForElement('mo-search-box[data-cy="quick_search"]');
@@ -287,14 +282,13 @@ const openCampaignWithDNumberScript = (dNumber) => {
             const inputSelector = 'input[type="text"][data-is-native-input]';
             const inputElement = await waitForElement(inputSelector, 1); // Get the SECOND element
 
-            console.log(`[D-Number Open - Injected] Native input element found. Typing "${dNumber}"...`);
+            console.log(`[D-Number Open - Injected] Native input element found. Pasting clipboard...`);
 
-            // Paste the D-Number and trigger search events
-            inputElement.value = dNumber;
-            inputElement.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-            inputElement.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+            // FIX: Focus the input and use native paste command for reliable SPA input
+            inputElement.focus();
+            document.execCommand('paste');
 
-            console.log(`[D-Number Open - Injected] D-Number "${dNumber}" pasted. Waiting for result link...`);
+            console.log(`[D-Number Open - Injected] Clipboard pasted. Waiting for result link...`);
 
             // Wait for the result link and navigate
             const resultLinkSelector = 'a.item-row[href*="campaign-id"]';
@@ -475,8 +469,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "openCampaignWithDNumber") {
         (async () => {
             try {
-                // Simplified logic: Removed clipboard operations as they are unreliable
-                // and the dNumber is passed directly to the injected script.
+                // FIX: Copy D-number to clipboard first using the offscreen document.
+                const copyResponse = await new Promise(resolve => {
+                     chrome.runtime.sendMessage({ action: 'copyToClipboard', text: request.dNumber }, resolve);
+                });
+
+                if (copyResponse && copyResponse.status !== 'success') {
+                    throw new Error(`Failed to copy D-Number to clipboard: ${copyResponse.message || 'Unknown error'}`);
+                }
 
                 // Open the tab.
                 const tab = await chrome.tabs.create({ url: 'https://groupmuk-prisma.mediaocean.com/campaign-management/#osAppId=prsm-cm-spa&osPspId=cm-dashboard&route=campaigns' });
@@ -486,7 +486,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         func: openCampaignWithDNumberScript,
-                        args: [request.dNumber] // Pass dNumber directly
+                        // REMOVED args: dNumber is now in the clipboard.
                     });
                 }, 10000); // 10-second delay for page load.
 

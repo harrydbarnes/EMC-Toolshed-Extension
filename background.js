@@ -294,13 +294,10 @@ const openCampaignWithDNumberScript = () => {
             const resultLinkSelector = 'a.item-row[href*="campaign-id"]';
             const resultLink = await waitForElement(resultLinkSelector, 0, 5000); // Wait for first result link
 
-            console.log('[D-Number Open - Injected] Result link found. Navigating directly.');
+            console.log('[D-Number Open - Injected] Result link found. Navigating.');
 
-            if (resultLink.href) {
-                window.location.href = resultLink.href;
-            } else {
-                 resultLink.click();
-            }
+            // Always click the link to ensure SPA routing is handled correctly.
+            resultLink.click();
 
         } catch (error) {
             console.error('[D-Number Open - Injected] Automation failed:', error);
@@ -470,8 +467,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 // FIX: Copy D-number to clipboard first using the offscreen document.
-                const copyResponse = await new Promise(resolve => {
-                     chrome.runtime.sendMessage({ action: 'copyToClipboard', text: request.dNumber }, resolve);
+                const copyResponse = await new Promise((resolve, reject) => {
+                    chrome.runtime.sendMessage({ action: 'copyToClipboard', text: request.dNumber }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            return reject(new Error(chrome.runtime.lastError.message));
+                        }
+                        resolve(response);
+                    });
                 });
 
                 if (copyResponse && copyResponse.status !== 'success') {
